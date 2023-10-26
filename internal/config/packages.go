@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/lucas-ingemar/mdnf/internal/shared"
@@ -8,8 +9,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func ReadPackagesConfig(filename string) (packages shared.Packages, err error) {
-	yamlRaw, err := os.ReadFile(filename)
+func ReadPackagesConfig() (packages shared.Packages, err error) {
+	err = CreateOrMigratePackageFile()
+	if err != nil {
+		return
+	}
+
+	yamlRaw, err := os.ReadFile(PackageFile)
 	if err != nil {
 		return
 	}
@@ -19,4 +25,31 @@ func ReadPackagesConfig(filename string) (packages shared.Packages, err error) {
 		return
 	}
 	return
+}
+
+func CreateOrMigratePackageFile() error {
+	err := os.MkdirAll(ConfigDir, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	info, err := os.Stat(PackageFile)
+	if os.IsNotExist(err) {
+		return createPackagesFile()
+	}
+
+	if info.IsDir() {
+		return fmt.Errorf("%s is a directory", PackageFile)
+	}
+
+	return nil
+}
+
+func createPackagesFile() error {
+	bytes, err := yaml.Marshal(shared.Packages{})
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(PackageFile, bytes, 0755)
 }

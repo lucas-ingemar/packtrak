@@ -1,7 +1,9 @@
 package shared
 
 type Packages struct {
-	Global struct {
-		Packages []string `yaml:"packages"`
-	} `yaml:"global"`
+	Global PackagesGlobal `yaml:"global"`
+}
+
+type PackagesGlobal struct {
+	Packages []string `yaml:"packages"`
 }

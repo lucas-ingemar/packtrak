@@ -1,6 +1,7 @@
 package mdnf
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -8,8 +9,8 @@ import (
 	"github.com/lucas-ingemar/mdnf/internal/shared"
 )
 
-func List(packages shared.Packages) (installedPkgs []string, missingPkgs []string, err error) {
-	dnfList, err := dnf.ListInstalled()
+func List(ctx context.Context, packages shared.Packages) (installedPkgs []string, missingPkgs []string, err error) {
+	dnfList, err := dnf.ListInstalled(ctx)
 	if err != nil {
 		return
 	}
