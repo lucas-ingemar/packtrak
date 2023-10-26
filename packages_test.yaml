@@ -1,0 +1,6 @@
+global:
+  packages:
+    - sway
+    - kanshi
+    - terraform
+    - btop
