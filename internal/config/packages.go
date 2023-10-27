@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 
@@ -8,6 +9,17 @@ import (
 
 	"gopkg.in/yaml.v3"
 )
+
+func SavePackages(packages shared.Packages) error {
+	var b bytes.Buffer
+	yamlEncoder := yaml.NewEncoder(&b)
+	yamlEncoder.SetIndent(2)
+	err := yamlEncoder.Encode(&packages)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(PackageFile, b.Bytes(), 0755)
+}
 
 func ReadPackagesConfig() (packages shared.Packages, err error) {
 	err = CreateOrMigratePackageFile()
@@ -50,6 +62,5 @@ func createPackagesFile() error {
 	if err != nil {
 		return err
 	}
-
 	return os.WriteFile(PackageFile, bytes, 0755)
 }

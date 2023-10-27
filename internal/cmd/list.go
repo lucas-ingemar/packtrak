@@ -3,8 +3,8 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"strings"
 
-	"github.com/fatih/color"
 	"github.com/lucas-ingemar/mdnf/internal/config"
 	"github.com/lucas-ingemar/mdnf/internal/mdnf"
 	"github.com/lucas-ingemar/mdnf/internal/shared"
@@ -19,61 +19,58 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List status of dnf packages",
 	Args:  cobra.NoArgs,
-	// Long:  `All software has versions. This is Hugo's`,
 	Run: func(cmd *cobra.Command, args []string) {
-		//FIXME: should be in an init somewhere
 		packages, err := config.ReadPackagesConfig()
 		if err != nil {
 			panic(err)
 		}
 
-		_, _, err = cmdListPackages(cmd.Context(), packages)
+		state, err := config.ReadState()
 		if err != nil {
 			panic(err)
 		}
-		// fmt.Println("Listing DNF packages...")
-		// installedPkgs, missingPkgs, err := mdnf.List(cmd.Context(), packages)
-		// if err != nil {
-		// 	panic(err)
-		// }
 
-		// for _, pkg := range installedPkgs {
-		// 	color.Green(" %s", pkg)
-		// }
-
-		// for _, pkg := range missingPkgs {
-		// 	color.Red(" %s", pkg)
-		// }
-
-		// fmt.Println("")
-		// if len(missingPkgs) > 0 {
-		// 	color.Red("%d package(s) missing", len(missingPkgs))
-		// } else {
-		// 	color.Green("All packages installed")
-		// }
+		_, _, _, err = cmdListPackages(cmd.Context(), packages, state)
+		if err != nil {
+			panic(err)
+		}
 	},
 }
 
-func cmdListPackages(ctx context.Context, packages shared.Packages) (installedPkgs []string, missingPkgs []string, err error) {
+func cmdListPackages(ctx context.Context, packages shared.Packages, state shared.State) (installedPkgs []string, missingPkgs []string, removedPkgs []string, err error) {
 	fmt.Println("Listing DNF packages...")
-	installedPkgs, missingPkgs, err = mdnf.List(ctx, packages)
+	installedPkgs, missingPkgs, removedPkgs, err = mdnf.List(ctx, packages, state)
 	if err != nil {
 		return
 	}
 
 	for _, pkg := range installedPkgs {
-		shared.PtermFound.Println(pkg)
+		shared.PtermInstalled.Println(pkg)
 	}
 
 	for _, pkg := range missingPkgs {
-		shared.PtermNotFound.Println(pkg)
+		shared.PtermMissing.Println(pkg)
 	}
 
-	fmt.Println("")
+	for _, pkg := range removedPkgs {
+		shared.PtermRemoved.Println(pkg)
+	}
+
+	infoStrings := []string{}
+	if len(installedPkgs) > 0 {
+		infoStrings = append(infoStrings, shared.PtermInstalled.Sprintf("%d in sync", len(installedPkgs)))
+	}
 	if len(missingPkgs) > 0 {
-		color.Red("%d package(s) missing", len(missingPkgs))
+		infoStrings = append(infoStrings, shared.PtermMissing.Sprintf("%d to install", len(missingPkgs)))
+	}
+	if len(removedPkgs) > 0 {
+		infoStrings = append(infoStrings, shared.PtermRemoved.Sprintf("%d to remove", len(removedPkgs)))
+	}
+
+	if len(infoStrings) > 0 {
+		fmt.Println("\n" + strings.Join(infoStrings, "   "))
 	} else {
-		color.Green("All packages installed")
+		shared.PtermGreen.Printfln("All packages up to date")
 	}
 
 	return

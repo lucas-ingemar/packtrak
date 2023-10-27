@@ -10,18 +10,46 @@ var (
 			Text:  "",
 		},
 	}
-	PtermFound = pterm.PrefixPrinter{
+	PtermInstalled = pterm.PrefixPrinter{
 		MessageStyle: &pterm.ThemeDefault.SuccessMessageStyle,
 		Prefix: pterm.Prefix{
 			Style: &pterm.ThemeDefault.SuccessMessageStyle,
 			Text:  "",
 		},
 	}
-	PtermNotFound = pterm.PrefixPrinter{
+	PtermMissing = pterm.PrefixPrinter{
+		MessageStyle: &pterm.ThemeDefault.WarningMessageStyle,
+		Prefix: pterm.Prefix{
+			Style: &pterm.ThemeDefault.WarningMessageStyle,
+			Text:  "󱍷",
+		},
+	}
+	PtermRemoved = pterm.PrefixPrinter{
 		MessageStyle: &pterm.ThemeDefault.ErrorMessageStyle,
 		Prefix: pterm.Prefix{
 			Style: &pterm.ThemeDefault.ErrorMessageStyle,
 			Text:  "",
+		},
+	}
+	PtermRed = pterm.PrefixPrinter{
+		MessageStyle: &pterm.ThemeDefault.ErrorMessageStyle,
+		Prefix: pterm.Prefix{
+			Style: &pterm.ThemeDefault.ErrorMessageStyle,
+			Text:  "",
+		},
+	}
+	PtermYellow = pterm.PrefixPrinter{
+		MessageStyle: &pterm.ThemeDefault.WarningMessageStyle,
+		Prefix: pterm.Prefix{
+			Style: &pterm.ThemeDefault.WarningMessageStyle,
+			Text:  "",
+		},
+	}
+	PtermGreen = pterm.PrefixPrinter{
+		MessageStyle: &pterm.ThemeDefault.SuccessMessageStyle,
+		Prefix: pterm.Prefix{
+			Style: &pterm.ThemeDefault.SuccessMessageStyle,
+			Text:  "",
 		},
 	}
 )

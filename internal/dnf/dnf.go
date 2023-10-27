@@ -3,6 +3,7 @@ package dnf
 import (
 	"context"
 	"errors"
+	"os"
 	"strings"
 
 	execute "github.com/alexellis/go-execute/v2"
@@ -59,4 +60,50 @@ func ListAvailable(ctx context.Context, filter string) ([]string, error) {
 	}
 
 	return pkgs, nil
+}
+
+func Install(ctx context.Context, pkgs []string) error {
+	if len(pkgs) == 0 {
+		return errors.New("no packages provided")
+	}
+	cmd := execute.ExecTask{
+		Command:     "sudo",
+		Args:        append([]string{"dnf", "--color=always", "install"}, pkgs...),
+		StreamStdio: true,
+		Stdin:       os.Stdin,
+	}
+
+	res, err := cmd.Execute(ctx)
+	if err != nil {
+		return err
+	}
+
+	if res.ExitCode != 0 {
+		return errors.New("Non-zero exit code: " + res.Stderr)
+	}
+
+	return nil
+}
+
+func Remove(ctx context.Context, pkgs []string) error {
+	if len(pkgs) == 0 {
+		return errors.New("no packages provided")
+	}
+	cmd := execute.ExecTask{
+		Command:     "sudo",
+		Args:        append([]string{"dnf", "--color=always", "remove"}, pkgs...),
+		StreamStdio: true,
+		Stdin:       os.Stdin,
+	}
+
+	res, err := cmd.Execute(ctx)
+	if err != nil {
+		return err
+	}
+
+	if res.ExitCode != 0 {
+		return errors.New("Non-zero exit code: " + res.Stderr)
+	}
+
+	return nil
 }
