@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/lucas-ingemar/mdnf/internal/config"
-	"github.com/lucas-ingemar/mdnf/internal/mdnf"
+	"github.com/lucas-ingemar/mdnf/internal/packagemanagers"
 	"github.com/lucas-ingemar/mdnf/internal/shared"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -53,13 +53,19 @@ var removeCmd = &cobra.Command{
 			}
 			pkgsToRemove = append(pkgsToRemove, arg)
 		}
-		if warningPrinted {
-			fmt.Println("")
-		}
 
-		cPackages, err = mdnf.RemovePackages(cPackages, pkgsToRemove)
+		cPackages, userWarnings, err := packagemanagers.PackageManagers[0].Remove(cmd.Context(), cPackages, pkgsToRemove)
 		if err != nil {
 			panic(err)
+		}
+
+		for _, uw := range userWarnings {
+			shared.PtermWarning.Println(uw)
+			warningPrinted = true
+		}
+
+		if warningPrinted {
+			fmt.Println("")
 		}
 
 		err = cmdSync(cmd.Context(), cPackages, state)

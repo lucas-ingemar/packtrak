@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/lucas-ingemar/mdnf/internal/config"
-	"github.com/lucas-ingemar/mdnf/internal/mdnf"
+	"github.com/lucas-ingemar/mdnf/internal/packagemanagers"
 	"github.com/lucas-ingemar/mdnf/internal/shared"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -60,9 +60,12 @@ func cmdSync(ctx context.Context, packages shared.Packages, state shared.State) 
 	}.Show()
 
 	if result == "y" {
-		err = mdnf.Sync(ctx, missingPkgs, removedPkgs)
-		if err != nil {
-			return err
+		if config.DnfEnabled {
+			uw, err := packagemanagers.PackageManagers[0].Sync(ctx, missingPkgs, removedPkgs)
+			_ = uw
+			if err != nil {
+				return err
+			}
 		}
 	}
 

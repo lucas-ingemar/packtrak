@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/lucas-ingemar/mdnf/internal/config"
-	"github.com/lucas-ingemar/mdnf/internal/mdnf"
+	"github.com/lucas-ingemar/mdnf/internal/packagemanagers"
 	"github.com/lucas-ingemar/mdnf/internal/shared"
 	"github.com/spf13/cobra"
 )
@@ -34,26 +34,28 @@ var listCmd = &cobra.Command{
 		if err != nil {
 			panic(err)
 		}
+
 	},
 }
 
 func cmdListPackages(ctx context.Context, packages shared.Packages, state shared.State) (installedPkgs []string, missingPkgs []string, removedPkgs []string, err error) {
 	fmt.Println("Listing DNF packages...")
-	installedPkgs, missingPkgs, removedPkgs, err = mdnf.List(ctx, packages, state)
+	dnfTmp := packagemanagers.PackageManagers[0]
+	installedPkgs, missingPkgs, removedPkgs, err = dnfTmp.List(ctx, packages, state)
 	if err != nil {
 		return
 	}
 
 	for _, pkg := range installedPkgs {
-		shared.PtermInstalled.Println(pkg)
+		shared.PtermInstalled.Printfln("%s %s", dnfTmp.Icon(), pkg)
 	}
 
 	for _, pkg := range missingPkgs {
-		shared.PtermMissing.Println(pkg)
+		shared.PtermMissing.Printfln("%s %s", dnfTmp.Icon(), pkg)
 	}
 
 	for _, pkg := range removedPkgs {
-		shared.PtermRemoved.Println(pkg)
+		shared.PtermRemoved.Printfln("%s %s", dnfTmp.Icon(), pkg)
 	}
 
 	infoStrings := []string{}

@@ -4,8 +4,7 @@ import (
 	"fmt"
 
 	"github.com/lucas-ingemar/mdnf/internal/config"
-	"github.com/lucas-ingemar/mdnf/internal/dnf"
-	"github.com/lucas-ingemar/mdnf/internal/mdnf"
+	"github.com/lucas-ingemar/mdnf/internal/packagemanagers"
 	"github.com/lucas-ingemar/mdnf/internal/shared"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -20,7 +19,7 @@ var installCmd = &cobra.Command{
 	Short: "install a package or packages on your system",
 	Args:  cobra.MinimumNArgs(1),
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		pkgs, err := dnf.ListAvailable(cmd.Context(), toComplete)
+		pkgs, err := packagemanagers.PackageManagers[0].InstallValidArgs(cmd.Context(), toComplete)
 		if err != nil {
 			pkgs = []string{}
 		}
@@ -49,13 +48,19 @@ var installCmd = &cobra.Command{
 			}
 			pkgsToAdd = append(pkgsToAdd, arg)
 		}
-		if warningPrinted {
-			fmt.Println("")
-		}
 
-		cPackages, err = mdnf.AddPackages(cPackages, pkgsToAdd)
+		cPackages, userWarnings, err := packagemanagers.PackageManagers[0].Add(cmd.Context(), cPackages, pkgsToAdd)
 		if err != nil {
 			panic(err)
+		}
+
+		for _, uw := range userWarnings {
+			shared.PtermWarning.Println(uw)
+			warningPrinted = true
+		}
+
+		if warningPrinted {
+			fmt.Println("")
 		}
 
 		err = cmdSync(cmd.Context(), cPackages, state)
