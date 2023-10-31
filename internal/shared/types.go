@@ -1,16 +1,26 @@
 package shared
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
-type Packages struct {
-	Dnf Dnf `yaml:"dnf"`
+type Packages map[string]PmPackages
+
+func (p Packages) Register(packageManagerName string) error {
+	_, exists := p[packageManagerName]
+	if exists {
+		return fmt.Errorf("%s already exists", packageManagerName)
+	}
+	p[packageManagerName] = PmPackages{}
+	return nil
 }
 
-type Dnf struct {
-	Global DnfPackagesGlobal `yaml:"global"`
+type PmPackages struct {
+	Global PackagesGlobal `yaml:"global"`
 }
 
-type DnfPackagesGlobal struct {
+type PackagesGlobal struct {
 	Packages []string `yaml:"packages"`
 }
 

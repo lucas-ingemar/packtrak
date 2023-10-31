@@ -15,13 +15,15 @@ import (
 // FIXME: ska formodligen spara ner installed, missing och removed i strucet for att kunna
 // accessa senare. Blir battre i printen
 type Dnf struct {
+	Lucas              string
 	test               string
 	cacheAllInstalled  []string //FIXME: add cache
 	cacheUserInstalled []string //FIXME: add cache
 }
 
 func (d *Dnf) Name() string {
-	return "dnf"
+	// return "dnf"
+	return d.Lucas
 }
 
 func (d *Dnf) Icon() string {
@@ -30,15 +32,15 @@ func (d *Dnf) Icon() string {
 	return ""
 }
 
-func (d *Dnf) Add(ctx context.Context, packagesConfig shared.Packages, pkgs []string) (packageConfig shared.Packages, userWarnings []string, err error) {
+func (d *Dnf) Add(ctx context.Context, packagesConfig shared.PmPackages, pkgs []string) (packageConfig shared.PmPackages, userWarnings []string, err error) {
 	for _, pkg := range pkgs {
 		isSysPkg, err := d.isSystemPackage(ctx, pkg)
 		if err != nil {
-			return shared.Packages{}, []string{}, err
+			return shared.PmPackages{}, []string{}, err
 		}
 
 		if !isSysPkg {
-			packagesConfig.Dnf.Global.Packages = append(packagesConfig.Dnf.Global.Packages, pkg)
+			packagesConfig.Global.Packages = append(packagesConfig.Global.Packages, pkg)
 		} else {
 			userWarnings = append(userWarnings, fmt.Sprintf("'%s' is a system package and cannot be managed", pkg))
 		}
@@ -78,13 +80,13 @@ func (d *Dnf) InstallValidArgs(ctx context.Context, toComplete string) ([]string
 	return pkgs, nil
 }
 
-func (d *Dnf) List(ctx context.Context, packages shared.Packages, state shared.State) (installedPkgs []string, missingPkgs []string, removedPkgs []string, err error) {
+func (d *Dnf) List(ctx context.Context, packages shared.PmPackages, state shared.State) (installedPkgs []string, missingPkgs []string, removedPkgs []string, err error) {
 	dnfList, err := d.listInstalled(ctx)
 	if err != nil {
 		return
 	}
 
-	for _, pkg := range packages.Dnf.Global.Packages {
+	for _, pkg := range packages.Global.Packages {
 		pkgFound := false
 		for _, dnfPkg := range dnfList {
 			if dnfPkg == pkg {
@@ -103,10 +105,10 @@ func (d *Dnf) List(ctx context.Context, packages shared.Packages, state shared.S
 	//
 	// NO! Scratch that. Ofc the manager needs to deal with it..
 	// Otherwise we cant make sure the package is installed or not
-	for _, pkg := range state.Packages.Dnf.Global.Packages {
+	for _, pkg := range state.Packages[d.Name()].Global.Packages {
 		for _, dnfPkg := range dnfList {
 			if dnfPkg == pkg {
-				if !lo.Contains(packages.Dnf.Global.Packages, pkg) {
+				if !lo.Contains(packages.Global.Packages, pkg) {
 					removedPkgs = append(removedPkgs, pkg)
 				}
 				break
@@ -117,11 +119,11 @@ func (d *Dnf) List(ctx context.Context, packages shared.Packages, state shared.S
 	return
 }
 
-func (d *Dnf) Remove(ctx context.Context, packagesConfig shared.Packages, pkgs []string) (packageConfig shared.Packages, userWarnings []string, err error) {
+func (d *Dnf) Remove(ctx context.Context, packagesConfig shared.PmPackages, pkgs []string) (packageConfig shared.PmPackages, userWarnings []string, err error) {
 	for _, pkg := range pkgs {
 		isSysPkg, err := d.isSystemPackage(ctx, pkg)
 		if err != nil {
-			return shared.Packages{}, []string{}, err
+			return shared.PmPackages{}, []string{}, err
 		}
 
 		if isSysPkg {
@@ -129,7 +131,7 @@ func (d *Dnf) Remove(ctx context.Context, packagesConfig shared.Packages, pkgs [
 		}
 	}
 
-	packagesConfig.Dnf.Global.Packages = lo.Filter(packagesConfig.Dnf.Global.Packages, func(item string, index int) bool {
+	packagesConfig.Global.Packages = lo.Filter(packagesConfig.Global.Packages, func(item string, index int) bool {
 		return !lo.Contains(pkgs, item)
 	})
 

@@ -24,7 +24,7 @@ var removeCmd = &cobra.Command{
 		if err != nil {
 			return []string{}, cobra.ShellCompDirectiveNoFileComp
 		}
-		return lo.Filter(packages.Dnf.Global.Packages,
+		return lo.Filter(packages["dnf"].Global.Packages,
 				func(item string, index int) bool {
 					return strings.HasPrefix(item, toComplete)
 				}),
@@ -43,10 +43,12 @@ var removeCmd = &cobra.Command{
 			panic(err)
 		}
 
+		dnfTmp := packagemanagers.PackageManagers[0]
+
 		pkgsToRemove := []string{}
 		warningPrinted := false
 		for _, arg := range args {
-			if !lo.Contains(cPackages.Dnf.Global.Packages, arg) {
+			if !lo.Contains(cPackages[dnfTmp.Name()].Global.Packages, arg) {
 				shared.PtermWarning.Printfln("'%s' is not present in packages file", arg)
 				warningPrinted = true
 				continue
@@ -54,7 +56,8 @@ var removeCmd = &cobra.Command{
 			pkgsToRemove = append(pkgsToRemove, arg)
 		}
 
-		cPackages, userWarnings, err := packagemanagers.PackageManagers[0].Remove(cmd.Context(), cPackages, pkgsToRemove)
+		var userWarnings []string
+		cPackages[dnfTmp.Name()], userWarnings, err = dnfTmp.Remove(cmd.Context(), cPackages[dnfTmp.Name()], pkgsToRemove)
 		if err != nil {
 			panic(err)
 		}

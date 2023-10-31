@@ -41,7 +41,7 @@ var listCmd = &cobra.Command{
 func cmdListPackages(ctx context.Context, packages shared.Packages, state shared.State) (installedPkgs []string, missingPkgs []string, removedPkgs []string, err error) {
 	fmt.Println("Listing DNF packages...")
 	dnfTmp := packagemanagers.PackageManagers[0]
-	installedPkgs, missingPkgs, removedPkgs, err = dnfTmp.List(ctx, packages, state)
+	installedPkgs, missingPkgs, removedPkgs, err = dnfTmp.List(ctx, packages[dnfTmp.Name()], state)
 	if err != nil {
 		return
 	}

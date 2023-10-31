@@ -38,10 +38,12 @@ var installCmd = &cobra.Command{
 			panic(err)
 		}
 
+		dnfTmp := packagemanagers.PackageManagers[0]
+
 		pkgsToAdd := []string{}
 		warningPrinted := false
 		for _, arg := range args {
-			if lo.Contains(cPackages.Dnf.Global.Packages, arg) {
+			if lo.Contains(cPackages[dnfTmp.Name()].Global.Packages, arg) {
 				shared.PtermWarning.Printfln("'%s' is already present in packages file", arg)
 				warningPrinted = true
 				continue
@@ -49,7 +51,8 @@ var installCmd = &cobra.Command{
 			pkgsToAdd = append(pkgsToAdd, arg)
 		}
 
-		cPackages, userWarnings, err := packagemanagers.PackageManagers[0].Add(cmd.Context(), cPackages, pkgsToAdd)
+		var userWarnings []string
+		cPackages[dnfTmp.Name()], userWarnings, err = dnfTmp.Add(cmd.Context(), cPackages[dnfTmp.Name()], pkgsToAdd)
 		if err != nil {
 			panic(err)
 		}
