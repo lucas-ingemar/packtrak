@@ -3,12 +3,29 @@ package packagemanagers
 import (
 	"context"
 
+	"github.com/lucas-ingemar/mdnf/internal/config"
 	"github.com/lucas-ingemar/mdnf/internal/shared"
 )
 
 var (
-	PackageManagers = []PackageManager{&Dnf{Lucas: "dnf"}, &Dnf{Lucas: "git"}}
+	PackageManagers = []PackageManager{&Dnf{Lucas: "dnf", Banan: ""}, &Dnf{Lucas: "git", Banan: "󰊢"}}
 )
+
+func MustInitPackages() shared.Packages {
+	var err error
+	config.Packages, err = config.ReadPackagesConfig()
+	if err != nil {
+		panic(err)
+	}
+
+	for _, pm := range PackageManagers {
+		_, ok := config.Packages[pm.Name()]
+		if !ok {
+			config.Packages[pm.Name()] = shared.PmPackages{}
+		}
+	}
+	return config.Packages
+}
 
 type PackageManager interface {
 	Name() string

@@ -11,44 +11,32 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	rootCmd.AddCommand(removeCmd)
+func initRemove(state shared.State) {
+	for _, pm := range packagemanagers.PackageManagers {
+		PmCmds[pm.Name()].AddCommand(&cobra.Command{
+			Use:   "remove",
+			Short: "remove a package or packages on your system",
+			Args:  cobra.MinimumNArgs(1),
+			ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+				return lo.Filter(config.Packages[pm.Name()].Global.Packages,
+						func(item string, index int) bool {
+							return strings.HasPrefix(item, toComplete)
+						}),
+					cobra.ShellCompDirectiveNoFileComp
+			},
+			Run: generateRemoveCmd(pm, config.Packages[pm.Name()], state),
+		})
+	}
 }
 
-var removeCmd = &cobra.Command{
-	Use:   "remove",
-	Short: "remove a package or packages on your system",
-	Args:  cobra.MinimumNArgs(1),
-	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		packages, err := config.ReadPackagesConfig()
-		if err != nil {
-			return []string{}, cobra.ShellCompDirectiveNoFileComp
-		}
-		return lo.Filter(packages["dnf"].Global.Packages,
-				func(item string, index int) bool {
-					return strings.HasPrefix(item, toComplete)
-				}),
-			cobra.ShellCompDirectiveNoFileComp
-	},
-	Run: func(cmd *cobra.Command, args []string) {
+func generateRemoveCmd(pm packagemanagers.PackageManager, pmPackages shared.PmPackages, state shared.State) func(cmd *cobra.Command, args []string) {
+	return func(cmd *cobra.Command, args []string) {
 		args = lo.Uniq(args)
-
-		cPackages, err := config.ReadPackagesConfig()
-		if err != nil {
-			panic(err)
-		}
-
-		state, err := config.ReadState()
-		if err != nil {
-			panic(err)
-		}
-
-		dnfTmp := packagemanagers.PackageManagers[0]
 
 		pkgsToRemove := []string{}
 		warningPrinted := false
 		for _, arg := range args {
-			if !lo.Contains(cPackages[dnfTmp.Name()].Global.Packages, arg) {
+			if !lo.Contains(pmPackages.Global.Packages, arg) {
 				shared.PtermWarning.Printfln("'%s' is not present in packages file", arg)
 				warningPrinted = true
 				continue
@@ -56,8 +44,7 @@ var removeCmd = &cobra.Command{
 			pkgsToRemove = append(pkgsToRemove, arg)
 		}
 
-		var userWarnings []string
-		cPackages[dnfTmp.Name()], userWarnings, err = dnfTmp.Remove(cmd.Context(), cPackages[dnfTmp.Name()], pkgsToRemove)
+		pmPackages, userWarnings, err := pm.Remove(cmd.Context(), pmPackages, pkgsToRemove)
 		if err != nil {
 			panic(err)
 		}
@@ -71,15 +58,16 @@ var removeCmd = &cobra.Command{
 			fmt.Println("")
 		}
 
-		err = cmdSync(cmd.Context(), cPackages, state)
+		config.Packages[pm.Name()] = pmPackages
+
+		err = cmdSync(cmd.Context(), state)
 		if err != nil {
 			panic(err)
 		}
 
-		err = config.SavePackages(cPackages)
+		err = config.SavePackages()
 		if err != nil {
 			panic(err)
 		}
-
-	},
+	}
 }

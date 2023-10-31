@@ -10,40 +10,32 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	rootCmd.AddCommand(installCmd)
+func initInstall(state shared.State) {
+	for _, pm := range packagemanagers.PackageManagers {
+		PmCmds[pm.Name()].AddCommand(&cobra.Command{
+			Use:   "install",
+			Short: "install a package or packages on your system",
+			Args:  cobra.MinimumNArgs(1),
+			ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+				pkgs, err := pm.InstallValidArgs(cmd.Context(), toComplete)
+				if err != nil {
+					pkgs = []string{}
+				}
+				return pkgs, cobra.ShellCompDirectiveNoFileComp
+			},
+			Run: generateInstallCmd(pm, config.Packages[pm.Name()], state),
+		})
+	}
 }
 
-var installCmd = &cobra.Command{
-	Use:   "install",
-	Short: "install a package or packages on your system",
-	Args:  cobra.MinimumNArgs(1),
-	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		pkgs, err := packagemanagers.PackageManagers[0].InstallValidArgs(cmd.Context(), toComplete)
-		if err != nil {
-			pkgs = []string{}
-		}
-		return pkgs, cobra.ShellCompDirectiveNoFileComp
-	},
-	Run: func(cmd *cobra.Command, args []string) {
+func generateInstallCmd(pm packagemanagers.PackageManager, pmPackages shared.PmPackages, state shared.State) func(cmd *cobra.Command, args []string) {
+	return func(cmd *cobra.Command, args []string) {
 		args = lo.Uniq(args)
-
-		cPackages, err := config.ReadPackagesConfig()
-		if err != nil {
-			panic(err)
-		}
-
-		state, err := config.ReadState()
-		if err != nil {
-			panic(err)
-		}
-
-		dnfTmp := packagemanagers.PackageManagers[0]
 
 		pkgsToAdd := []string{}
 		warningPrinted := false
 		for _, arg := range args {
-			if lo.Contains(cPackages[dnfTmp.Name()].Global.Packages, arg) {
+			if lo.Contains(pmPackages.Global.Packages, arg) {
 				shared.PtermWarning.Printfln("'%s' is already present in packages file", arg)
 				warningPrinted = true
 				continue
@@ -51,8 +43,7 @@ var installCmd = &cobra.Command{
 			pkgsToAdd = append(pkgsToAdd, arg)
 		}
 
-		var userWarnings []string
-		cPackages[dnfTmp.Name()], userWarnings, err = dnfTmp.Add(cmd.Context(), cPackages[dnfTmp.Name()], pkgsToAdd)
+		pmPackages, userWarnings, err := pm.Add(cmd.Context(), pmPackages, pkgsToAdd)
 		if err != nil {
 			panic(err)
 		}
@@ -66,14 +57,16 @@ var installCmd = &cobra.Command{
 			fmt.Println("")
 		}
 
-		err = cmdSync(cmd.Context(), cPackages, state)
+		config.Packages[pm.Name()] = pmPackages
+
+		err = cmdSync(cmd.Context(), state)
 		if err != nil {
 			panic(err)
 		}
 
-		err = config.SavePackages(cPackages)
+		err = config.SavePackages()
 		if err != nil {
 			panic(err)
 		}
-	},
+	}
 }

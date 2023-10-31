@@ -10,11 +10,15 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func SavePackages(packages shared.Packages) error {
+var (
+	Packages shared.Packages
+)
+
+func SavePackages() error {
 	var b bytes.Buffer
 	yamlEncoder := yaml.NewEncoder(&b)
 	yamlEncoder.SetIndent(2)
-	err := yamlEncoder.Encode(&packages)
+	err := yamlEncoder.Encode(&Packages)
 	if err != nil {
 		return err
 	}

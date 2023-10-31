@@ -16,6 +16,7 @@ import (
 // accessa senare. Blir battre i printen
 type Dnf struct {
 	Lucas              string
+	Banan              string
 	test               string
 	cacheAllInstalled  []string //FIXME: add cache
 	cacheUserInstalled []string //FIXME: add cache
@@ -29,7 +30,8 @@ func (d *Dnf) Name() string {
 func (d *Dnf) Icon() string {
 	// return "󰟓"
 	// return "󰊢"
-	return ""
+	// return ""
+	return d.Banan
 }
 
 func (d *Dnf) Add(ctx context.Context, packagesConfig shared.PmPackages, pkgs []string) (packageConfig shared.PmPackages, userWarnings []string, err error) {

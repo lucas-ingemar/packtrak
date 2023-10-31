@@ -6,8 +6,12 @@ import (
 
 	chigo "github.com/UltiRequiem/chigo/pkg"
 	"github.com/common-nighthawk/go-figure"
+	"github.com/lucas-ingemar/mdnf/internal/config"
+	"github.com/lucas-ingemar/mdnf/internal/packagemanagers"
 	"github.com/spf13/cobra"
 )
+
+var PmCmds = map[string]*cobra.Command{}
 
 var rootCmd = &cobra.Command{
 	Use:   "mdnf",
@@ -27,6 +31,27 @@ func Execute() {
 }
 
 func init() {
+	for _, pm := range packagemanagers.PackageManagers {
+		PmCmds[pm.Name()] = &cobra.Command{
+			Use:   pm.Name(),
+			Short: fmt.Sprintf("%s en liten beskrivning", pm.Icon()),
+			Long:  "En langre beskrivning",
+		}
+		rootCmd.AddCommand(PmCmds[pm.Name()])
+	}
+
+	packagemanagers.MustInitPackages()
+
+	// FIXME: really bad
+	state, err := config.ReadState()
+	if err != nil {
+		panic(err)
+	}
+
+	initInstall(state)
+	initList(state)
+	initRemove(state)
+
 	cobra.OnInitialize(initConfig)
 	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.cobra.yaml)")
 	// rootCmd.PersistentFlags().StringVarP(&projectBase, "projectbase", "b", "", "base project directory eg. github.com/spf13/")

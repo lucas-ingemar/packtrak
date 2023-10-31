@@ -21,31 +21,43 @@ var syncCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	// Long:  `All software has versions. This is Hugo's`,
 	Run: func(cmd *cobra.Command, args []string) {
-		packages, err := config.ReadPackagesConfig()
-		if err != nil {
-			panic(err)
-		}
+		// packages, err := config.ReadPackagesConfig()
+		// if err != nil {
+		// 	panic(err)
+		// }
 
 		state, err := config.ReadState()
 		if err != nil {
 			panic(err)
 		}
 
-		err = cmdSync(cmd.Context(), packages, state)
+		err = cmdSync(cmd.Context(), state)
 		if err != nil {
 			panic(err)
 		}
 	},
 }
 
-func cmdSync(ctx context.Context, packages shared.Packages, state shared.State) error {
-	_, missingPkgs, removedPkgs, err := cmdListPackages(ctx, packages, state)
-	if err != nil {
-		return err
+func cmdSync(ctx context.Context, state shared.State) (err error) {
+	var fpkgI, fpkgR []string
+	pkgsSynced := map[string][]string{}
+	pkgsInstall := map[string][]string{}
+	pkgsRemove := map[string][]string{}
+
+	for _, pm := range packagemanagers.PackageManagers {
+		fmt.Printf("Listing %s packages...\n", pm.Name())
+		pkgsSynced[pm.Name()], pkgsInstall[pm.Name()], pkgsRemove[pm.Name()], err = pm.List(ctx, config.Packages[pm.Name()], state)
+		if err != nil {
+			return
+		}
+		fpkgI = append(fpkgI, pkgsInstall[pm.Name()]...)
+		fpkgR = append(fpkgR, pkgsRemove[pm.Name()]...)
 	}
 
-	if len(missingPkgs) == 0 && len(removedPkgs) == 0 {
-		return config.NewState(packages)
+	printPackageList(pkgsSynced, pkgsInstall, pkgsRemove)
+
+	if len(fpkgI) == 0 && len(fpkgR) == 0 {
+		return config.NewState(config.Packages)
 	}
 
 	fmt.Println("")
@@ -60,14 +72,17 @@ func cmdSync(ctx context.Context, packages shared.Packages, state shared.State) 
 	}.Show()
 
 	if result == "y" {
-		if config.DnfEnabled {
-			uw, err := packagemanagers.PackageManagers[0].Sync(ctx, missingPkgs, removedPkgs)
+		for _, pm := range packagemanagers.PackageManagers {
+			//FIXME: This have to be enabled somehow
+			// if config.DnfEnabled {
+			uw, err := pm.Sync(ctx, pkgsInstall[pm.Name()], pkgsRemove[pm.Name()])
 			_ = uw
 			if err != nil {
 				return err
 			}
+			// }
 		}
 	}
 
-	return config.NewState(packages)
+	return config.NewState(config.Packages)
 }
