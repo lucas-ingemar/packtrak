@@ -29,5 +29,5 @@ To start with only `latest` will be installed
 ## Manager specific setttings.
 Take dnf for example. Should be able to list coprs that should be installed. That needs to be solved
 Maybe there could be something like dependencies for each manager as well
-That have its own table in the state
+That have its own table in the state.
 
