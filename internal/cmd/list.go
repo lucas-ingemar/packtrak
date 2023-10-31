@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -113,45 +112,4 @@ func printPackageList(pkgsSynced, pkgsInstall, pkgsRemove map[string][]string) {
 	} else {
 		shared.PtermGreen.Printfln("All packages up to date")
 	}
-}
-
-func cmdListPackages(ctx context.Context, packages shared.Packages, state shared.State) (installedPkgs []string, missingPkgs []string, removedPkgs []string, err error) {
-	fmt.Println("cmdListPackages is DEPRICATED")
-	fmt.Println("Listing DNF packages...")
-	dnfTmp := packagemanagers.PackageManagers[0]
-	installedPkgs, missingPkgs, removedPkgs, err = dnfTmp.List(ctx, packages[dnfTmp.Name()], state)
-	if err != nil {
-		return
-	}
-
-	for _, pkg := range installedPkgs {
-		shared.PtermInstalled.Printfln("%s %s", dnfTmp.Icon(), pkg)
-	}
-
-	for _, pkg := range missingPkgs {
-		shared.PtermMissing.Printfln("%s %s", dnfTmp.Icon(), pkg)
-	}
-
-	for _, pkg := range removedPkgs {
-		shared.PtermRemoved.Printfln("%s %s", dnfTmp.Icon(), pkg)
-	}
-
-	infoStrings := []string{}
-	if len(installedPkgs) > 0 {
-		infoStrings = append(infoStrings, shared.PtermInstalled.Sprintf("%d in sync", len(installedPkgs)))
-	}
-	if len(missingPkgs) > 0 {
-		infoStrings = append(infoStrings, shared.PtermMissing.Sprintf("%d to install", len(missingPkgs)))
-	}
-	if len(removedPkgs) > 0 {
-		infoStrings = append(infoStrings, shared.PtermRemoved.Sprintf("%d to remove", len(removedPkgs)))
-	}
-
-	if len(infoStrings) > 0 {
-		fmt.Println("\n" + strings.Join(infoStrings, "   "))
-	} else {
-		shared.PtermGreen.Printfln("All packages up to date")
-	}
-
-	return
 }

@@ -17,9 +17,8 @@ import (
 type Dnf struct {
 	Lucas              string
 	Banan              string
-	test               string
-	cacheAllInstalled  []string //FIXME: add cache
-	cacheUserInstalled []string //FIXME: add cache
+	cacheAllInstalled  []string
+	cacheUserInstalled []string
 }
 
 func (d *Dnf) Name() string {
