@@ -6,17 +6,17 @@ import (
 
 	chigo "github.com/UltiRequiem/chigo/pkg"
 	"github.com/common-nighthawk/go-figure"
-	"github.com/lucas-ingemar/mdnf/internal/config"
-	"github.com/lucas-ingemar/mdnf/internal/packagemanagers"
+	"github.com/lucas-ingemar/packtrak/internal/config"
+	"github.com/lucas-ingemar/packtrak/internal/packagemanagers"
 	"github.com/spf13/cobra"
 )
 
 var PmCmds = map[string]*cobra.Command{}
 
 var rootCmd = &cobra.Command{
-	Use:   "mdnf",
+	Use:   "packtrak",
 	Short: "Managed DNF",
-	Long:  chigo.Colorize(figure.NewFigure("MDNF", "doom", true).String()),
+	Long:  chigo.Colorize(figure.NewFigure("packtrak", "doom", true).String()),
 	// Run: func(cmd *cobra.Command, args []string) {
 	// 	// Do Stuff Here
 	// 	fmt.Println("tjof;ljt")

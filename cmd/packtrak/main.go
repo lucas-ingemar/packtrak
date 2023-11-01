@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/lucas-ingemar/mdnf/internal/cmd"
+	"github.com/lucas-ingemar/packtrak/internal/cmd"
 )
 
 func main() {

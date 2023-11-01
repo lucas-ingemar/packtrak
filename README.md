@@ -1,5 +1,5 @@
-# mdnf
-Managed DNF
+# packtrak 
+Track your packages
 
 ## State - PLAN
 
@@ -13,7 +13,7 @@ id        manager        package
 -----------------------------------------
 0         dnf            btop
 1         go             golang.org/x/tools/gopls
-2         git            git@github.com:lucas-ingemar/mdnf.git
+2         git            git@github.com:lucas-ingemar/packtrak.git
 ```
 
 ## Package file - PLAN

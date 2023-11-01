@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/lucas-ingemar/mdnf/internal/shared"
+	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"gopkg.in/yaml.v3"
 )
 

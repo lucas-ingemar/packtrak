@@ -1,4 +1,4 @@
-module github.com/lucas-ingemar/mdnf
+module github.com/lucas-ingemar/packtrak
 
 go 1.21.2
 

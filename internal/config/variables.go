@@ -32,10 +32,10 @@ func init() {
 }
 
 func Refresh() {
-	viper.SetEnvPrefix("mdnf")
+	viper.SetEnvPrefix("packtrak")
 	viper.AutomaticEnv()
 
-	ConfigDir = filepath.Join(xdg.ConfigHome, "mdnf")
+	ConfigDir = filepath.Join(xdg.ConfigHome, "packtrak")
 	ConfigFile = filepath.Join(ConfigDir, "config.yaml")
 	PackageFile = filepath.Join(ConfigDir, "packages.yaml")
 
@@ -53,14 +53,18 @@ func Refresh() {
 		}
 	}
 
-	DataDir = getViperStringWithDefault("data_dir", filepath.Join(xdg.DataHome, "mdnf"))
+	DataDir = getViperStringWithDefault("data_dir", filepath.Join(xdg.DataHome, "packtrak"))
 	StateFile = filepath.Join(DataDir, "state.yaml")
 
 	DnfEnabled = getViperBoolWithDefault(keyDnfEnabled, true)
 	fmt.Println(DnfEnabled)
 
 	if !configFileExists() {
-		err := viper.WriteConfigAs(ConfigFile)
+		err := os.MkdirAll(ConfigDir, os.ModePerm)
+		if err != nil {
+			panic(err)
+		}
+		err = viper.WriteConfigAs(ConfigFile)
 		if err != nil {
 			panic(err)
 		}

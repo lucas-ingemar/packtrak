@@ -3,9 +3,9 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/lucas-ingemar/mdnf/internal/config"
-	"github.com/lucas-ingemar/mdnf/internal/packagemanagers"
-	"github.com/lucas-ingemar/mdnf/internal/shared"
+	"github.com/lucas-ingemar/packtrak/internal/config"
+	"github.com/lucas-ingemar/packtrak/internal/packagemanagers"
+	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 )

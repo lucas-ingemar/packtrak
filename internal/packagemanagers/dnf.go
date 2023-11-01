@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/alexellis/go-execute/v2"
-	"github.com/lucas-ingemar/mdnf/internal/shared"
+	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/samber/lo"
 )
 
