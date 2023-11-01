@@ -9,7 +9,9 @@ import (
 
 	"github.com/alexellis/go-execute/v2"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
+	"github.com/lucas-ingemar/packtrak/internal/state"
 	"github.com/samber/lo"
+	"gorm.io/gorm"
 )
 
 // FIXME: ska formodligen spara ner installed, missing och removed i strucet for att kunna
@@ -81,7 +83,7 @@ func (d *Dnf) InstallValidArgs(ctx context.Context, toComplete string) ([]string
 	return pkgs, nil
 }
 
-func (d *Dnf) List(ctx context.Context, packages shared.PmPackages, state shared.State) (installedPkgs []string, missingPkgs []string, removedPkgs []string, err error) {
+func (d *Dnf) List(ctx context.Context, tx *gorm.DB, packages shared.PmPackages) (installedPkgs []string, missingPkgs []string, removedPkgs []string, err error) {
 	dnfList, err := d.listInstalled(ctx)
 	if err != nil {
 		return
@@ -106,7 +108,12 @@ func (d *Dnf) List(ctx context.Context, packages shared.PmPackages, state shared
 	//
 	// NO! Scratch that. Ofc the manager needs to deal with it..
 	// Otherwise we cant make sure the package is installed or not
-	for _, pkg := range state.Packages[d.Name()].Global.Packages {
+	statePkgs, err := state.GetPackageState(tx, d.Name())
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	for _, pkg := range statePkgs {
 		for _, dnfPkg := range dnfList {
 			if dnfPkg == pkg {
 				if !lo.Contains(packages.Global.Packages, pkg) {

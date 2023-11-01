@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func initRemove(state shared.State) {
+func initRemove() {
 	for _, pm := range packagemanagers.PackageManagers {
 		PmCmds[pm.Name()].AddCommand(&cobra.Command{
 			Use:   "remove",
@@ -24,12 +24,12 @@ func initRemove(state shared.State) {
 						}),
 					cobra.ShellCompDirectiveNoFileComp
 			},
-			Run: generateRemoveCmd(pm, config.Packages[pm.Name()], state),
+			Run: generateRemoveCmd(pm, config.Packages[pm.Name()]),
 		})
 	}
 }
 
-func generateRemoveCmd(pm packagemanagers.PackageManager, pmPackages shared.PmPackages, state shared.State) func(cmd *cobra.Command, args []string) {
+func generateRemoveCmd(pm packagemanagers.PackageManager, pmPackages shared.PmPackages) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		args = lo.Uniq(args)
 
@@ -60,7 +60,7 @@ func generateRemoveCmd(pm packagemanagers.PackageManager, pmPackages shared.PmPa
 
 		config.Packages[pm.Name()] = pmPackages
 
-		err = cmdSync(cmd.Context(), state)
+		err = cmdSync(cmd.Context())
 		if err != nil {
 			panic(err)
 		}

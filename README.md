@@ -31,3 +31,5 @@ Take dnf for example. Should be able to list coprs that should be installed. Tha
 Maybe there could be something like dependencies for each manager as well
 That have its own table in the state.
 
+# KNOWN ISSUES:
+* State is not updated when a package already exists when installing it. Probably better to do a proper sync, not just add/remove

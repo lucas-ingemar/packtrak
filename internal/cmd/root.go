@@ -6,8 +6,8 @@ import (
 
 	chigo "github.com/UltiRequiem/chigo/pkg"
 	"github.com/common-nighthawk/go-figure"
-	"github.com/lucas-ingemar/packtrak/internal/config"
 	"github.com/lucas-ingemar/packtrak/internal/packagemanagers"
+	"github.com/lucas-ingemar/packtrak/internal/state"
 	"github.com/spf13/cobra"
 )
 
@@ -16,7 +16,7 @@ var PmCmds = map[string]*cobra.Command{}
 var rootCmd = &cobra.Command{
 	Use:   "packtrak",
 	Short: "Managed DNF",
-	Long:  chigo.Colorize(figure.NewFigure("packtrak", "doom", true).String()),
+	Long:  chigo.Colorize(figure.NewFigure("packtrak", "speed", true).String()),
 	// Run: func(cmd *cobra.Command, args []string) {
 	// 	// Do Stuff Here
 	// 	fmt.Println("tjof;ljt")
@@ -43,14 +43,21 @@ func init() {
 	packagemanagers.MustInitPackages()
 
 	// FIXME: really bad
-	state, err := config.ReadState()
+	// state1, err := config.ReadState()
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	err := state.InitDb()
 	if err != nil {
 		panic(err)
 	}
 
-	initInstall(state)
-	initList(state)
-	initRemove(state)
+	// state.Test()
+
+	initInstall()
+	initList()
+	initRemove()
 
 	cobra.OnInitialize(initConfig)
 	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.cobra.yaml)")

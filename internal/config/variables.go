@@ -16,6 +16,7 @@ var (
 	DataDir     string
 	ConfigFile  string
 	PackageFile string
+	StateFile1  string
 	StateFile   string
 
 	ConfigFileExists bool
@@ -54,7 +55,9 @@ func Refresh() {
 	}
 
 	DataDir = getViperStringWithDefault("data_dir", filepath.Join(xdg.DataHome, "packtrak"))
-	StateFile = filepath.Join(DataDir, "state.yaml")
+	StateFile = filepath.Join(DataDir, "state.db")
+	//FIXME: old
+	StateFile1 = filepath.Join(DataDir, "state.yaml")
 
 	DnfEnabled = getViperBoolWithDefault(keyDnfEnabled, true)
 	fmt.Println(DnfEnabled)

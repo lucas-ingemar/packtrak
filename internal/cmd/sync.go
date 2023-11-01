@@ -6,7 +6,7 @@ import (
 
 	"github.com/lucas-ingemar/packtrak/internal/config"
 	"github.com/lucas-ingemar/packtrak/internal/packagemanagers"
-	"github.com/lucas-ingemar/packtrak/internal/shared"
+	"github.com/lucas-ingemar/packtrak/internal/state"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -26,19 +26,22 @@ var syncCmd = &cobra.Command{
 		// 	panic(err)
 		// }
 
-		state, err := config.ReadState()
-		if err != nil {
-			panic(err)
-		}
+		// state, err := config.ReadState()
+		// if err != nil {
+		// 	panic(err)
+		// }
 
-		err = cmdSync(cmd.Context(), state)
+		err := cmdSync(cmd.Context())
 		if err != nil {
 			panic(err)
 		}
 	},
 }
 
-func cmdSync(ctx context.Context, state shared.State) (err error) {
+func cmdSync(ctx context.Context) (err error) {
+	tx := state.Begin()
+	defer tx.Rollback()
+
 	var fpkgI, fpkgR []string
 	pkgsSynced := map[string][]string{}
 	pkgsInstall := map[string][]string{}
@@ -46,7 +49,7 @@ func cmdSync(ctx context.Context, state shared.State) (err error) {
 
 	for _, pm := range packagemanagers.PackageManagers {
 		fmt.Printf("Listing %s packages...\n", pm.Name())
-		pkgsSynced[pm.Name()], pkgsInstall[pm.Name()], pkgsRemove[pm.Name()], err = pm.List(ctx, config.Packages[pm.Name()], state)
+		pkgsSynced[pm.Name()], pkgsInstall[pm.Name()], pkgsRemove[pm.Name()], err = pm.List(ctx, tx, config.Packages[pm.Name()])
 		if err != nil {
 			return
 		}
@@ -57,7 +60,7 @@ func cmdSync(ctx context.Context, state shared.State) (err error) {
 	printPackageList(pkgsSynced, pkgsInstall, pkgsRemove)
 
 	if len(fpkgI) == 0 && len(fpkgR) == 0 {
-		return config.NewState(config.Packages)
+		return nil
 	}
 
 	fmt.Println("")
@@ -80,9 +83,10 @@ func cmdSync(ctx context.Context, state shared.State) (err error) {
 			if err != nil {
 				return err
 			}
+			state.UpdatePackageState(tx, pm.Name(), pkgsInstall[pm.Name()], pkgsRemove[pm.Name()])
 			// }
 		}
 	}
 
-	return config.NewState(config.Packages)
+	return tx.Commit().Error
 }

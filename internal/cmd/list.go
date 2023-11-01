@@ -7,16 +7,17 @@ import (
 	"github.com/lucas-ingemar/packtrak/internal/config"
 	"github.com/lucas-ingemar/packtrak/internal/packagemanagers"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
+	"github.com/lucas-ingemar/packtrak/internal/state"
 	"github.com/spf13/cobra"
 )
 
-func initList(state shared.State) {
+func initList() {
 	for _, pm := range packagemanagers.PackageManagers {
 		PmCmds[pm.Name()].AddCommand(&cobra.Command{
 			Use:   "list",
 			Short: fmt.Sprintf("List status of %s packages", pm.Name()),
 			Args:  cobra.NoArgs,
-			Run:   generateListCmd(pm, config.Packages[pm.Name()], state),
+			Run:   generateListCmd(pm, config.Packages[pm.Name()]),
 		})
 	}
 }
@@ -25,14 +26,15 @@ func init() {
 	rootCmd.AddCommand(listCmd)
 }
 
-func generateListCmd(pm packagemanagers.PackageManager, pmPackages shared.PmPackages, state shared.State) func(cmd *cobra.Command, args []string) {
+func generateListCmd(pm packagemanagers.PackageManager, pmPackages shared.PmPackages) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		var err error
+		tx := state.BeginNoTrans()
 		pkgsSynced := map[string][]string{}
 		pkgsInstall := map[string][]string{}
 		pkgsRemove := map[string][]string{}
 		fmt.Printf("Listing %s packages...\n", pm.Name())
-		pkgsSynced[pm.Name()], pkgsInstall[pm.Name()], pkgsRemove[pm.Name()], err = pm.List(cmd.Context(), config.Packages[pm.Name()], state)
+		pkgsSynced[pm.Name()], pkgsInstall[pm.Name()], pkgsRemove[pm.Name()], err = pm.List(cmd.Context(), tx, config.Packages[pm.Name()])
 		if err != nil {
 			panic(err)
 		}
@@ -51,22 +53,23 @@ var listCmd = &cobra.Command{
 		// 	panic(err)
 		// }
 
-		state, err := config.ReadState()
-		if err != nil {
-			panic(err)
-		}
+		// state1, err := config.ReadState()
+		// if err != nil {
+		// 	panic(err)
+		// }
 
 		// _, _, _, err = cmdListPackages(cmd.Context(), packages, state)
 		// if err != nil {
 		// 	panic(err)
 		// }
+		var err error
 
 		pkgsSynced := map[string][]string{}
 		pkgsInstall := map[string][]string{}
 		pkgsRemove := map[string][]string{}
 		for _, pm := range packagemanagers.PackageManagers {
 			fmt.Printf("Listing %s packages...\n", pm.Name())
-			pkgsSynced[pm.Name()], pkgsInstall[pm.Name()], pkgsRemove[pm.Name()], err = pm.List(cmd.Context(), config.Packages[pm.Name()], state)
+			pkgsSynced[pm.Name()], pkgsInstall[pm.Name()], pkgsRemove[pm.Name()], err = pm.List(cmd.Context(), state.BeginNoTrans(), config.Packages[pm.Name()])
 			if err != nil {
 				panic(err)
 			}

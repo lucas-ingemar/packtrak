@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func initInstall(state shared.State) {
+func initInstall() {
 	for _, pm := range packagemanagers.PackageManagers {
 		PmCmds[pm.Name()].AddCommand(&cobra.Command{
 			Use:   "install",
@@ -23,12 +23,12 @@ func initInstall(state shared.State) {
 				}
 				return pkgs, cobra.ShellCompDirectiveNoFileComp
 			},
-			Run: generateInstallCmd(pm, config.Packages[pm.Name()], state),
+			Run: generateInstallCmd(pm, config.Packages[pm.Name()]),
 		})
 	}
 }
 
-func generateInstallCmd(pm packagemanagers.PackageManager, pmPackages shared.PmPackages, state shared.State) func(cmd *cobra.Command, args []string) {
+func generateInstallCmd(pm packagemanagers.PackageManager, pmPackages shared.PmPackages) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		args = lo.Uniq(args)
 
@@ -59,7 +59,7 @@ func generateInstallCmd(pm packagemanagers.PackageManager, pmPackages shared.PmP
 
 		config.Packages[pm.Name()] = pmPackages
 
-		err = cmdSync(cmd.Context(), state)
+		err = cmdSync(cmd.Context())
 		if err != nil {
 			panic(err)
 		}
