@@ -28,3 +28,17 @@ type State struct {
 	Timestamp time.Time `yaml:"timestamp"`
 	Packages  Packages  `yaml:"packages"`
 }
+
+type Package struct {
+	Name          string
+	FullName      string
+	Version       string
+	LatestVersion string
+}
+
+type PackageStatus struct {
+	Synced  []Package
+	Updated []Package
+	Missing []Package
+	Removed []Package
+}

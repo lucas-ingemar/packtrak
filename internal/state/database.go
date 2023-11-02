@@ -1,13 +1,13 @@
 package state
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"time"
 
 	"github.com/glebarez/sqlite"
 	"github.com/lucas-ingemar/packtrak/internal/config"
+	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/samber/lo"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -60,14 +60,19 @@ func BeginNoTrans() (tx *gorm.DB) {
 	return &db
 }
 
-func UpdatePackageState(tx *gorm.DB, manager string, packages []string) error {
+func UpdatePackageState(tx *gorm.DB, manager string, packages []shared.Package) error {
 	currentPkgs, err := GetPackageState(tx, manager)
 	if err != nil {
 		return err
 	}
 
+	pkgNames := []string{}
+	for _, p := range packages {
+		pkgNames = append(pkgNames, p.Name)
+	}
+
 	for _, pkg := range currentPkgs {
-		if !lo.Contains(packages, pkg) {
+		if !lo.Contains(pkgNames, pkg) {
 			result := tx.Where("manager LIKE ? AND package = ?", manager, pkg).Delete(&PackageState{Package: pkg})
 			if result.Error != nil {
 				return result.Error
@@ -75,7 +80,7 @@ func UpdatePackageState(tx *gorm.DB, manager string, packages []string) error {
 		}
 	}
 
-	for _, pkg := range packages {
+	for _, pkg := range pkgNames {
 		if !lo.Contains(currentPkgs, pkg) {
 			result := tx.Create(&PackageState{Package: pkg, Manager: manager})
 			if result.Error != nil {
@@ -101,31 +106,31 @@ func GetPackageState(tx *gorm.DB, manager string) (packages []string, err error)
 	return packages, err
 }
 
-func Test() {
-	tx := Begin()
-	defer tx.Rollback()
+// func Test() {
+// 	tx := Begin()
+// 	defer tx.Rollback()
 
-	// p := []PackageState{}
-	// db.Find(&p)
-	// b, _ := json.Marshal(p)
-	// fmt.Println(string(b))
+// 	// p := []PackageState{}
+// 	// db.Find(&p)
+// 	// b, _ := json.Marshal(p)
+// 	// fmt.Println(string(b))
 
-	err := UpdatePackageState(tx, "go", []string{})
-	if err != nil {
-		panic(err)
-	}
-	pkgs, err := GetPackageState(tx, "go")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(pkgs)
+// 	err := UpdatePackageState(tx, "go", []string{})
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	pkgs, err := GetPackageState(tx, "go")
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	fmt.Println(pkgs)
 
-	// tx.Delete(&[]PackageState{{Manager: "dnf"}})
-	// tx.Create(&PackageState{
-	// 	Manager: "go",
-	// 	Package: "pack1",
-	// })
+// 	// tx.Delete(&[]PackageState{{Manager: "dnf"}})
+// 	// tx.Create(&PackageState{
+// 	// 	Manager: "go",
+// 	// 	Package: "pack1",
+// 	// })
 
-	res := tx.Commit()
-	fmt.Println(res.Error)
-}
+// 	res := tx.Commit()
+// 	fmt.Println(res.Error)
+// }

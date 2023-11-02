@@ -6,6 +6,7 @@ import (
 
 	"github.com/lucas-ingemar/packtrak/internal/config"
 	"github.com/lucas-ingemar/packtrak/internal/packagemanagers"
+	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/state"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -32,28 +33,34 @@ func cmdSync(ctx context.Context) (err error) {
 	tx := state.Begin()
 	defer tx.Rollback()
 
-	var fpkgI, fpkgR []string
-	pkgsSynced := map[string][]string{}
-	pkgsInstall := map[string][]string{}
-	pkgsRemove := map[string][]string{}
-	pkgsState := map[string][]string{}
+	var fpkgM, fpkgU, fpkgR []shared.Package
+	// pkgsSynced := map[string][]string{}
+	// pkgsInstall := map[string][]string{}
+	// pkgsRemove := map[string][]string{}
+	pkgsState := map[string][]shared.Package{}
+	pkgStatus := map[string]shared.PackageStatus{}
 
 	for _, pm := range packagemanagers.PackageManagers {
 		fmt.Printf("Listing %s packages...\n", pm.Name())
-		pkgsSynced[pm.Name()], pkgsInstall[pm.Name()], pkgsRemove[pm.Name()], err = pm.List(ctx, tx, config.Packages[pm.Name()])
+		pkgStatus[pm.Name()], err = pm.List(ctx, tx, config.Packages[pm.Name()])
 		if err != nil {
 			return
 		}
-		fpkgI = append(fpkgI, pkgsInstall[pm.Name()]...)
-		fpkgR = append(fpkgR, pkgsRemove[pm.Name()]...)
+		fpkgM = append(fpkgM, pkgStatus[pm.Name()].Missing...)
+		fpkgU = append(fpkgU, pkgStatus[pm.Name()].Updated...)
+		fpkgR = append(fpkgR, pkgStatus[pm.Name()].Removed...)
 
-		pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgsSynced[pm.Name()]...)
-		pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgsInstall[pm.Name()]...)
+		pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgStatus[pm.Name()].Synced...)
+		pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgStatus[pm.Name()].Updated...)
+		pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgStatus[pm.Name()].Missing...)
+		pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgStatus[pm.Name()].Removed...)
+		// pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgsSynced[pm.Name()]...)
+		// pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgsInstall[pm.Name()]...)
 	}
 
-	printPackageList(pkgsSynced, pkgsInstall, pkgsRemove)
+	printPackageList(pkgStatus)
 
-	if len(fpkgI) == 0 && len(fpkgR) == 0 {
+	if len(fpkgM) == 0 && len(fpkgU) == 0 && len(fpkgR) == 0 {
 		//FIXME: Must update state here aswell. It will update when package exists
 		for _, pm := range packagemanagers.PackageManagers {
 			//FIXME: This have to be enabled somehow
@@ -81,7 +88,7 @@ func cmdSync(ctx context.Context) (err error) {
 		for _, pm := range packagemanagers.PackageManagers {
 			//FIXME: This have to be enabled somehow
 			// if config.DnfEnabled {
-			uw, err := pm.Sync(ctx, pkgsInstall[pm.Name()], pkgsRemove[pm.Name()])
+			uw, err := pm.Sync(ctx, pkgStatus[pm.Name()])
 			_ = uw
 			if err != nil {
 				return err

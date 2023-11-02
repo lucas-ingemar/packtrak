@@ -9,9 +9,20 @@ import (
 )
 
 var (
-	PackageManagersRegistered= []PackageManager{&Dnf{Lucas: "dnf", Banan: ""}, &Dnf{Lucas: "git", Banan: "󰊢"}}
-	PackageManagers = []PackageManager{}
+	PackageManagersRegistered = []PackageManager{&Dnf{}, &Go{}}
+	PackageManagers           = []PackageManager{}
 )
+
+type PackageManager interface {
+	Name() string
+	Icon() string
+
+	Add(ctx context.Context, packagesConfig shared.PmPackages, pkgs []string) (packageConfig shared.PmPackages, userWarnings []string, err error)
+	InstallValidArgs(ctx context.Context, toComplete string) ([]string, error)
+	List(ctx context.Context, tx *gorm.DB, packages shared.PmPackages) (packageStatus shared.PackageStatus, err error)
+	Remove(ctx context.Context, packagesConfig shared.PmPackages, pkgs []string) (packageConfig shared.PmPackages, userWarnings []string, err error)
+	Sync(ctx context.Context, packageStatus shared.PackageStatus) (userWarnings []string, err error)
+}
 
 func InitPackageManagers() {
 	for _, pm := range PackageManagersRegistered {
@@ -34,15 +45,4 @@ func MustInitPackages() shared.Packages {
 		}
 	}
 	return config.Packages
-}
-
-type PackageManager interface {
-	Name() string
-	Icon() string
-
-	Add(ctx context.Context, packagesConfig shared.PmPackages, pkgs []string) (packageConfig shared.PmPackages, userWarnings []string, err error)
-	InstallValidArgs(ctx context.Context, toComplete string) ([]string, error)
-	List(ctx context.Context, tx *gorm.DB, packages shared.PmPackages) (installedPkgs []string, missingPkgs []string, removedPkgs []string, err error)
-	Remove(ctx context.Context, packagesConfig shared.PmPackages, pkgs []string) (packageConfig shared.PmPackages, userWarnings []string, err error)
-	Sync(ctx context.Context, pkgsInstall, pkgsRemove []string) (userWarnings []string, err error)
 }

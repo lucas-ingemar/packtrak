@@ -15,22 +15,16 @@ import (
 )
 
 type Dnf struct {
-	Lucas              string
-	Banan              string
 	cacheAllInstalled  []string
 	cacheUserInstalled []string
 }
 
 func (d *Dnf) Name() string {
-	// return "dnf"
-	return d.Lucas
+	return "dnf"
 }
 
 func (d *Dnf) Icon() string {
-	// return "󰟓"
-	// return "󰊢"
-	// return ""
-	return d.Banan
+	return ""
 }
 
 func (d *Dnf) Add(ctx context.Context, packagesConfig shared.PmPackages, pkgs []string) (packageConfig shared.PmPackages, userWarnings []string, err error) {
@@ -81,7 +75,7 @@ func (d *Dnf) InstallValidArgs(ctx context.Context, toComplete string) ([]string
 	return pkgs, nil
 }
 
-func (d *Dnf) List(ctx context.Context, tx *gorm.DB, packages shared.PmPackages) (installedPkgs []string, missingPkgs []string, removedPkgs []string, err error) {
+func (d *Dnf) List(ctx context.Context, tx *gorm.DB, packages shared.PmPackages) (packageStatus shared.PackageStatus, err error) {
 	dnfList, err := d.listInstalled(ctx)
 	if err != nil {
 		return
@@ -91,13 +85,15 @@ func (d *Dnf) List(ctx context.Context, tx *gorm.DB, packages shared.PmPackages)
 		pkgFound := false
 		for _, dnfPkg := range dnfList {
 			if dnfPkg == pkg {
-				installedPkgs = append(installedPkgs, pkg)
+				packageStatus.Synced = append(packageStatus.Synced, shared.Package{Name: pkg})
+				// installedPkgs = append(installedPkgs, pkg)
 				pkgFound = true
 				break
 			}
 		}
 		if !pkgFound {
-			missingPkgs = append(missingPkgs, pkg)
+			packageStatus.Missing = append(packageStatus.Missing, shared.Package{Name: pkg})
+			// missingPkgs = append(missingPkgs, pkg)
 		}
 	}
 
@@ -108,14 +104,16 @@ func (d *Dnf) List(ctx context.Context, tx *gorm.DB, packages shared.PmPackages)
 	// Otherwise we cant make sure the package is installed or not
 	statePkgs, err := state.GetPackageState(tx, d.Name())
 	if err != nil {
-		return nil, nil, nil, err
+		return
+		// return nil, nil, nil, err
 	}
 
 	for _, pkg := range statePkgs {
 		for _, dnfPkg := range dnfList {
 			if dnfPkg == pkg {
 				if !lo.Contains(packages.Global.Packages, pkg) {
-					removedPkgs = append(removedPkgs, pkg)
+					packageStatus.Removed = append(packageStatus.Removed, shared.Package{Name: pkg})
+					// removedPkgs = append(removedPkgs, pkg)
 				}
 				break
 			}
@@ -144,10 +142,10 @@ func (d *Dnf) Remove(ctx context.Context, packagesConfig shared.PmPackages, pkgs
 	return packagesConfig, userWarnings, nil
 }
 
-func (d *Dnf) Sync(ctx context.Context, pkgsInstall, pkgsRemove []string) (userWarnings []string, err error) {
-	if len(pkgsInstall) > 0 {
-		filteredPkgsInstall := lo.Filter(pkgsInstall, func(item string, _ int) bool {
-			isSysPkg, err := d.isSystemPackage(ctx, item)
+func (d *Dnf) Sync(ctx context.Context, packageStatus shared.PackageStatus) (userWarnings []string, err error) {
+	if len(packageStatus.Missing) > 0 {
+		filteredPkgsInstall := lo.Filter(packageStatus.Missing, func(item shared.Package, _ int) bool {
+			isSysPkg, err := d.isSystemPackage(ctx, item.Name)
 			if err != nil || isSysPkg {
 				return false
 			}
@@ -161,9 +159,9 @@ func (d *Dnf) Sync(ctx context.Context, pkgsInstall, pkgsRemove []string) (userW
 		}
 	}
 
-	if len(pkgsRemove) > 0 {
-		filteredPkgsRemove := lo.Filter(pkgsRemove, func(item string, _ int) bool {
-			isSysPkg, err := d.isSystemPackage(ctx, item)
+	if len(packageStatus.Removed) > 0 {
+		filteredPkgsRemove := lo.Filter(packageStatus.Removed, func(item shared.Package, _ int) bool {
+			isSysPkg, err := d.isSystemPackage(ctx, item.Name)
 			if err != nil || isSysPkg {
 				return false
 			}
@@ -179,13 +177,19 @@ func (d *Dnf) Sync(ctx context.Context, pkgsInstall, pkgsRemove []string) (userW
 	return nil, nil
 }
 
-func (d *Dnf) install(ctx context.Context, pkgs []string) error {
+func (d *Dnf) install(ctx context.Context, pkgs []shared.Package) error {
 	if len(pkgs) == 0 {
 		return errors.New("no packages provided")
 	}
+
+	pkgNames := []string{}
+	for _, pkg := range pkgs {
+		pkgNames = append(pkgNames, pkg.Name)
+	}
+
 	cmd := execute.ExecTask{
 		Command:     "sudo",
-		Args:        append([]string{"dnf", "--color=always", "install"}, pkgs...),
+		Args:        append([]string{"dnf", "--color=always", "install"}, pkgNames...),
 		StreamStdio: true,
 		Stdin:       os.Stdin,
 	}
@@ -202,13 +206,19 @@ func (d *Dnf) install(ctx context.Context, pkgs []string) error {
 	return nil
 }
 
-func (d *Dnf) remove(ctx context.Context, pkgs []string) error {
+func (d *Dnf) remove(ctx context.Context, pkgs []shared.Package) error {
 	if len(pkgs) == 0 {
 		return errors.New("no packages provided")
 	}
+
+	pkgNames := []string{}
+	for _, pkg := range pkgs {
+		pkgNames = append(pkgNames, pkg.Name)
+	}
+
 	cmd := execute.ExecTask{
 		Command:     "sudo",
-		Args:        append([]string{"dnf", "--color=always", "remove"}, pkgs...),
+		Args:        append([]string{"dnf", "--color=always", "remove"}, pkgNames...),
 		StreamStdio: true,
 		Stdin:       os.Stdin,
 	}

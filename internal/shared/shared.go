@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"fmt"
 	"os"
 )
 
@@ -9,4 +10,13 @@ func IsSudo() bool {
 		return true
 	}
 	return false
+}
+
+func GetPackage(name string, packages []Package) (Package, error) {
+	for _, pkg := range packages {
+		if pkg.Name == name {
+			return pkg, nil
+		}
+	}
+	return Package{}, fmt.Errorf("package %s not found", name)
 }
