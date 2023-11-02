@@ -17,7 +17,7 @@ func initList() {
 			Use:   "list",
 			Short: fmt.Sprintf("List status of %s packages", pm.Name()),
 			Args:  cobra.NoArgs,
-			Run:   generateListCmd(pm, config.Packages[pm.Name()]),
+			Run:   generateListCmd([]packagemanagers.PackageManager{pm}),
 		})
 	}
 }
@@ -26,17 +26,36 @@ func init() {
 	rootCmd.AddCommand(listCmd)
 }
 
-func generateListCmd(pm packagemanagers.PackageManager, pmPackages shared.PmPackages) func(cmd *cobra.Command, args []string) {
+func generateListCmd(pms []packagemanagers.PackageManager) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		var err error
-		tx := state.BeginNoTrans()
+		tx := state.Begin()
+
 		pkgsSynced := map[string][]string{}
 		pkgsInstall := map[string][]string{}
 		pkgsRemove := map[string][]string{}
-		fmt.Printf("Listing %s packages...\n", pm.Name())
-		pkgsSynced[pm.Name()], pkgsInstall[pm.Name()], pkgsRemove[pm.Name()], err = pm.List(cmd.Context(), tx, config.Packages[pm.Name()])
-		if err != nil {
-			panic(err)
+
+		for _, pm := range pms {
+			pkgsState := []string{}
+			fmt.Printf("Listing %s packages...\n", pm.Name())
+			pkgsSynced[pm.Name()], pkgsInstall[pm.Name()], pkgsRemove[pm.Name()], err = pm.List(cmd.Context(), tx, config.Packages[pm.Name()])
+			if err != nil {
+				panic(err)
+			}
+
+			pkgsState = append(pkgsState, pkgsSynced[pm.Name()]...)
+			pkgsState = append(pkgsState, pkgsInstall[pm.Name()]...)
+
+			err := state.UpdatePackageState(tx, pm.Name(), pkgsState)
+			if err != nil {
+				panic(err)
+			}
+
+		}
+
+		res := tx.Commit()
+		if res.Error != nil {
+			panic(res.Error)
 		}
 
 		printPackageList(pkgsSynced, pkgsInstall, pkgsRemove)
@@ -47,37 +66,25 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List status of dnf packages",
 	Args:  cobra.NoArgs,
-	Run: func(cmd *cobra.Command, args []string) {
-		// packages, err := config.ReadPackagesConfig()
-		// if err != nil {
-		// 	panic(err)
-		// }
+	Run:   generateListCmd(packagemanagers.PackageManagers),
 
-		// state1, err := config.ReadState()
-		// if err != nil {
-		// 	panic(err)
-		// }
+	// func(cmd *cobra.Command, args []string) {
+	// 	var err error
 
-		// _, _, _, err = cmdListPackages(cmd.Context(), packages, state)
-		// if err != nil {
-		// 	panic(err)
-		// }
-		var err error
+	// 	pkgsSynced := map[string][]string{}
+	// 	pkgsInstall := map[string][]string{}
+	// 	pkgsRemove := map[string][]string{}
+	// 	for _, pm := range packagemanagers.PackageManagers {
+	// 		fmt.Printf("Listing %s packages...\n", pm.Name())
+	// 		pkgsSynced[pm.Name()], pkgsInstall[pm.Name()], pkgsRemove[pm.Name()], err = pm.List(cmd.Context(), state.BeginNoTrans(), config.Packages[pm.Name()])
+	// 		if err != nil {
+	// 			panic(err)
+	// 		}
+	// 	}
 
-		pkgsSynced := map[string][]string{}
-		pkgsInstall := map[string][]string{}
-		pkgsRemove := map[string][]string{}
-		for _, pm := range packagemanagers.PackageManagers {
-			fmt.Printf("Listing %s packages...\n", pm.Name())
-			pkgsSynced[pm.Name()], pkgsInstall[pm.Name()], pkgsRemove[pm.Name()], err = pm.List(cmd.Context(), state.BeginNoTrans(), config.Packages[pm.Name()])
-			if err != nil {
-				panic(err)
-			}
-		}
+	// 	printPackageList(pkgsSynced, pkgsInstall, pkgsRemove)
 
-		printPackageList(pkgsSynced, pkgsInstall, pkgsRemove)
-
-	},
+	// },
 }
 
 func printPackageList(pkgsSynced, pkgsInstall, pkgsRemove map[string][]string) {

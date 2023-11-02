@@ -20,20 +20,20 @@ var (
 type PackageState struct {
 	ID        uint `gorm:"primarykey"`
 	CreatedAt time.Time
-	UpdatedAt time.Time
 	Manager   string
 	Package   string
 }
 
 func InitDb() error {
+	// FIXME: Connect verbose flag
 	newLogger := logger.New(
 		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
 		logger.Config{
-			SlowThreshold:             time.Second, // Slow SQL threshold
-			LogLevel:                  logger.Info, // Log level
-			IgnoreRecordNotFoundError: true,        // Ignore ErrRecordNotFound error for logger
-			ParameterizedQueries:      true,        // Don't include params in the SQL log
-			Colorful:                  false,       // Disable color
+			SlowThreshold:             time.Second,   // Slow SQL threshold
+			LogLevel:                  logger.Silent, // Log level
+			IgnoreRecordNotFoundError: true,          // Ignore ErrRecordNotFound error for logger
+			ParameterizedQueries:      true,          // Don't include params in the SQL log
+			Colorful:                  false,         // Disable color
 		},
 	)
 	dbInit, err := gorm.Open(sqlite.Open(config.StateFile), &gorm.Config{
@@ -71,15 +71,14 @@ func BeginNoTrans() (tx *gorm.DB) {
 	return &db
 }
 
-func UpdatePackageState(tx *gorm.DB, manager string, pkgsAdd, pkgsRemove []string) error {
+func UpdatePackageState(tx *gorm.DB, manager string, packages []string) error {
 	currentPkgs, err := GetPackageState(tx, manager)
 	if err != nil {
 		return err
 	}
 
-	for _, pkg := range pkgsRemove {
-		if lo.Contains(currentPkgs, pkg) {
-			fmt.Println("remove: ", pkg)
+	for _, pkg := range currentPkgs {
+		if !lo.Contains(packages, pkg) {
 			result := tx.Where("manager LIKE ? AND package = ?", manager, pkg).Delete(&PackageState{Package: pkg})
 			if result.Error != nil {
 				return result.Error
@@ -87,9 +86,8 @@ func UpdatePackageState(tx *gorm.DB, manager string, pkgsAdd, pkgsRemove []strin
 		}
 	}
 
-	for _, pkg := range pkgsAdd {
+	for _, pkg := range packages {
 		if !lo.Contains(currentPkgs, pkg) {
-			fmt.Println("add: ", pkg)
 			result := tx.Create(&PackageState{Package: pkg, Manager: manager})
 			if result.Error != nil {
 				return result.Error
@@ -97,42 +95,17 @@ func UpdatePackageState(tx *gorm.DB, manager string, pkgsAdd, pkgsRemove []strin
 		}
 	}
 	return nil
-	// pkgsR := []PackageState{}
-	// for _, pkg := range pkgsRemove {
-	// 	pkgsR = append(pkgsR, PackageState{
-	// 		Manager: manager,
-	// 		Package: pkg,
-	// 	})
-	// }
-
-	// pkgsA := []PackageState{}
-	// for _, pkg := range pkgsAdd {
-	// 	pkgsA = append(pkgsA, PackageState{
-	// 		Manager: manager,
-	// 		Package: pkg,
-	// 	})
-	// }
-
-	// result := tx.Create(&pkgsA)
-	// return result.Error
-	// if result.Error != nil {
-	// 	return result.Error
-	// }
-
-	// return tx.Commit().Error
 }
 
 func GetPackageState(tx *gorm.DB, manager string) (packages []string, err error) {
 	packageStates := []PackageState{}
 
 	result := tx.Where("manager LIKE ?", manager).Find(&packageStates)
-	fmt.Println(result.RowsAffected)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
 	for _, pkg := range packageStates {
-		fmt.Println(pkg.Package)
 		packages = append(packages, pkg.Package)
 	}
 
@@ -148,7 +121,7 @@ func Test() {
 	// b, _ := json.Marshal(p)
 	// fmt.Println(string(b))
 
-	err := UpdatePackageState(tx, "go", []string{"p3", "p2"}, []string{"p1"})
+	err := UpdatePackageState(tx, "go", []string{})
 	if err != nil {
 		panic(err)
 	}

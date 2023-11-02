@@ -46,6 +46,7 @@ func cmdSync(ctx context.Context) (err error) {
 	pkgsSynced := map[string][]string{}
 	pkgsInstall := map[string][]string{}
 	pkgsRemove := map[string][]string{}
+	pkgsState := map[string][]string{}
 
 	for _, pm := range packagemanagers.PackageManagers {
 		fmt.Printf("Listing %s packages...\n", pm.Name())
@@ -55,12 +56,24 @@ func cmdSync(ctx context.Context) (err error) {
 		}
 		fpkgI = append(fpkgI, pkgsInstall[pm.Name()]...)
 		fpkgR = append(fpkgR, pkgsRemove[pm.Name()]...)
+
+		pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgsSynced[pm.Name()]...)
+		pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgsInstall[pm.Name()]...)
 	}
 
 	printPackageList(pkgsSynced, pkgsInstall, pkgsRemove)
 
 	if len(fpkgI) == 0 && len(fpkgR) == 0 {
-		return nil
+		//FIXME: Must update state here aswell. It will update when package exists
+		for _, pm := range packagemanagers.PackageManagers {
+			//FIXME: This have to be enabled somehow
+			// if config.DnfEnabled {
+			err := state.UpdatePackageState(tx, pm.Name(), pkgsState[pm.Name()])
+			if err != nil {
+				return err
+			}
+		}
+		return tx.Commit().Error
 	}
 
 	fmt.Println("")
@@ -83,7 +96,10 @@ func cmdSync(ctx context.Context) (err error) {
 			if err != nil {
 				return err
 			}
-			state.UpdatePackageState(tx, pm.Name(), pkgsInstall[pm.Name()], pkgsRemove[pm.Name()])
+			err = state.UpdatePackageState(tx, pm.Name(), pkgsState[pm.Name()])
+			if err != nil {
+				return err
+			}
 			// }
 		}
 	}
