@@ -31,6 +31,8 @@ func Execute() {
 }
 
 func init() {
+	packagemanagers.InitPackageManagers()
+
 	for _, pm := range packagemanagers.PackageManagers {
 		PmCmds[pm.Name()] = &cobra.Command{
 			Use:   pm.Name(),
@@ -41,12 +43,6 @@ func init() {
 	}
 
 	packagemanagers.MustInitPackages()
-
-	// FIXME: really bad
-	// state1, err := config.ReadState()
-	// if err != nil {
-	// 	panic(err)
-	// }
 
 	err := state.InitDb()
 	if err != nil {

@@ -31,6 +31,10 @@ Take dnf for example. Should be able to list coprs that should be installed. Tha
 Maybe there could be something like dependencies for each manager as well
 That have its own table in the state.
 
+# TODO:
+* Should probably commit db for each packagemanager in sync as well
+* Rotate state file. Config option for how many rotations
+* Make sure user is not sudo when cmd runs
+
 # KNOWN ISSUES:
 * State is not updated when a package already exists when installing it. Probably better to do a proper sync, not just add/remove. 
-* Should probably commit db for each packagemanager in sync as well

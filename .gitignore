@@ -22,3 +22,4 @@ build/
 go.work
 
 .envrc
+LOCAL.md

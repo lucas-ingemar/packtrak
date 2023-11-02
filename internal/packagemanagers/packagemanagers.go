@@ -9,8 +9,16 @@ import (
 )
 
 var (
-	PackageManagers = []PackageManager{&Dnf{Lucas: "dnf", Banan: ""}, &Dnf{Lucas: "git", Banan: "󰊢"}}
+	PackageManagersRegistered= []PackageManager{&Dnf{Lucas: "dnf", Banan: ""}, &Dnf{Lucas: "git", Banan: "󰊢"}}
+	PackageManagers = []PackageManager{}
 )
+
+func InitPackageManagers() {
+	for _, pm := range PackageManagersRegistered {
+		//FIXME: HERE should the enabled/disabled flag be
+		PackageManagers = append(PackageManagers, pm)
+	}
+}
 
 func MustInitPackages() shared.Packages {
 	var err error

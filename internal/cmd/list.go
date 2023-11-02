@@ -21,6 +21,12 @@ func initList() {
 		})
 	}
 
+	var listGlobalCmd = &cobra.Command{
+		Use:   "list",
+		Short: "List status of dnf packages",
+		Args:  cobra.NoArgs,
+		Run:   generateListCmd(packagemanagers.PackageManagers),
+	}
 	rootCmd.AddCommand(listGlobalCmd)
 }
 
@@ -33,6 +39,7 @@ func generateListCmd(pms []packagemanagers.PackageManager) func(cmd *cobra.Comma
 		pkgsInstall := map[string][]string{}
 		pkgsRemove := map[string][]string{}
 
+		fmt.Println(pms)
 		for _, pm := range pms {
 			pkgsState := []string{}
 			fmt.Printf("Listing %s packages...\n", pm.Name())
@@ -43,6 +50,8 @@ func generateListCmd(pms []packagemanagers.PackageManager) func(cmd *cobra.Comma
 
 			pkgsState = append(pkgsState, pkgsSynced[pm.Name()]...)
 			pkgsState = append(pkgsState, pkgsInstall[pm.Name()]...)
+			// Must include removed pkgs as well. Otherwise the state will be messed up
+			pkgsState = append(pkgsState, pkgsRemove[pm.Name()]...)
 
 			err := state.UpdatePackageState(tx, pm.Name(), pkgsState)
 			if err != nil {
@@ -58,13 +67,6 @@ func generateListCmd(pms []packagemanagers.PackageManager) func(cmd *cobra.Comma
 
 		printPackageList(pkgsSynced, pkgsInstall, pkgsRemove)
 	}
-}
-
-var listGlobalCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List status of dnf packages",
-	Args:  cobra.NoArgs,
-	Run:   generateListCmd(packagemanagers.PackageManagers),
 }
 
 func printPackageList(pkgsSynced, pkgsInstall, pkgsRemove map[string][]string) {
