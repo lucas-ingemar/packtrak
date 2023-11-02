@@ -21,16 +21,6 @@ var syncCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	// Long:  `All software has versions. This is Hugo's`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// packages, err := config.ReadPackagesConfig()
-		// if err != nil {
-		// 	panic(err)
-		// }
-
-		// state, err := config.ReadState()
-		// if err != nil {
-		// 	panic(err)
-		// }
-
 		err := cmdSync(cmd.Context())
 		if err != nil {
 			panic(err)

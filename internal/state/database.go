@@ -44,23 +44,12 @@ func InitDb() error {
 	}
 	db = *dbInit
 
-	db.AutoMigrate(&PackageState{})
+	err = db.AutoMigrate(&PackageState{})
+	if err != nil {
+		return err
+	}
 
 	return nil
-
-	// db.Create(&PackageState{
-	// 	Manager: "dnf",
-	// 	Package: "pack1",
-	// })
-
-	// db.Create(&PackageState{
-	// 	Manager: "git",
-	// 	Package: "pack2",
-	// })
-	// p := []PackageState{}
-	// db.Find(&p)
-	// b, _ := json.Marshal(p)
-	// fmt.Println(string(b))
 }
 
 func Begin() (tx *gorm.DB) {

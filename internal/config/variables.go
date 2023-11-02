@@ -56,8 +56,6 @@ func Refresh() {
 
 	DataDir = getViperStringWithDefault("data_dir", filepath.Join(xdg.DataHome, "packtrak"))
 	StateFile = filepath.Join(DataDir, "state.db")
-	//FIXME: old
-	StateFile1 = filepath.Join(DataDir, "state.yaml")
 
 	DnfEnabled = getViperBoolWithDefault(keyDnfEnabled, true)
 	fmt.Println(DnfEnabled)

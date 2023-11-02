@@ -20,10 +20,8 @@ func initList() {
 			Run:   generateListCmd([]packagemanagers.PackageManager{pm}),
 		})
 	}
-}
 
-func init() {
-	rootCmd.AddCommand(listCmd)
+	rootCmd.AddCommand(listGlobalCmd)
 }
 
 func generateListCmd(pms []packagemanagers.PackageManager) func(cmd *cobra.Command, args []string) {
@@ -62,29 +60,11 @@ func generateListCmd(pms []packagemanagers.PackageManager) func(cmd *cobra.Comma
 	}
 }
 
-var listCmd = &cobra.Command{
+var listGlobalCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List status of dnf packages",
 	Args:  cobra.NoArgs,
 	Run:   generateListCmd(packagemanagers.PackageManagers),
-
-	// func(cmd *cobra.Command, args []string) {
-	// 	var err error
-
-	// 	pkgsSynced := map[string][]string{}
-	// 	pkgsInstall := map[string][]string{}
-	// 	pkgsRemove := map[string][]string{}
-	// 	for _, pm := range packagemanagers.PackageManagers {
-	// 		fmt.Printf("Listing %s packages...\n", pm.Name())
-	// 		pkgsSynced[pm.Name()], pkgsInstall[pm.Name()], pkgsRemove[pm.Name()], err = pm.List(cmd.Context(), state.BeginNoTrans(), config.Packages[pm.Name()])
-	// 		if err != nil {
-	// 			panic(err)
-	// 		}
-	// 	}
-
-	// 	printPackageList(pkgsSynced, pkgsInstall, pkgsRemove)
-
-	// },
 }
 
 func printPackageList(pkgsSynced, pkgsInstall, pkgsRemove map[string][]string) {

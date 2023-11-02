@@ -14,8 +14,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// FIXME: ska formodligen spara ner installed, missing och removed i strucet for att kunna
-// accessa senare. Blir battre i printen
 type Dnf struct {
 	Lucas              string
 	Banan              string
