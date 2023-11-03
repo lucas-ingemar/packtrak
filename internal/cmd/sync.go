@@ -34,9 +34,7 @@ func cmdSync(ctx context.Context) (err error) {
 	defer tx.Rollback()
 
 	var fpkgM, fpkgU, fpkgR []shared.Package
-	// pkgsSynced := map[string][]string{}
-	// pkgsInstall := map[string][]string{}
-	// pkgsRemove := map[string][]string{}
+
 	pkgsState := map[string][]shared.Package{}
 	pkgStatus := map[string]shared.PackageStatus{}
 
@@ -53,18 +51,13 @@ func cmdSync(ctx context.Context) (err error) {
 		pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgStatus[pm.Name()].Synced...)
 		pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgStatus[pm.Name()].Updated...)
 		pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgStatus[pm.Name()].Missing...)
-		pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgStatus[pm.Name()].Removed...)
-		// pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgsSynced[pm.Name()]...)
-		// pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgsInstall[pm.Name()]...)
+		// pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgStatus[pm.Name()].Removed...)
 	}
 
 	printPackageList(pkgStatus)
 
 	if len(fpkgM) == 0 && len(fpkgU) == 0 && len(fpkgR) == 0 {
-		//FIXME: Must update state here aswell. It will update when package exists
 		for _, pm := range packagemanagers.PackageManagers {
-			//FIXME: This have to be enabled somehow
-			// if config.DnfEnabled {
 			err := state.UpdatePackageState(tx, pm.Name(), pkgsState[pm.Name()])
 			if err != nil {
 				return err
@@ -86,8 +79,6 @@ func cmdSync(ctx context.Context) (err error) {
 
 	if result == "y" {
 		for _, pm := range packagemanagers.PackageManagers {
-			//FIXME: This have to be enabled somehow
-			// if config.DnfEnabled {
 			uw, err := pm.Sync(ctx, pkgStatus[pm.Name()])
 			_ = uw
 			if err != nil {
@@ -97,7 +88,6 @@ func cmdSync(ctx context.Context) (err error) {
 			if err != nil {
 				return err
 			}
-			// }
 		}
 	}
 

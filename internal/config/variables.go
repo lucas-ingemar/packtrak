@@ -58,7 +58,7 @@ func Refresh() {
 	StateFile = filepath.Join(DataDir, "state.db")
 
 	DnfEnabled = getViperBoolWithDefault(keyDnfEnabled, true)
-	fmt.Println(DnfEnabled)
+	// fmt.Println(DnfEnabled)
 
 	if !configFileExists() {
 		err := os.MkdirAll(ConfigDir, os.ModePerm)

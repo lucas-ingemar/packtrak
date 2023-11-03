@@ -40,7 +40,6 @@ func generateListCmd(pms []packagemanagers.PackageManager) func(cmd *cobra.Comma
 		// pkgsRemove := map[string][]string{}
 		pkgStatus := map[string]shared.PackageStatus{}
 
-		fmt.Println(pms)
 		for _, pm := range pms {
 			pkgsState := []shared.Package{}
 			fmt.Printf("Listing %s packages...\n", pm.Name())
@@ -58,15 +57,15 @@ func generateListCmd(pms []packagemanagers.PackageManager) func(cmd *cobra.Comma
 			pkgsState = append(pkgsState, pkgStatus[pm.Name()].Synced...)
 			pkgsState = append(pkgsState, pkgStatus[pm.Name()].Updated...)
 			pkgsState = append(pkgsState, pkgStatus[pm.Name()].Missing...)
-			pkgsState = append(pkgsState, pkgStatus[pm.Name()].Removed...)
+			// pkgsState = append(pkgsState, pkgStatus[pm.Name()].Removed...)
 			// pkgsState = append(pkgsState, [pm.Name()]...)
 			// pkgsState = append(pkgsState, [pm.Name()]...)
 			// pkgsState = append(pkgsState, [pm.Name()]...)
 
-			err := state.UpdatePackageState(tx, pm.Name(), pkgsState)
-			if err != nil {
-				panic(err)
-			}
+			// err := state.UpdatePackageState(tx, pm.Name(), pkgsState)
+			// if err != nil {
+			// 	panic(err)
+			// }
 
 		}
 
@@ -88,7 +87,7 @@ func printPackageList(pkgStatus map[string]shared.PackageStatus) {
 		}
 
 		for _, pkg := range pkgStatus[pm.Name()].Updated {
-			shared.PtermInstalled.Printfln("%s %s, %s -> %s", pm.Icon(), pkg.Name, pkg.Version, pkg.LatestVersion)
+			shared.PtermUpdated.Printfln("%s %s %s -> %s", pm.Icon(), pkg.Name, pkg.Version, pkg.LatestVersion)
 			noUpdated++
 		}
 
@@ -106,6 +105,9 @@ func printPackageList(pkgStatus map[string]shared.PackageStatus) {
 	infoStrings := []string{}
 	if noSynced > 0 {
 		infoStrings = append(infoStrings, shared.PtermInstalled.Sprintf("%d in sync", noSynced))
+	}
+	if noUpdated > 0 {
+		infoStrings = append(infoStrings, shared.PtermUpdated.Sprintf("%d to update", noUpdated))
 	}
 	if noMissing > 0 {
 		infoStrings = append(infoStrings, shared.PtermMissing.Sprintf("%d to install", noMissing))

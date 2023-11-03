@@ -68,7 +68,7 @@ func UpdatePackageState(tx *gorm.DB, manager string, packages []shared.Package) 
 
 	pkgNames := []string{}
 	for _, p := range packages {
-		pkgNames = append(pkgNames, p.Name)
+		pkgNames = append(pkgNames, p.FullName)
 	}
 
 	for _, pkg := range currentPkgs {

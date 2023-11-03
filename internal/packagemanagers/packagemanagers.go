@@ -17,10 +17,14 @@ type PackageManager interface {
 	Name() string
 	Icon() string
 
-	Add(ctx context.Context, packagesConfig shared.PmPackages, pkgs []string) (packageConfig shared.PmPackages, userWarnings []string, err error)
+	GetPackageNames(ctx context.Context, packagesConfig shared.PmPackages) []string
+
+	// FIXME: Update to new format
+	Add(ctx context.Context, packagesConfig shared.PmPackages, pkgs []string) (packagesConfigUpdated shared.PmPackages, userWarnings []string, err error)
 	InstallValidArgs(ctx context.Context, toComplete string) ([]string, error)
 	List(ctx context.Context, tx *gorm.DB, packages shared.PmPackages) (packageStatus shared.PackageStatus, err error)
-	Remove(ctx context.Context, packagesConfig shared.PmPackages, pkgs []string) (packageConfig shared.PmPackages, userWarnings []string, err error)
+	// FIXME: Update to new format
+	Remove(ctx context.Context, packagesConfig shared.PmPackages, pkgs []string) (packagesConfigUpdated shared.PmPackages, userWarnings []string, err error)
 	Sync(ctx context.Context, packageStatus shared.PackageStatus) (userWarnings []string, err error)
 }
 

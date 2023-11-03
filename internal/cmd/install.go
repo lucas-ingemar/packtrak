@@ -13,25 +13,28 @@ import (
 func initInstall() {
 	for _, pm := range packagemanagers.PackageManagers {
 		PmCmds[pm.Name()].AddCommand(&cobra.Command{
-			Use:   "install",
-			Short: "install a package or packages on your system",
-			Args:  cobra.MinimumNArgs(1),
-			ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-				pkgs, err := pm.InstallValidArgs(cmd.Context(), toComplete)
-				if err != nil {
-					pkgs = []string{}
-				}
-				return pkgs, cobra.ShellCompDirectiveNoFileComp
-			},
-			Run: generateInstallCmd(pm, config.Packages[pm.Name()]),
+			Use:               "install",
+			Short:             "install a package or packages on your system",
+			Args:              cobra.MinimumNArgs(1),
+			ValidArgsFunction: generateInstallValidArgsFunc(pm, config.Packages[pm.Name()]),
+			Run:               generateInstallCmd(pm, config.Packages[pm.Name()]),
 		})
+	}
+}
+
+func generateInstallValidArgsFunc(pm packagemanagers.PackageManager, pmPackages shared.PmPackages) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		pkgs, err := pm.InstallValidArgs(cmd.Context(), toComplete)
+		if err != nil {
+			pkgs = []string{}
+		}
+		return pkgs, cobra.ShellCompDirectiveNoFileComp
 	}
 }
 
 func generateInstallCmd(pm packagemanagers.PackageManager, pmPackages shared.PmPackages) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		args = lo.Uniq(args)
-
 		pkgsToAdd := []string{}
 		warningPrinted := false
 		for _, arg := range args {

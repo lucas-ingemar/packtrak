@@ -27,6 +27,10 @@ func (d *Dnf) Icon() string {
 	return ""
 }
 
+func (d *Dnf) GetPackageNames(ctx context.Context, packagesConfig shared.PmPackages) []string {
+	return packagesConfig.Global.Packages
+}
+
 func (d *Dnf) Add(ctx context.Context, packagesConfig shared.PmPackages, pkgs []string) (packageConfig shared.PmPackages, userWarnings []string, err error) {
 	for _, pkg := range pkgs {
 		isSysPkg, err := d.isSystemPackage(ctx, pkg)
@@ -85,14 +89,14 @@ func (d *Dnf) List(ctx context.Context, tx *gorm.DB, packages shared.PmPackages)
 		pkgFound := false
 		for _, dnfPkg := range dnfList {
 			if dnfPkg == pkg {
-				packageStatus.Synced = append(packageStatus.Synced, shared.Package{Name: pkg})
+				packageStatus.Synced = append(packageStatus.Synced, shared.Package{Name: pkg, FullName: pkg})
 				// installedPkgs = append(installedPkgs, pkg)
 				pkgFound = true
 				break
 			}
 		}
 		if !pkgFound {
-			packageStatus.Missing = append(packageStatus.Missing, shared.Package{Name: pkg})
+			packageStatus.Missing = append(packageStatus.Missing, shared.Package{Name: pkg, FullName: pkg})
 			// missingPkgs = append(missingPkgs, pkg)
 		}
 	}
@@ -112,7 +116,7 @@ func (d *Dnf) List(ctx context.Context, tx *gorm.DB, packages shared.PmPackages)
 		for _, dnfPkg := range dnfList {
 			if dnfPkg == pkg {
 				if !lo.Contains(packages.Global.Packages, pkg) {
-					packageStatus.Removed = append(packageStatus.Removed, shared.Package{Name: pkg})
+					packageStatus.Removed = append(packageStatus.Removed, shared.Package{Name: pkg, FullName: pkg})
 					// removedPkgs = append(removedPkgs, pkg)
 				}
 				break
@@ -145,7 +149,7 @@ func (d *Dnf) Remove(ctx context.Context, packagesConfig shared.PmPackages, pkgs
 func (d *Dnf) Sync(ctx context.Context, packageStatus shared.PackageStatus) (userWarnings []string, err error) {
 	if len(packageStatus.Missing) > 0 {
 		filteredPkgsInstall := lo.Filter(packageStatus.Missing, func(item shared.Package, _ int) bool {
-			isSysPkg, err := d.isSystemPackage(ctx, item.Name)
+			isSysPkg, err := d.isSystemPackage(ctx, item.FullName)
 			if err != nil || isSysPkg {
 				return false
 			}
@@ -161,7 +165,7 @@ func (d *Dnf) Sync(ctx context.Context, packageStatus shared.PackageStatus) (use
 
 	if len(packageStatus.Removed) > 0 {
 		filteredPkgsRemove := lo.Filter(packageStatus.Removed, func(item shared.Package, _ int) bool {
-			isSysPkg, err := d.isSystemPackage(ctx, item.Name)
+			isSysPkg, err := d.isSystemPackage(ctx, item.FullName)
 			if err != nil || isSysPkg {
 				return false
 			}
@@ -184,7 +188,7 @@ func (d *Dnf) install(ctx context.Context, pkgs []shared.Package) error {
 
 	pkgNames := []string{}
 	for _, pkg := range pkgs {
-		pkgNames = append(pkgNames, pkg.Name)
+		pkgNames = append(pkgNames, pkg.FullName)
 	}
 
 	cmd := execute.ExecTask{
@@ -213,7 +217,7 @@ func (d *Dnf) remove(ctx context.Context, pkgs []shared.Package) error {
 
 	pkgNames := []string{}
 	for _, pkg := range pkgs {
-		pkgNames = append(pkgNames, pkg.Name)
+		pkgNames = append(pkgNames, pkg.FullName)
 	}
 
 	cmd := execute.ExecTask{

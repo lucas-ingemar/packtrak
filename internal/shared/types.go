@@ -34,6 +34,7 @@ type Package struct {
 	FullName      string
 	Version       string
 	LatestVersion string
+	RepoUrl       string
 }
 
 type PackageStatus struct {

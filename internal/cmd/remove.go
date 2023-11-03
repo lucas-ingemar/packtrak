@@ -14,18 +14,22 @@ import (
 func initRemove() {
 	for _, pm := range packagemanagers.PackageManagers {
 		PmCmds[pm.Name()].AddCommand(&cobra.Command{
-			Use:   "remove",
-			Short: "remove a package or packages on your system",
-			Args:  cobra.MinimumNArgs(1),
-			ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-				return lo.Filter(config.Packages[pm.Name()].Global.Packages,
-						func(item string, index int) bool {
-							return strings.HasPrefix(item, toComplete)
-						}),
-					cobra.ShellCompDirectiveNoFileComp
-			},
-			Run: generateRemoveCmd(pm, config.Packages[pm.Name()]),
+			Use:               "remove",
+			Short:             "remove a package or packages on your system",
+			Args:              cobra.MinimumNArgs(1),
+			ValidArgsFunction: generateRemoveValidArgsFunc(pm, config.Packages[pm.Name()]),
+			Run:               generateRemoveCmd(pm, config.Packages[pm.Name()]),
 		})
+	}
+}
+
+func generateRemoveValidArgsFunc(pm packagemanagers.PackageManager, pmPackages shared.PmPackages) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return lo.Filter(pm.GetPackageNames(cmd.Context(), pmPackages),
+				func(item string, index int) bool {
+					return strings.HasPrefix(item, toComplete)
+				}),
+			cobra.ShellCompDirectiveNoFileComp
 	}
 }
 
@@ -36,7 +40,7 @@ func generateRemoveCmd(pm packagemanagers.PackageManager, pmPackages shared.PmPa
 		pkgsToRemove := []string{}
 		warningPrinted := false
 		for _, arg := range args {
-			if !lo.Contains(pmPackages.Global.Packages, arg) {
+			if !lo.Contains(pm.GetPackageNames(cmd.Context(), pmPackages), arg) {
 				shared.PtermWarning.Printfln("'%s' is not present in packages file", arg)
 				warningPrinted = true
 				continue
