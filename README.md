@@ -20,6 +20,41 @@ id        manager        package
 Should only have 1 field: `package`. This field will have the same convention as `package` in the state.
 All the logic should be happening in the different managers inside the app. E.g: go package renaming from `golang.org/x/tools/gopls` to `gopls` in the UI.
 
+``` yaml
+dnf:
+  global:
+    dependencies:
+      - copr:copr.fedorainfracloud.org/phracek/PyCharm
+      - cm:https://rpm.releases.hashicorp.com/fedora/hashicorp.repo
+    packages:
+      - sway
+      - kanshi
+      - btop
+      - terraform
+  conditional:
+    - type: host
+      value: spock
+      dependencies:
+        - hejhej
+      packages:
+        - bla
+    - type: group
+      value: work
+      dependencies:
+        - dada
+      packages:
+        - apa
+go:
+  global:
+    packages:
+      - github.com/mikefarah/yq/v4
+      - github.com/lucas-ingemar/clergo/cmd/clergo
+      - github.com/rogpeppe/godef
+      - github.com/golangci/golangci-lint/cmd/golangci-lint
+      - golang.org/x/tools/gopls
+      - sigs.k8s.io/kind
+```
+
 ### Host/environment specific
 Should add rules next to the global packages. For instance for host-specific packages, or `group(?): work` packages.
 
