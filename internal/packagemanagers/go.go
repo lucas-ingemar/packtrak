@@ -34,35 +34,35 @@ func (g *Go) NeedsSudo() []shared.CommandName {
 	return []shared.CommandName{}
 }
 
-func (g *Go) GetPackageNames(ctx context.Context, packagesConfig shared.PmPackages) []string {
+func (g *Go) GetPackageNames(ctx context.Context, packages []string) []string {
 	pkgNames := []string{}
-	for _, pkg := range packagesConfig.Global.Packages {
+	for _, pkg := range packages {
 		pkgNames = append(pkgNames, g.nameFromFullName(pkg))
 	}
 	return pkgNames
 }
 
-func (g *Go) Add(ctx context.Context, packagesConfig shared.PmPackages, pkgs []string) (packagesConfigUpdated shared.PmPackages, userWarnings []string, err error) {
+func (g *Go) Add(ctx context.Context, packages []string, pkgsToAdd []string) (packagesUpdated []string, userWarnings []string, err error) {
 	// FIXME: Could do something more fancy perhaps? See if the path exists and so on
-	packagesConfig.Global.Packages = append(packagesConfig.Global.Packages, pkgs...)
-	return packagesConfig, nil, nil
+	// packagesConfig.Global.Packages = append(packagesConfig.Global.Packages, pkgs...)
+	return pkgsToAdd, nil, nil
 }
 
 func (g *Go) InstallValidArgs(ctx context.Context, toComplete string) ([]string, error) {
 	return []string{}, nil
 }
 
-func (g *Go) ListDependencies(ctx context.Context, tx *gorm.DB, packages shared.PmPackages) (depStatus shared.DependenciesStatus, err error) {
+func (g *Go) ListDependencies(ctx context.Context, tx *gorm.DB, deps []string) (depStatus shared.DependenciesStatus, err error) {
 	return
 }
 
-func (g *Go) ListPackages(ctx context.Context, tx *gorm.DB, packages shared.PmPackages) (packageStatus shared.PackageStatus, err error) {
+func (g *Go) ListPackages(ctx context.Context, tx *gorm.DB, packages []string) (packageStatus shared.PackageStatus, err error) {
 	installed, err := g.listInstalled(ctx)
 	if err != nil {
 		return
 	}
 
-	for _, pkgFullName := range packages.Global.Packages {
+	for _, pkgFullName := range packages {
 		pkgName := g.nameFromFullName(pkgFullName)
 		iPkg, err := shared.GetPackage(pkgName, installed)
 		if err != nil {
@@ -96,7 +96,7 @@ func (g *Go) ListPackages(ctx context.Context, tx *gorm.DB, packages shared.PmPa
 	}
 
 	for _, pkg := range statePkgs {
-		if !lo.Contains(packages.Global.Packages, pkg) {
+		if !lo.Contains(packages, pkg) {
 			packageStatus.Removed = append(packageStatus.Removed, shared.Package{
 				Name:     g.nameFromFullName(pkg),
 				FullName: pkg,
@@ -107,12 +107,12 @@ func (g *Go) ListPackages(ctx context.Context, tx *gorm.DB, packages shared.PmPa
 	return
 }
 
-func (g *Go) Remove(ctx context.Context, packagesConfig shared.PmPackages, pkgs []string) (packagesConfigUpdated shared.PmPackages, userWarnings []string, err error) {
-	packagesConfig.Global.Packages = lo.Filter(packagesConfig.Global.Packages, func(item string, index int) bool {
-		return !lo.Contains(pkgs, g.nameFromFullName(item))
+func (g *Go) Remove(ctx context.Context, packages []string, pkgs []string) (packagesToRemove []string, userWarnings []string, err error) {
+	packagesToRemove = lo.Filter(packages, func(item string, index int) bool {
+		return lo.Contains(pkgs, g.nameFromFullName(item))
 	})
 
-	return packagesConfig, userWarnings, nil
+	return
 }
 
 func (g *Go) SyncDependencies(ctx context.Context, depStatus shared.DependenciesStatus) (userWarnings []string, err error) {

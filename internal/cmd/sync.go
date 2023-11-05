@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/lucas-ingemar/packtrak/internal/config"
+	"github.com/lucas-ingemar/packtrak/internal/manifest"
 	"github.com/lucas-ingemar/packtrak/internal/packagemanagers"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/state"
@@ -50,12 +50,14 @@ func cmdSync(ctx context.Context) (err error) {
 
 	for _, pm := range packagemanagers.PackageManagers {
 		fmt.Printf("Listing %s dependencies...\n", pm.Name())
-		depStatus[pm.Name()], err = pm.ListDependencies(ctx, tx, config.Packages[pm.Name()])
+		// FIXME: Manifestfilter
+		depStatus[pm.Name()], err = pm.ListDependencies(ctx, tx, manifest.Manifest.Pm(pm.Name()).Global.Dependencies)
 		if err != nil {
 			panic(err)
 		}
 		fmt.Printf("Listing %s packages...\n", pm.Name())
-		pkgStatus[pm.Name()], err = pm.ListPackages(ctx, tx, config.Packages[pm.Name()])
+		// FIXME: Manifestfilter
+		pkgStatus[pm.Name()], err = pm.ListPackages(ctx, tx, manifest.Manifest.Pm(pm.Name()).Global.Packages)
 		if err != nil {
 			return
 		}

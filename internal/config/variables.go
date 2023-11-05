@@ -12,12 +12,12 @@ import (
 )
 
 var (
-	ConfigDir   string
-	DataDir     string
-	CacheDir    string
-	ConfigFile  string
-	PackageFile string
-	StateFile   string
+	ConfigDir    string
+	DataDir      string
+	CacheDir     string
+	ConfigFile   string
+	ManifestFile string
+	StateFile    string
 
 	ConfigFileExists bool
 
@@ -38,7 +38,7 @@ func Refresh() {
 
 	ConfigDir = filepath.Join(xdg.ConfigHome, "packtrak")
 	ConfigFile = filepath.Join(ConfigDir, "config.yaml")
-	PackageFile = filepath.Join(ConfigDir, "packages.yaml")
+	ManifestFile = filepath.Join(ConfigDir, "manifest.yaml")
 
 	CacheDir = filepath.Join(xdg.CacheHome, "packtrak")
 

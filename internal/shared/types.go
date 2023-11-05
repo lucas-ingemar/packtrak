@@ -2,33 +2,84 @@ package shared
 
 import (
 	"fmt"
-	"time"
+
+	"github.com/samber/lo"
 )
 
-type Packages map[string]PmPackages
+type (
+	CommandName             string
+	ManifestConditionalType string
+	// Manifest                map[string]PmManifest
+)
 
-func (p Packages) Register(packageManagerName string) error {
-	_, exists := p[packageManagerName]
-	if exists {
-		return fmt.Errorf("%s already exists", packageManagerName)
+const (
+	CommandInstall CommandName = "install"
+	CommandRemove  CommandName = "remove"
+	CommandList    CommandName = "list"
+	CommandSync    CommandName = "sync"
+
+	MConditionHost  ManifestConditionalType = "host"
+	MConditionGroup ManifestConditionalType = "group"
+)
+
+// type Packages map[string]PmPackages
+
+// func (p Packages) Register(packageManagerName string) error {
+// 	_, exists := p[packageManagerName]
+// 	if exists {
+// 		return fmt.Errorf("%s already exists", packageManagerName)
+// 	}
+// 	p[packageManagerName] = PmPackages{}
+// 	return nil
+// }
+
+type Manifest struct {
+	Dnf PmManifest `yaml:"dnf"`
+	Go  PmManifest `yaml:"go"`
+}
+
+func (m *Manifest) Pm(name string) *PmManifest {
+	switch name {
+	case "dnf":
+		return &m.Dnf
+	case "go":
+		return &m.Go
+	default:
+		panic(fmt.Sprintf("%s is not a registered package manager", name))
 	}
-	p[packageManagerName] = PmPackages{}
-	return nil
 }
 
-type PmPackages struct {
-	Global PackagesGlobal `yaml:"global"`
+type PmManifest struct {
+	Global      ManifestGlobal        `yaml:"global"`
+	Conditional []ManifestConditional `yaml:"conditional"`
 }
 
-type PackagesGlobal struct {
+type ManifestGlobal struct {
 	Dependencies []string `yaml:"dependencies"`
 	Packages     []string `yaml:"packages"`
 }
 
-type State struct {
-	Timestamp time.Time `yaml:"timestamp"`
-	Packages  Packages  `yaml:"packages"`
+func (m *ManifestGlobal) AddPackages(packages []string) {
+	m.Packages = append(m.Packages, packages...)
 }
+
+func (m *ManifestGlobal) RemovePackages(packages []string) {
+	m.Packages = lo.Filter(m.Packages, func(item string, index int) bool {
+		return !lo.Contains(packages, item)
+	})
+}
+
+type ManifestConditional struct {
+	Type         ManifestConditionalType `yaml:"type"`
+	Value        string                  `yaml:"value"`
+	Dependencies []string                `yaml:"dependencies"`
+	Packages     []string                `yaml:"packages"`
+}
+
+// type State struct {
+// 	Timestamp time.Time `yaml:"timestamp"`
+// 	Packages  Packages  `yaml:"packages"`
+// }
 
 type Package struct {
 	Name          string
@@ -59,12 +110,3 @@ type DependenciesStatus struct {
 	Missing []Dependency
 	Removed []Dependency
 }
-
-type CommandName string
-
-const (
-	CommandInstall CommandName = "install"
-	CommandRemove  CommandName = "remove"
-	CommandList    CommandName = "list"
-	CommandSync    CommandName = "sync"
-)

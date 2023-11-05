@@ -11,15 +11,15 @@ type PackageManager interface {
 	Icon() string
 	NeedsSudo() []CommandName
 
-	GetPackageNames(ctx context.Context, packagesConfig PmPackages) []string
+	GetPackageNames(ctx context.Context, packages []string) []string
 
-	// FIXME: Update to new format
-	Add(ctx context.Context, packagesConfig PmPackages, pkgs []string) (packagesConfigUpdated PmPackages, userWarnings []string, err error)
+	// FIXME: Update to new format ???? This looks fucked up
+	Add(ctx context.Context, packages []string, pkgsToAdd []string) (packagesUpdated []string, userWarnings []string, err error)
 	InstallValidArgs(ctx context.Context, toComplete string) ([]string, error)
-	ListDependencies(ctx context.Context, tx *gorm.DB, packages PmPackages) (depStatus DependenciesStatus, err error)
-	ListPackages(ctx context.Context, tx *gorm.DB, packages PmPackages) (packageStatus PackageStatus, err error)
-	// FIXME: Update to new format
-	Remove(ctx context.Context, packagesConfig PmPackages, pkgs []string) (packagesConfigUpdated PmPackages, userWarnings []string, err error)
+	ListDependencies(ctx context.Context, tx *gorm.DB, deps []string) (depStatus DependenciesStatus, err error)
+	ListPackages(ctx context.Context, tx *gorm.DB, packages []string) (packageStatus PackageStatus, err error)
+	// FIXME: Update to new format ???? This looks fucked up
+	Remove(ctx context.Context, packages []string, pkgs []string) (packagesToRemove []string, userWarnings []string, err error)
 	SyncDependencies(ctx context.Context, depStatus DependenciesStatus) (userWarnings []string, err error)
 	SyncPackages(ctx context.Context, packageStatus PackageStatus) (userWarnings []string, err error)
 }

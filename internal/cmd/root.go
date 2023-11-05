@@ -42,7 +42,7 @@ func init() {
 		rootCmd.AddCommand(PmCmds[pm.Name()])
 	}
 
-	packagemanagers.MustInitPackages()
+	packagemanagers.MustInitManifest()
 
 	err := state.InitDb()
 	if err != nil {

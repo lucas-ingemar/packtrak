@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lucas-ingemar/packtrak/internal/config"
+	"github.com/lucas-ingemar/packtrak/internal/manifest"
 	"github.com/lucas-ingemar/packtrak/internal/packagemanagers"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/state"
@@ -46,12 +46,14 @@ func generateListCmd(pms []shared.PackageManager) func(cmd *cobra.Command, args 
 		for _, pm := range pms {
 			// pkgsState := []shared.Package{}
 			fmt.Printf("Listing %s dependencies...\n", pm.Name())
-			depStatus[pm.Name()], err = pm.ListDependencies(cmd.Context(), tx, config.Packages[pm.Name()])
+			// FIXME: Manifestfilter
+			depStatus[pm.Name()], err = pm.ListDependencies(cmd.Context(), tx, manifest.Manifest.Pm(pm.Name()).Global.Dependencies)
 			if err != nil {
 				panic(err)
 			}
 			fmt.Printf("Listing %s packages...\n", pm.Name())
-			pkgStatus[pm.Name()], err = pm.ListPackages(cmd.Context(), tx, config.Packages[pm.Name()])
+			// FIXME: Manifestfilter
+			pkgStatus[pm.Name()], err = pm.ListPackages(cmd.Context(), tx, manifest.Manifest.Pm(pm.Name()).Global.Packages)
 			if err != nil {
 				panic(err)
 			}

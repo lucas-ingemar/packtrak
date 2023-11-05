@@ -2,6 +2,7 @@ package packagemanagers
 
 import (
 	"github.com/lucas-ingemar/packtrak/internal/config"
+	"github.com/lucas-ingemar/packtrak/internal/manifest"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 )
 
@@ -35,18 +36,18 @@ func InitPackageManagers() {
 	}
 }
 
-func MustInitPackages() shared.Packages {
+func MustInitManifest() shared.Manifest {
 	var err error
-	config.Packages, err = config.ReadPackagesConfig()
+	manifest.Manifest, err = manifest.ReadManifest(config.ManifestFile)
 	if err != nil {
 		panic(err)
 	}
 
-	for _, pm := range PackageManagers {
-		_, ok := config.Packages[pm.Name()]
-		if !ok {
-			config.Packages[pm.Name()] = shared.PmPackages{}
-		}
-	}
-	return config.Packages
+	// for _, pm := range PackageManagers {
+	// 	_, ok := manifest.Manifest[pm.Name()]
+	// 	if !ok {
+	// 		manifest.Manifest[pm.Name()] = shared.PmManifest{}
+	// 	}
+	// }
+	return manifest.Manifest
 }

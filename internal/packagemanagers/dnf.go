@@ -37,24 +37,24 @@ func (d *Dnf) NeedsSudo() []shared.CommandName {
 	return []shared.CommandName{shared.CommandInstall, shared.CommandRemove, shared.CommandSync}
 }
 
-func (d *Dnf) GetPackageNames(ctx context.Context, packagesConfig shared.PmPackages) []string {
-	return packagesConfig.Global.Packages
+func (d *Dnf) GetPackageNames(ctx context.Context, packages []string) []string {
+	return packages
 }
 
-func (d *Dnf) Add(ctx context.Context, packagesConfig shared.PmPackages, pkgs []string) (packageConfig shared.PmPackages, userWarnings []string, err error) {
-	for _, pkg := range pkgs {
+func (d *Dnf) Add(ctx context.Context, packages []string, pkgsToAdd []string) (packagesUpdated []string, userWarnings []string, err error) {
+	for _, pkg := range pkgsToAdd {
 		isSysPkg, err := d.isSystemPackage(ctx, pkg)
 		if err != nil {
-			return shared.PmPackages{}, []string{}, err
+			return packagesUpdated, []string{}, err
 		}
 
 		if !isSysPkg {
-			packagesConfig.Global.Packages = append(packagesConfig.Global.Packages, pkg)
+			packagesUpdated = append(packagesUpdated, pkg)
 		} else {
 			userWarnings = append(userWarnings, fmt.Sprintf("'%s' is a system package and cannot be managed", pkg))
 		}
 	}
-	return packagesConfig, userWarnings, nil
+	return packagesUpdated, userWarnings, nil
 }
 
 func (d *Dnf) InstallValidArgs(ctx context.Context, toComplete string) ([]string, error) {
@@ -89,7 +89,7 @@ func (d *Dnf) InstallValidArgs(ctx context.Context, toComplete string) ([]string
 	return pkgs, nil
 }
 
-func (d *Dnf) ListDependencies(ctx context.Context, tx *gorm.DB, packages shared.PmPackages) (depStatus shared.DependenciesStatus, err error) {
+func (d *Dnf) ListDependencies(ctx context.Context, tx *gorm.DB, deps []string) (depStatus shared.DependenciesStatus, err error) {
 	installedCoprs, err := d.listCoprs(ctx)
 	if err != nil {
 		return shared.DependenciesStatus{}, err
@@ -100,7 +100,7 @@ func (d *Dnf) ListDependencies(ctx context.Context, tx *gorm.DB, packages shared
 		return shared.DependenciesStatus{}, err
 	}
 
-	pCoprs, pCms := d.sortDeps(packages.Global.Dependencies)
+	pCoprs, pCms := d.sortDeps(deps)
 
 	// COPR
 	for _, dep := range pCoprs {
@@ -142,7 +142,7 @@ func (d *Dnf) ListDependencies(ctx context.Context, tx *gorm.DB, packages shared
 	for _, dep := range sCoprs {
 		for _, dnfDep := range installedCoprs {
 			if dnfDep == dep.Name {
-				if !lo.Contains(packages.Global.Dependencies, dep.FullName) {
+				if !lo.Contains(deps, dep.FullName) {
 					depStatus.Removed = append(depStatus.Removed, dep)
 				}
 				break
@@ -153,7 +153,7 @@ func (d *Dnf) ListDependencies(ctx context.Context, tx *gorm.DB, packages shared
 	for _, dep := range sCms {
 		for _, dnfDep := range installedCms {
 			if strings.HasSuffix(dep.Name, dnfDep) {
-				if !lo.Contains(packages.Global.Dependencies, dep.FullName) {
+				if !lo.Contains(deps, dep.FullName) {
 					depStatus.Removed = append(depStatus.Removed, dep)
 				}
 				break
@@ -164,45 +164,36 @@ func (d *Dnf) ListDependencies(ctx context.Context, tx *gorm.DB, packages shared
 	return
 }
 
-func (d *Dnf) ListPackages(ctx context.Context, tx *gorm.DB, packages shared.PmPackages) (packageStatus shared.PackageStatus, err error) {
+func (d *Dnf) ListPackages(ctx context.Context, tx *gorm.DB, packages []string) (packageStatus shared.PackageStatus, err error) {
 	dnfList, err := d.listInstalled(ctx)
 	if err != nil {
 		return
 	}
 
-	for _, pkg := range packages.Global.Packages {
+	for _, pkg := range packages {
 		pkgFound := false
 		for _, dnfPkg := range dnfList {
 			if dnfPkg == pkg {
 				packageStatus.Synced = append(packageStatus.Synced, shared.Package{Name: pkg, FullName: pkg})
-				// installedPkgs = append(installedPkgs, pkg)
 				pkgFound = true
 				break
 			}
 		}
 		if !pkgFound {
 			packageStatus.Missing = append(packageStatus.Missing, shared.Package{Name: pkg, FullName: pkg})
-			// missingPkgs = append(missingPkgs, pkg)
 		}
 	}
 
-	// FIXME: State check should be global for all managers
-	// So removedPkgs should not be coming from this func
-	//
-	// NO! Scratch that. Ofc the manager needs to deal with it..
-	// Otherwise we cant make sure the package is installed or not
 	statePkgs, err := state.GetPackageState(tx, d.Name())
 	if err != nil {
 		return
-		// return nil, nil, nil, err
 	}
 
 	for _, pkg := range statePkgs {
 		for _, dnfPkg := range dnfList {
 			if dnfPkg == pkg {
-				if !lo.Contains(packages.Global.Packages, pkg) {
+				if !lo.Contains(packages, pkg) {
 					packageStatus.Removed = append(packageStatus.Removed, shared.Package{Name: pkg, FullName: pkg})
-					// removedPkgs = append(removedPkgs, pkg)
 				}
 				break
 			}
@@ -212,11 +203,12 @@ func (d *Dnf) ListPackages(ctx context.Context, tx *gorm.DB, packages shared.PmP
 	return
 }
 
-func (d *Dnf) Remove(ctx context.Context, packagesConfig shared.PmPackages, pkgs []string) (packageConfig shared.PmPackages, userWarnings []string, err error) {
+func (d *Dnf) Remove(ctx context.Context, packages []string, pkgs []string) (packagesToRemove []string, userWarnings []string, err error) {
 	for _, pkg := range pkgs {
-		isSysPkg, err := d.isSystemPackage(ctx, pkg)
+		var isSysPkg bool
+		isSysPkg, err = d.isSystemPackage(ctx, pkg)
 		if err != nil {
-			return shared.PmPackages{}, []string{}, err
+			return
 		}
 
 		if isSysPkg {
@@ -224,11 +216,11 @@ func (d *Dnf) Remove(ctx context.Context, packagesConfig shared.PmPackages, pkgs
 		}
 	}
 
-	packagesConfig.Global.Packages = lo.Filter(packagesConfig.Global.Packages, func(item string, index int) bool {
-		return !lo.Contains(pkgs, item)
+	packagesToRemove = lo.Filter(pkgs, func(item string, index int) bool {
+		return lo.Contains(packages, item)
 	})
 
-	return packagesConfig, userWarnings, nil
+	return
 }
 
 func (d *Dnf) SyncDependencies(ctx context.Context, depStatus shared.DependenciesStatus) (userWarnings []string, err error) {
