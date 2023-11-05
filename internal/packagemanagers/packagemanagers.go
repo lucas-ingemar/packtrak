@@ -1,32 +1,32 @@
 package packagemanagers
 
 import (
-	"context"
-
 	"github.com/lucas-ingemar/packtrak/internal/config"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
-	"gorm.io/gorm"
 )
 
 var (
-	PackageManagersRegistered = []PackageManager{&Dnf{}, &Go{}}
-	PackageManagers           = []PackageManager{}
+	PackageManagersRegistered = []shared.PackageManager{&Dnf{}, &Go{}}
+	PackageManagers           = []shared.PackageManager{}
 )
 
-type PackageManager interface {
-	Name() string
-	Icon() string
+// type PackageManager interface {
+// 	Name() string
+// 	Icon() string
+// 	NeedsSudo() []shared.CommandName
 
-	GetPackageNames(ctx context.Context, packagesConfig shared.PmPackages) []string
+// 	GetPackageNames(ctx context.Context, packagesConfig shared.PmPackages) []string
 
-	// FIXME: Update to new format
-	Add(ctx context.Context, packagesConfig shared.PmPackages, pkgs []string) (packagesConfigUpdated shared.PmPackages, userWarnings []string, err error)
-	InstallValidArgs(ctx context.Context, toComplete string) ([]string, error)
-	List(ctx context.Context, tx *gorm.DB, packages shared.PmPackages) (packageStatus shared.PackageStatus, err error)
-	// FIXME: Update to new format
-	Remove(ctx context.Context, packagesConfig shared.PmPackages, pkgs []string) (packagesConfigUpdated shared.PmPackages, userWarnings []string, err error)
-	Sync(ctx context.Context, packageStatus shared.PackageStatus) (userWarnings []string, err error)
-}
+// 	// FIXME: Update to new format
+// 	Add(ctx context.Context, packagesConfig shared.PmPackages, pkgs []string) (packagesConfigUpdated shared.PmPackages, userWarnings []string, err error)
+// 	InstallValidArgs(ctx context.Context, toComplete string) ([]string, error)
+// 	ListDependencies(ctx context.Context, tx *gorm.DB, packages shared.PmPackages) (depStatus shared.DependenciesStatus, err error)
+// 	ListPackages(ctx context.Context, tx *gorm.DB, packages shared.PmPackages) (packageStatus shared.PackageStatus, err error)
+// 	// FIXME: Update to new format
+// 	Remove(ctx context.Context, packagesConfig shared.PmPackages, pkgs []string) (packagesConfigUpdated shared.PmPackages, userWarnings []string, err error)
+// 	SyncDependencies(ctx context.Context, depStatus shared.DependenciesStatus) (userWarnings []string, err error)
+// 	SyncPackages(ctx context.Context, packageStatus shared.PackageStatus) (userWarnings []string, err error)
+// }
 
 func InitPackageManagers() {
 	for _, pm := range PackageManagersRegistered {

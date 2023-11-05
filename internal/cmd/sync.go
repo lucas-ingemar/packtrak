@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/lucas-ingemar/packtrak/internal/config"
@@ -30,23 +31,45 @@ var syncCmd = &cobra.Command{
 }
 
 func cmdSync(ctx context.Context) (err error) {
+	if !shared.MustDoSudo(ctx, packagemanagers.PackageManagers, shared.CommandSync) {
+		return errors.New("sudo access not granted")
+	}
+
 	tx := state.Begin()
 	defer tx.Rollback()
 
-	var fpkgM, fpkgU, fpkgR []shared.Package
+	// var fpkgM, fpkgU, fpkgR []shared.Package
+	totUpdatedPkgs := []shared.Package{}
+	totUpdatedDeps := []shared.Dependency{}
 
 	pkgsState := map[string][]shared.Package{}
 	pkgStatus := map[string]shared.PackageStatus{}
 
+	depsState := map[string][]shared.Dependency{}
+	depStatus := map[string]shared.DependenciesStatus{}
+
 	for _, pm := range packagemanagers.PackageManagers {
+		fmt.Printf("Listing %s dependencies...\n", pm.Name())
+		depStatus[pm.Name()], err = pm.ListDependencies(ctx, tx, config.Packages[pm.Name()])
+		if err != nil {
+			panic(err)
+		}
 		fmt.Printf("Listing %s packages...\n", pm.Name())
-		pkgStatus[pm.Name()], err = pm.List(ctx, tx, config.Packages[pm.Name()])
+		pkgStatus[pm.Name()], err = pm.ListPackages(ctx, tx, config.Packages[pm.Name()])
 		if err != nil {
 			return
 		}
-		fpkgM = append(fpkgM, pkgStatus[pm.Name()].Missing...)
-		fpkgU = append(fpkgU, pkgStatus[pm.Name()].Updated...)
-		fpkgR = append(fpkgR, pkgStatus[pm.Name()].Removed...)
+		totUpdatedDeps = append(totUpdatedDeps, depStatus[pm.Name()].Missing...)
+		totUpdatedDeps = append(totUpdatedDeps, depStatus[pm.Name()].Updated...)
+		totUpdatedDeps = append(totUpdatedDeps, depStatus[pm.Name()].Removed...)
+
+		depsState[pm.Name()] = append(depsState[pm.Name()], depStatus[pm.Name()].Synced...)
+		depsState[pm.Name()] = append(depsState[pm.Name()], depStatus[pm.Name()].Updated...)
+		depsState[pm.Name()] = append(depsState[pm.Name()], depStatus[pm.Name()].Missing...)
+
+		totUpdatedPkgs = append(totUpdatedPkgs, pkgStatus[pm.Name()].Missing...)
+		totUpdatedPkgs = append(totUpdatedPkgs, pkgStatus[pm.Name()].Updated...)
+		totUpdatedPkgs = append(totUpdatedPkgs, pkgStatus[pm.Name()].Removed...)
 
 		pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgStatus[pm.Name()].Synced...)
 		pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgStatus[pm.Name()].Updated...)
@@ -54,11 +77,16 @@ func cmdSync(ctx context.Context) (err error) {
 		// pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgStatus[pm.Name()].Removed...)
 	}
 
-	printPackageList(pkgStatus)
+	printPackageList(depStatus, pkgStatus)
 
-	if len(fpkgM) == 0 && len(fpkgU) == 0 && len(fpkgR) == 0 {
+	if len(totUpdatedDeps) == 0 && len(totUpdatedPkgs) == 0 {
 		for _, pm := range packagemanagers.PackageManagers {
 			err := state.UpdatePackageState(tx, pm.Name(), pkgsState[pm.Name()])
+			if err != nil {
+				return err
+			}
+
+			err = state.UpdateDependencyState(tx, pm.Name(), depsState[pm.Name()])
 			if err != nil {
 				return err
 			}
@@ -79,7 +107,17 @@ func cmdSync(ctx context.Context) (err error) {
 
 	if result == "y" {
 		for _, pm := range packagemanagers.PackageManagers {
-			uw, err := pm.Sync(ctx, pkgStatus[pm.Name()])
+			uw, err := pm.SyncDependencies(ctx, depStatus[pm.Name()])
+			_ = uw
+			if err != nil {
+				return err
+			}
+			err = state.UpdateDependencyState(tx, pm.Name(), depsState[pm.Name()])
+			if err != nil {
+				return err
+			}
+
+			uw, err = pm.SyncPackages(ctx, pkgStatus[pm.Name()])
 			_ = uw
 			if err != nil {
 				return err

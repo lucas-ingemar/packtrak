@@ -79,7 +79,7 @@ const (
 	PtermSpinnerRemove  PtermSpinnerStatus = "remove"
 )
 
-var ptermSpinnerStatusMsgs map[PtermSpinnerStatus]ptermMsgs = map[PtermSpinnerStatus]ptermMsgs{
+var PtermSpinnerStatusMsgs map[PtermSpinnerStatus]ptermMsgs = map[PtermSpinnerStatus]ptermMsgs{
 	PtermSpinnerInstall: {
 		Start:   "Installing %s...",
 		Success: "%s installed successfully",
@@ -97,14 +97,14 @@ var ptermSpinnerStatusMsgs map[PtermSpinnerStatus]ptermMsgs = map[PtermSpinnerSt
 	},
 }
 
-func PtermSpinner(spinnerStatus PtermSpinnerStatus, pkg Package, f func() error) error {
-	spinner, _ := pterm.DefaultSpinner.Start(fmt.Sprintf(ptermSpinnerStatusMsgs[spinnerStatus].Start, pkg.Name))
+func PtermSpinner(spinnerStatus PtermSpinnerStatus, itemName string, f func() error) error {
+	spinner, _ := pterm.DefaultSpinner.Start(fmt.Sprintf(PtermSpinnerStatusMsgs[spinnerStatus].Start, itemName))
 	spinner.SuccessPrinter = &PtermInstalled
 	spinner.FailPrinter = &PtermRemoved
 	if err := f(); err != nil {
-		spinner.Fail(fmt.Sprintf(ptermSpinnerStatusMsgs[spinnerStatus].Fail, pkg.Name)) // Resolve spinner with error message.
+		spinner.Fail(fmt.Sprintf(PtermSpinnerStatusMsgs[spinnerStatus].Fail, itemName)) // Resolve spinner with error message.
 		return err
 	}
-	spinner.Success(fmt.Sprintf(ptermSpinnerStatusMsgs[spinnerStatus].Success, pkg.Name)) // Resolve spinner with error message.
+	spinner.Success(fmt.Sprintf(PtermSpinnerStatusMsgs[spinnerStatus].Success, itemName)) // Resolve spinner with error message.
 	return nil
 }

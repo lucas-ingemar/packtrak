@@ -14,9 +14,9 @@ import (
 var (
 	ConfigDir   string
 	DataDir     string
+	CacheDir    string
 	ConfigFile  string
 	PackageFile string
-	StateFile1  string
 	StateFile   string
 
 	ConfigFileExists bool
@@ -40,6 +40,8 @@ func Refresh() {
 	ConfigFile = filepath.Join(ConfigDir, "config.yaml")
 	PackageFile = filepath.Join(ConfigDir, "packages.yaml")
 
+	CacheDir = filepath.Join(xdg.CacheHome, "packtrak")
+
 	ConfigFileExists = configFileExists()
 
 	viper.SetConfigName("config")
@@ -53,6 +55,8 @@ func Refresh() {
 			panic(fmt.Errorf("fatal error config file: %w", err))
 		}
 	}
+
+	mustCreateCacheDir()
 
 	DataDir = getViperStringWithDefault("data_dir", filepath.Join(xdg.DataHome, "packtrak"))
 	StateFile = filepath.Join(DataDir, "state.db")
@@ -85,4 +89,11 @@ func getViperBoolWithDefault(key string, defaultValue bool) bool {
 func configFileExists() bool {
 	_, err := os.Stat(ConfigFile)
 	return !os.IsNotExist(err)
+}
+
+func mustCreateCacheDir() {
+	err := os.MkdirAll(CacheDir, os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
 }

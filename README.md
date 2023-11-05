@@ -39,3 +39,4 @@ That have its own table in the state.
 * Add update function
 
 # KNOWN ISSUES:
+* Must trigger sudo early on, so that dnf is running under sudo without password

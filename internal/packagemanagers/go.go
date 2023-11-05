@@ -30,6 +30,10 @@ func (g *Go) Icon() string {
 	return "󰟓"
 }
 
+func (g *Go) NeedsSudo() []shared.CommandName {
+	return []shared.CommandName{}
+}
+
 func (g *Go) GetPackageNames(ctx context.Context, packagesConfig shared.PmPackages) []string {
 	pkgNames := []string{}
 	for _, pkg := range packagesConfig.Global.Packages {
@@ -48,7 +52,11 @@ func (g *Go) InstallValidArgs(ctx context.Context, toComplete string) ([]string,
 	return []string{}, nil
 }
 
-func (g *Go) List(ctx context.Context, tx *gorm.DB, packages shared.PmPackages) (packageStatus shared.PackageStatus, err error) {
+func (g *Go) ListDependencies(ctx context.Context, tx *gorm.DB, packages shared.PmPackages) (depStatus shared.DependenciesStatus, err error) {
+	return
+}
+
+func (g *Go) ListPackages(ctx context.Context, tx *gorm.DB, packages shared.PmPackages) (packageStatus shared.PackageStatus, err error) {
 	installed, err := g.listInstalled(ctx)
 	if err != nil {
 		return
@@ -107,10 +115,14 @@ func (g *Go) Remove(ctx context.Context, packagesConfig shared.PmPackages, pkgs 
 	return packagesConfig, userWarnings, nil
 }
 
-func (g *Go) Sync(ctx context.Context, packageStatus shared.PackageStatus) (userWarnings []string, err error) {
+func (g *Go) SyncDependencies(ctx context.Context, depStatus shared.DependenciesStatus) (userWarnings []string, err error) {
+	return
+}
+
+func (g *Go) SyncPackages(ctx context.Context, packageStatus shared.PackageStatus) (userWarnings []string, err error) {
 	// fmt.Println(packageStatus)
 	for _, pkg := range packageStatus.Missing {
-		err = shared.PtermSpinner(shared.PtermSpinnerInstall, pkg, func() error {
+		err = shared.PtermSpinner(shared.PtermSpinnerInstall, pkg.Name, func() error {
 			return g.install(ctx, pkg)
 		})
 		//NOTE: Not sure what to do with err here. Maybe just verbose log?
@@ -118,7 +130,7 @@ func (g *Go) Sync(ctx context.Context, packageStatus shared.PackageStatus) (user
 	}
 
 	for _, pkg := range packageStatus.Updated {
-		err = shared.PtermSpinner(shared.PtermSpinnerUpdate, pkg, func() error {
+		err = shared.PtermSpinner(shared.PtermSpinnerUpdate, pkg.Name, func() error {
 			return g.install(ctx, pkg)
 		})
 		//NOTE: Not sure what to do with err here. Maybe just verbose log?
@@ -126,7 +138,7 @@ func (g *Go) Sync(ctx context.Context, packageStatus shared.PackageStatus) (user
 	}
 
 	for _, pkg := range packageStatus.Removed {
-		err = shared.PtermSpinner(shared.PtermSpinnerRemove, pkg, func() error {
+		err = shared.PtermSpinner(shared.PtermSpinnerRemove, pkg.Name, func() error {
 			return g.remove(pkg)
 		})
 		//NOTE: Not sure what to do with err here. Maybe just verbose log?
@@ -136,7 +148,7 @@ func (g *Go) Sync(ctx context.Context, packageStatus shared.PackageStatus) (user
 }
 
 func (g *Go) install(ctx context.Context, pkg shared.Package) error {
-	_, err := shared.Command(ctx, "go", []string{"install", pkg.FullName + "@latest"}, false)
+	_, err := shared.Command(ctx, "go", []string{"install", pkg.FullName + "@latest"}, false, nil)
 	if err != nil {
 		return err
 	}

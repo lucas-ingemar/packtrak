@@ -3,15 +3,17 @@ package shared
 import (
 	"context"
 	"errors"
+	"io"
 
 	"github.com/alexellis/go-execute/v2"
 )
 
-func Command(ctx context.Context, command string, args []string, streamStdio bool) (string, error) {
+func Command(ctx context.Context, command string, args []string, streamStdio bool, stdIn io.Reader) (string, error) {
 	cmd := execute.ExecTask{
 		Command:     command,
 		Args:        args,
 		StreamStdio: streamStdio,
+		Stdin:       stdIn,
 	}
 
 	res, err := cmd.Execute(ctx)

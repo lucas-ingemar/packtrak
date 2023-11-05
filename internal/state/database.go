@@ -24,6 +24,13 @@ type PackageState struct {
 	Package   string
 }
 
+type DependencyState struct {
+	ID         uint `gorm:"primarykey"`
+	CreatedAt  time.Time
+	Manager    string
+	Dependency string
+}
+
 func InitDb() error {
 	// FIXME: Connect verbose flag
 	newLogger := logger.New(
@@ -44,7 +51,7 @@ func InitDb() error {
 	}
 	db = *dbInit
 
-	err = db.AutoMigrate(&PackageState{})
+	err = db.AutoMigrate(&PackageState{}, &DependencyState{})
 	if err != nil {
 		return err
 	}
@@ -104,6 +111,52 @@ func GetPackageState(tx *gorm.DB, manager string) (packages []string, err error)
 	}
 
 	return packages, err
+}
+
+func UpdateDependencyState(tx *gorm.DB, manager string, deps []shared.Dependency) error {
+	currentDeps, err := GetDependencyState(tx, manager)
+	if err != nil {
+		return err
+	}
+
+	depNames := []string{}
+	for _, d := range deps {
+		depNames = append(depNames, d.FullName)
+	}
+
+	for _, dep := range currentDeps {
+		if !lo.Contains(depNames, dep) {
+			result := tx.Where("manager LIKE ? AND dependency = ?", manager, dep).Delete(&DependencyState{Dependency: dep})
+			if result.Error != nil {
+				return result.Error
+			}
+		}
+	}
+
+	for _, dep := range depNames {
+		if !lo.Contains(currentDeps, dep) {
+			result := tx.Create(&DependencyState{Dependency: dep, Manager: manager})
+			if result.Error != nil {
+				return result.Error
+			}
+		}
+	}
+	return nil
+}
+
+func GetDependencyState(tx *gorm.DB, manager string) (dependencies []string, err error) {
+	depStates := []DependencyState{}
+
+	result := tx.Where("manager LIKE ?", manager).Find(&depStates)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	for _, dep := range depStates {
+		dependencies = append(dependencies, dep.Dependency)
+	}
+
+	return dependencies, err
 }
 
 // func Test() {

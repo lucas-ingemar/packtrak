@@ -23,7 +23,7 @@ func initRemove() {
 	}
 }
 
-func generateRemoveValidArgsFunc(pm packagemanagers.PackageManager, pmPackages shared.PmPackages) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func generateRemoveValidArgsFunc(pm shared.PackageManager, pmPackages shared.PmPackages) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return lo.Filter(pm.GetPackageNames(cmd.Context(), pmPackages),
 				func(item string, index int) bool {
@@ -33,7 +33,7 @@ func generateRemoveValidArgsFunc(pm packagemanagers.PackageManager, pmPackages s
 	}
 }
 
-func generateRemoveCmd(pm packagemanagers.PackageManager, pmPackages shared.PmPackages) func(cmd *cobra.Command, args []string) {
+func generateRemoveCmd(pm shared.PackageManager, pmPackages shared.PmPackages) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		args = lo.Uniq(args)
 

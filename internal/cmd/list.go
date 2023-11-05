@@ -17,7 +17,7 @@ func initList() {
 			Use:   "list",
 			Short: fmt.Sprintf("List status of %s packages", pm.Name()),
 			Args:  cobra.NoArgs,
-			Run:   generateListCmd([]packagemanagers.PackageManager{pm}),
+			Run:   generateListCmd([]shared.PackageManager{pm}),
 		})
 	}
 
@@ -30,42 +30,31 @@ func initList() {
 	rootCmd.AddCommand(listGlobalCmd)
 }
 
-func generateListCmd(pms []packagemanagers.PackageManager) func(cmd *cobra.Command, args []string) {
+func generateListCmd(pms []shared.PackageManager) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		var err error
 		tx := state.Begin()
 
-		// pkgsSynced := map[string][]string{}
-		// pkgsInstall := map[string][]string{}
-		// pkgsRemove := map[string][]string{}
+		depStatus := map[string]shared.DependenciesStatus{}
 		pkgStatus := map[string]shared.PackageStatus{}
 
 		for _, pm := range pms {
-			pkgsState := []shared.Package{}
+			// pkgsState := []shared.Package{}
+			fmt.Printf("Listing %s dependencies...\n", pm.Name())
+			depStatus[pm.Name()], err = pm.ListDependencies(cmd.Context(), tx, config.Packages[pm.Name()])
+			if err != nil {
+				panic(err)
+			}
 			fmt.Printf("Listing %s packages...\n", pm.Name())
-			// pkgsSynced[pm.Name()], pkgsInstall[pm.Name()], pkgsRemove[pm.Name()], err = pm.List(cmd.Context(), tx, config.Packages[pm.Name()])
-			pkgStatus[pm.Name()], err = pm.List(cmd.Context(), tx, config.Packages[pm.Name()])
+			pkgStatus[pm.Name()], err = pm.ListPackages(cmd.Context(), tx, config.Packages[pm.Name()])
 			if err != nil {
 				panic(err)
 			}
 
-			// pkgsState = append(pkgsState, pkgsSynced[pm.Name()]...)
-			// pkgsState = append(pkgsState, pkgsInstall[pm.Name()]...)
-			// // Must include removed pkgs as well. Otherwise the state will be messed up
-			// pkgsState = append(pkgsState, pkgsRemove[pm.Name()]...)
-
-			pkgsState = append(pkgsState, pkgStatus[pm.Name()].Synced...)
-			pkgsState = append(pkgsState, pkgStatus[pm.Name()].Updated...)
-			pkgsState = append(pkgsState, pkgStatus[pm.Name()].Missing...)
-			// pkgsState = append(pkgsState, pkgStatus[pm.Name()].Removed...)
-			// pkgsState = append(pkgsState, [pm.Name()]...)
-			// pkgsState = append(pkgsState, [pm.Name()]...)
-			// pkgsState = append(pkgsState, [pm.Name()]...)
-
-			// err := state.UpdatePackageState(tx, pm.Name(), pkgsState)
-			// if err != nil {
-			// 	panic(err)
-			// }
+			// FIXME: This is currently not used. Pretty sure I dont want to sync state on list?
+			// pkgsState = append(pkgsState, pkgStatus[pm.Name()].Synced...)
+			// pkgsState = append(pkgsState, pkgStatus[pm.Name()].Updated...)
+			// pkgsState = append(pkgsState, pkgStatus[pm.Name()].Missing...)
 
 		}
 
@@ -73,13 +62,32 @@ func generateListCmd(pms []packagemanagers.PackageManager) func(cmd *cobra.Comma
 		if res.Error != nil {
 			panic(res.Error)
 		}
-
-		printPackageList(pkgStatus)
+		printPackageList(depStatus, pkgStatus)
 	}
 }
 
-func printPackageList(pkgStatus map[string]shared.PackageStatus) {
+func printPackageList(depStatus map[string]shared.DependenciesStatus, pkgStatus map[string]shared.PackageStatus) {
 	noSynced, noUpdated, noMissing, noRemoved := 0, 0, 0, 0
+
+	fmt.Println("\nDependencies:")
+	for _, pm := range packagemanagers.PackageManagers {
+		for _, dep := range depStatus[pm.Name()].Synced {
+			shared.PtermInstalled.Printfln("%s %s", pm.Icon(), dep.Name)
+			noSynced++
+		}
+
+		for _, dep := range depStatus[pm.Name()].Missing {
+			shared.PtermMissing.Printfln("%s %s", pm.Icon(), dep.Name)
+			noMissing++
+		}
+
+		for _, dep := range depStatus[pm.Name()].Removed {
+			shared.PtermRemoved.Printfln("%s %s", pm.Icon(), dep.Name)
+			noRemoved++
+		}
+	}
+
+	fmt.Println("\nPackages:")
 	for _, pm := range packagemanagers.PackageManagers {
 		for _, pkg := range pkgStatus[pm.Name()].Synced {
 			shared.PtermInstalled.Printfln("%s %s", pm.Icon(), pkg.Name)

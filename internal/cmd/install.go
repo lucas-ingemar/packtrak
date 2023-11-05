@@ -22,7 +22,7 @@ func initInstall() {
 	}
 }
 
-func generateInstallValidArgsFunc(pm packagemanagers.PackageManager, pmPackages shared.PmPackages) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func generateInstallValidArgsFunc(pm shared.PackageManager, pmPackages shared.PmPackages) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		pkgs, err := pm.InstallValidArgs(cmd.Context(), toComplete)
 		if err != nil {
@@ -32,7 +32,7 @@ func generateInstallValidArgsFunc(pm packagemanagers.PackageManager, pmPackages 
 	}
 }
 
-func generateInstallCmd(pm packagemanagers.PackageManager, pmPackages shared.PmPackages) func(cmd *cobra.Command, args []string) {
+func generateInstallCmd(pm shared.PackageManager, pmPackages shared.PmPackages) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		args = lo.Uniq(args)
 		pkgsToAdd := []string{}
