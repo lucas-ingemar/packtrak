@@ -35,6 +35,9 @@ func generateRemoveValidArgsFunc(pm shared.PackageManager, pmPackages shared.PmP
 
 func generateRemoveCmd(pm shared.PackageManager, pmPackages shared.PmPackages) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
+		if !shared.MustDoSudo(cmd.Context(), []shared.PackageManager{pm}, shared.CommandRemove) {
+			panic("sudo access not granted")
+		}
 		args = lo.Uniq(args)
 
 		pkgsToRemove := []string{}

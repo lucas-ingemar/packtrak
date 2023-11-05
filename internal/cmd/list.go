@@ -32,7 +32,12 @@ func initList() {
 
 func generateListCmd(pms []shared.PackageManager) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
+		if !shared.MustDoSudo(cmd.Context(), pms, shared.CommandList) {
+			panic("sudo access not granted")
+		}
+
 		var err error
+
 		tx := state.Begin()
 
 		depStatus := map[string]shared.DependenciesStatus{}

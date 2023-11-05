@@ -63,8 +63,8 @@ type DependenciesStatus struct {
 type CommandName string
 
 const (
-	CommandAdd    CommandName = "add"
-	CommandRemove CommandName = "remove"
-	CommandList   CommandName = "list"
-	CommandSync   CommandName = "sync"
+	CommandInstall CommandName = "install"
+	CommandRemove  CommandName = "remove"
+	CommandList    CommandName = "list"
+	CommandSync    CommandName = "sync"
 )

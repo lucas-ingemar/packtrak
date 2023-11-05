@@ -34,6 +34,10 @@ func generateInstallValidArgsFunc(pm shared.PackageManager, pmPackages shared.Pm
 
 func generateInstallCmd(pm shared.PackageManager, pmPackages shared.PmPackages) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
+		if !shared.MustDoSudo(cmd.Context(), []shared.PackageManager{pm}, shared.CommandInstall) {
+			panic("sudo access not granted")
+		}
+
 		args = lo.Uniq(args)
 		pkgsToAdd := []string{}
 		warningPrinted := false

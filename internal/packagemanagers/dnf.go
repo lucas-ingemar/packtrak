@@ -34,7 +34,7 @@ func (d *Dnf) Icon() string {
 }
 
 func (d *Dnf) NeedsSudo() []shared.CommandName {
-	return []shared.CommandName{shared.CommandAdd, shared.CommandRemove, shared.CommandSync}
+	return []shared.CommandName{shared.CommandInstall, shared.CommandRemove, shared.CommandSync}
 }
 
 func (d *Dnf) GetPackageNames(ctx context.Context, packagesConfig shared.PmPackages) []string {

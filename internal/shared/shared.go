@@ -34,6 +34,10 @@ func MustDoSudo(ctx context.Context, packageManagers []PackageManager, cmd Comma
 		}
 	}
 
+	if len(pmNames) == 0 {
+		return true
+	}
+
 	text := fmt.Sprintf("The following package managers needs sudo privileges to work properly with the '%s' command:\n\n%s\n\nDo you want to grant access? You might need to enter your password", cmd, strings.Join(pmNames, ", "))
 	result, _ := pterm.InteractiveContinuePrinter{
 		DefaultValueIndex: 0,
