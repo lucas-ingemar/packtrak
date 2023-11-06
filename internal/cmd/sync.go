@@ -49,15 +49,17 @@ func cmdSync(ctx context.Context) (err error) {
 	depStatus := map[string]shared.DependenciesStatus{}
 
 	for _, pm := range packagemanagers.PackageManagers {
+		packages, dependencies, errF := manifest.Filter(*manifest.Manifest.Pm(pm.Name()))
+		if errF != nil {
+			panic(err)
+		}
 		fmt.Printf("Listing %s dependencies...\n", pm.Name())
-		// FIXME: Manifestfilter
-		depStatus[pm.Name()], err = pm.ListDependencies(ctx, tx, manifest.Manifest.Pm(pm.Name()).Global.Dependencies)
+		depStatus[pm.Name()], err = pm.ListDependencies(ctx, tx, dependencies)
 		if err != nil {
 			panic(err)
 		}
 		fmt.Printf("Listing %s packages...\n", pm.Name())
-		// FIXME: Manifestfilter
-		pkgStatus[pm.Name()], err = pm.ListPackages(ctx, tx, manifest.Manifest.Pm(pm.Name()).Global.Packages)
+		pkgStatus[pm.Name()], err = pm.ListPackages(ctx, tx, packages)
 		if err != nil {
 			return
 		}

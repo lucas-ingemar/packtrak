@@ -30,13 +30,14 @@ func initList() {
 	rootCmd.AddCommand(listGlobalCmd)
 }
 
+// FIXME: This is almost identical to the first part of sync. Should make a common function
 func generateListCmd(pms []shared.PackageManager) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		if !shared.MustDoSudo(cmd.Context(), pms, shared.CommandList) {
 			panic("sudo access not granted")
 		}
 
-		var err error
+		// var err error
 
 		tx := state.Begin()
 
@@ -44,16 +45,18 @@ func generateListCmd(pms []shared.PackageManager) func(cmd *cobra.Command, args 
 		pkgStatus := map[string]shared.PackageStatus{}
 
 		for _, pm := range pms {
+			packages, dependencies, err := manifest.Filter(*manifest.Manifest.Pm(pm.Name()))
+			if err != nil {
+				panic(err)
+			}
 			// pkgsState := []shared.Package{}
 			fmt.Printf("Listing %s dependencies...\n", pm.Name())
-			// FIXME: Manifestfilter
-			depStatus[pm.Name()], err = pm.ListDependencies(cmd.Context(), tx, manifest.Manifest.Pm(pm.Name()).Global.Dependencies)
+			depStatus[pm.Name()], err = pm.ListDependencies(cmd.Context(), tx, dependencies)
 			if err != nil {
 				panic(err)
 			}
 			fmt.Printf("Listing %s packages...\n", pm.Name())
-			// FIXME: Manifestfilter
-			pkgStatus[pm.Name()], err = pm.ListPackages(cmd.Context(), tx, manifest.Manifest.Pm(pm.Name()).Global.Packages)
+			pkgStatus[pm.Name()], err = pm.ListPackages(cmd.Context(), tx, packages)
 			if err != nil {
 				panic(err)
 			}

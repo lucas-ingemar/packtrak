@@ -22,10 +22,12 @@ var (
 	ConfigFileExists bool
 
 	DnfEnabled bool
+	Groups     []string
 )
 
 const (
 	keyDnfEnabled = "dnf.enabled"
+	keyGroups     = "groups"
 )
 
 func init() {
@@ -61,6 +63,8 @@ func Refresh() {
 	DataDir = getViperStringWithDefault("data_dir", filepath.Join(xdg.DataHome, "packtrak"))
 	StateFile = filepath.Join(DataDir, "state.db")
 
+	Groups = getViperStringSliceWithDefault(keyGroups, []string{})
+
 	DnfEnabled = getViperBoolWithDefault(keyDnfEnabled, true)
 	// fmt.Println(DnfEnabled)
 
@@ -79,6 +83,11 @@ func Refresh() {
 func getViperStringWithDefault(key string, defaultValue string) string {
 	viper.SetDefault(key, defaultValue)
 	return viper.GetString(key)
+}
+
+func getViperStringSliceWithDefault(key string, defaultValue []string) []string {
+	viper.SetDefault(key, defaultValue)
+	return viper.GetStringSlice(key)
 }
 
 func getViperBoolWithDefault(key string, defaultValue bool) bool {
