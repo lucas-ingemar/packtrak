@@ -76,7 +76,11 @@ func (d *Dnf) AddDependencies(ctx context.Context, depsToAdd []string) (depsUpda
 	return
 }
 
-func (d *Dnf) InstallValidArgs(ctx context.Context, toComplete string) ([]string, error) {
+func (d *Dnf) InstallValidArgs(ctx context.Context, toComplete string, dependencies bool) ([]string, error) {
+	if dependencies {
+		return []string{}, nil
+	}
+
 	cmd := execute.ExecTask{
 		Command:     "dnf",
 		Args:        []string{"list", "--available", toComplete + "*"},

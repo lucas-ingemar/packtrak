@@ -1,8 +1,8 @@
-# packtrak 
 ![GitHub stars](https://img.shields.io/github/stars/lucas-ingemar/packtrak.svg?label=github%20stars)
 ![Latest GitHub release](https://img.shields.io/github/release/lucas-ingemar/packtrak.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/lucas-ingemar/packtrak)](https://goreportcard.com/report/github.com/lucas-ingemar/packtrak)
 
+# packtrak 
 Track your packages
 
 ## State - PLAN
@@ -77,6 +77,9 @@ That have its own table in the state.
 * ~~Add dependencies. Example: COPR/external sources for dnf~~
 * Add update function
 * Handle add/remove commands with conditional
+* Custom config variables
+* Add initCheck to make sure special config is correct
+* Add initCheckCommand to make sure the correct command exists on the host
 
 # KNOWN ISSUES:
-* Must trigger sudo early on, so that dnf is running under sudo without password
+* ~~Must trigger sudo early on, so that dnf is running under sudo without password~~

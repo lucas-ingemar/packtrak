@@ -56,7 +56,7 @@ func (g *Go) AddDependencies(ctx context.Context, depsToAdd []string) (depsUpdat
 	return
 }
 
-func (g *Go) InstallValidArgs(ctx context.Context, toComplete string) ([]string, error) {
+func (g *Go) InstallValidArgs(ctx context.Context, toComplete string, dependencies bool) ([]string, error) {
 	return []string{}, nil
 }
 

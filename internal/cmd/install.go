@@ -27,8 +27,8 @@ func initInstall() {
 
 func generateInstallValidArgsFunc(pm shared.PackageManager, pmManifest *shared.PmManifest) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		//FIXME: add dependency[bool] as arg to InstallValidArgs
-		pkgs, err := pm.InstallValidArgs(cmd.Context(), toComplete)
+		installDependency := cmd.Flag("dependency").Value.String() == "true"
+		pkgs, err := pm.InstallValidArgs(cmd.Context(), toComplete, installDependency)
 		if err != nil {
 			pkgs = []string{}
 		}

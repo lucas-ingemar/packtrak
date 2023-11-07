@@ -28,13 +28,25 @@ func initRemove() {
 
 func generateRemoveValidArgsFunc(pm shared.PackageManager, pmManifest *shared.PmManifest) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		// FIXME: Manifestfilter
-		// FIXME: Support dependencies
-		return lo.Filter(pm.GetPackageNames(cmd.Context(), pmManifest.Global.Packages),
-				func(item string, index int) bool {
-					return strings.HasPrefix(item, toComplete)
-				}),
-			cobra.ShellCompDirectiveNoFileComp
+		removeDependency := cmd.Flag("dependency").Value.String() == "true"
+		pkgs, deps, err := manifest.Filter(*pmManifest)
+		if err != nil {
+			panic(err)
+		}
+
+		if removeDependency {
+			return lo.Filter(pm.GetDependencyNames(cmd.Context(), deps),
+					func(item string, index int) bool {
+						return strings.HasPrefix(item, toComplete)
+					}),
+				cobra.ShellCompDirectiveNoFileComp
+		} else {
+			return lo.Filter(pm.GetPackageNames(cmd.Context(), pkgs),
+					func(item string, index int) bool {
+						return strings.HasPrefix(item, toComplete)
+					}),
+				cobra.ShellCompDirectiveNoFileComp
+		}
 	}
 }
 

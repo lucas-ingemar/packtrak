@@ -17,7 +17,7 @@ type PackageManager interface {
 	// FIXME: Update to new format ???? This looks fucked up
 	AddPackages(ctx context.Context, pkgsToAdd []string) (packagesUpdated []string, userWarnings []string, err error)
 	AddDependencies(ctx context.Context, depsToAdd []string) (depsUpdated []string, userWarnings []string, err error)
-	InstallValidArgs(ctx context.Context, toComplete string) ([]string, error)
+	InstallValidArgs(ctx context.Context, toComplete string, dependencies bool) ([]string, error)
 	ListDependencies(ctx context.Context, tx *gorm.DB, deps []string) (depStatus DependenciesStatus, err error)
 	ListPackages(ctx context.Context, tx *gorm.DB, packages []string) (packageStatus PackageStatus, err error)
 	// FIXME: Update to new format ???? This looks fucked up
