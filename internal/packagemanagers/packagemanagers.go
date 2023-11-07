@@ -1,9 +1,10 @@
 package packagemanagers
 
 import (
-	"github.com/lucas-ingemar/packtrak/internal/config"
-	"github.com/lucas-ingemar/packtrak/internal/manifest"
+	"fmt"
+
 	"github.com/lucas-ingemar/packtrak/internal/shared"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -11,43 +12,21 @@ var (
 	PackageManagers           = []shared.PackageManager{}
 )
 
-// type PackageManager interface {
-// 	Name() string
-// 	Icon() string
-// 	NeedsSudo() []shared.CommandName
-
-// 	GetPackageNames(ctx context.Context, packagesConfig shared.PmPackages) []string
-
-// 	// FIXME: Update to new format
-// 	Add(ctx context.Context, packagesConfig shared.PmPackages, pkgs []string) (packagesConfigUpdated shared.PmPackages, userWarnings []string, err error)
-// 	InstallValidArgs(ctx context.Context, toComplete string) ([]string, error)
-// 	ListDependencies(ctx context.Context, tx *gorm.DB, packages shared.PmPackages) (depStatus shared.DependenciesStatus, err error)
-// 	ListPackages(ctx context.Context, tx *gorm.DB, packages shared.PmPackages) (packageStatus shared.PackageStatus, err error)
-// 	// FIXME: Update to new format
-// 	Remove(ctx context.Context, packagesConfig shared.PmPackages, pkgs []string) (packagesConfigUpdated shared.PmPackages, userWarnings []string, err error)
-// 	SyncDependencies(ctx context.Context, depStatus shared.DependenciesStatus) (userWarnings []string, err error)
-// 	SyncPackages(ctx context.Context, packageStatus shared.PackageStatus) (userWarnings []string, err error)
-// }
-
-func InitPackageManagers() {
+func InitPackageManagerConfig() {
 	for _, pm := range PackageManagersRegistered {
-		//FIXME: HERE should the enabled/disabled flag be
-		PackageManagers = append(PackageManagers, pm)
+		viper.SetDefault(keyName(pm, "enabled"), true)
 	}
 }
 
-func MustInitManifest() shared.Manifest {
-	var err error
-	manifest.Manifest, err = manifest.ReadManifest(config.ManifestFile)
-	if err != nil {
-		panic(err)
+func InitPackageManagers() {
+	for _, pm := range PackageManagersRegistered {
+		if viper.GetBool(keyName(pm, "enabled")) {
+			//FIXME: Here we should also make the init checks
+			PackageManagers = append(PackageManagers, pm)
+		}
 	}
+}
 
-	// for _, pm := range PackageManagers {
-	// 	_, ok := manifest.Manifest[pm.Name()]
-	// 	if !ok {
-	// 		manifest.Manifest[pm.Name()] = shared.PmManifest{}
-	// 	}
-	// }
-	return manifest.Manifest
+func keyName(pm shared.PackageManager, key string) string {
+	return fmt.Sprintf("managers.%s.%s", pm.Name(), key)
 }

@@ -21,18 +21,21 @@ var (
 
 	ConfigFileExists bool
 
+	Version string
+	RepoUrl string
+
 	DnfEnabled bool
 	Groups     []string
 )
 
 const (
-	keyDnfEnabled = "dnf.enabled"
-	keyGroups     = "groups"
+	// keyDnfEnabled = "dnf.enabled"
+	keyGroups = "groups"
 )
 
-func init() {
-	Refresh()
-}
+// func init() {
+// 	Refresh()
+// }
 
 // type Hej struct {
 // 	// Type  types.String
@@ -80,7 +83,7 @@ func Refresh() {
 
 	Groups = getViperStringSliceWithDefault(keyGroups, []string{})
 
-	DnfEnabled = getViperBoolWithDefault(keyDnfEnabled, true)
+	// DnfEnabled = getViperBoolWithDefault(keyDnfEnabled, true)
 	// fmt.Println(DnfEnabled)
 
 	if !configFileExists() {

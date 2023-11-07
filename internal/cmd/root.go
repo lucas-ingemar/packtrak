@@ -6,6 +6,8 @@ import (
 
 	chigo "github.com/UltiRequiem/chigo/pkg"
 	"github.com/common-nighthawk/go-figure"
+	"github.com/lucas-ingemar/packtrak/internal/config"
+	"github.com/lucas-ingemar/packtrak/internal/manifest"
 	"github.com/lucas-ingemar/packtrak/internal/packagemanagers"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/state"
@@ -41,6 +43,8 @@ func init() {
 		os.Exit(1)
 	}
 
+	packagemanagers.InitPackageManagerConfig()
+	config.Refresh()
 	packagemanagers.InitPackageManagers()
 
 	for _, pm := range packagemanagers.PackageManagers {
@@ -52,7 +56,7 @@ func init() {
 		rootCmd.AddCommand(PmCmds[pm.Name()])
 	}
 
-	packagemanagers.MustInitManifest()
+	manifest.MustInitManifest()
 
 	err := state.InitDb()
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/lucas-ingemar/packtrak/internal/config"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 
 	"gopkg.in/yaml.v3"
@@ -13,6 +14,16 @@ import (
 var (
 	Manifest shared.Manifest
 )
+
+func MustInitManifest() shared.Manifest {
+	var err error
+	Manifest, err = ReadManifest(config.ManifestFile)
+	if err != nil {
+		panic(err)
+	}
+
+	return Manifest
+}
 
 func SaveManifest(filename string) error {
 	var b bytes.Buffer
