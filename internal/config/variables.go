@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/adrg/xdg"
+	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/spf13/viper"
 
 	"path/filepath"
@@ -24,13 +25,14 @@ var (
 	Version string
 	RepoUrl string
 
-	DnfEnabled bool
-	Groups     []string
+	Groups         []string
+	StateRotations int
 )
 
 const (
 	// keyDnfEnabled = "dnf.enabled"
-	keyGroups = "groups"
+	keyGroups         = "groups"
+	keyStateRotations = "state_rotations"
 )
 
 // func init() {
@@ -82,6 +84,7 @@ func Refresh() {
 	StateFile = filepath.Join(DataDir, "state.db")
 
 	Groups = getViperStringSliceWithDefault(keyGroups, []string{})
+	StateRotations = getViperIntWithDefault(keyStateRotations, 3)
 
 	// DnfEnabled = getViperBoolWithDefault(keyDnfEnabled, true)
 	// fmt.Println(DnfEnabled)
@@ -98,9 +101,22 @@ func Refresh() {
 	}
 }
 
+func CheckConfig() {
+	if StateRotations > 10 {
+		viper.Set(keyStateRotations, 10)
+		shared.PtermWarning.Printfln("'%s' (%d) has a limit of 10. Value set to 10.", keyStateRotations, StateRotations)
+	}
+
+}
+
 func getViperStringWithDefault(key string, defaultValue string) string {
 	viper.SetDefault(key, defaultValue)
 	return viper.GetString(key)
+}
+
+func getViperIntWithDefault(key string, defaultValue int) int {
+	viper.SetDefault(key, defaultValue)
+	return viper.GetInt(key)
 }
 
 func getViperStringSliceWithDefault(key string, defaultValue []string) []string {

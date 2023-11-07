@@ -32,6 +32,14 @@ func (g *Go) Icon() string {
 	return "󰟓"
 }
 
+func (g *Go) ShortDesc() string {
+	return "Compile and install Go packages"
+}
+
+func (g *Go) LongDesc() string {
+	return "Compile and install remote Go packages. It's added to the path and ready for you to use"
+}
+
 func (g *Go) NeedsSudo() []shared.CommandName {
 	return []shared.CommandName{}
 }

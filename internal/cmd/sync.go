@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/lucas-ingemar/packtrak/internal/config"
 	"github.com/lucas-ingemar/packtrak/internal/packagemanagers"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/state"
@@ -86,7 +87,10 @@ func cmdSync(ctx context.Context, pms []shared.PackageManager) (err error) {
 				return err
 			}
 		}
-		return tx.Commit().Error
+		if err := tx.Commit().Error; err != nil {
+			return err
+		}
+		return state.Rotate(config.StateRotations)
 	}
 
 	fmt.Println("")
@@ -138,5 +142,5 @@ func cmdSync(ctx context.Context, pms []shared.PackageManager) (err error) {
 		}
 	}
 
-	return nil
+	return state.Rotate(config.StateRotations)
 }

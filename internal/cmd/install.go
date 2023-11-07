@@ -22,7 +22,7 @@ func initInstall() {
 			Run:               generateInstallCmd(pm, manifest.Manifest.Pm(pm.Name())),
 		}
 		installCmd.PersistentFlags().BoolP("dependency", "d", false, "Install dependency")
-		installCmd.PersistentFlags().Bool("host", false, "Install only on current host")
+		installCmd.PersistentFlags().Bool("host", false, "Install only for the current host")
 		installCmd.PersistentFlags().String("group", "", "Install only for specified group")
 		PmCmds[pm.Name()].AddCommand(installCmd)
 	}

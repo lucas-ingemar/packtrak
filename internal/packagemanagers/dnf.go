@@ -34,6 +34,14 @@ func (d *Dnf) Icon() string {
 	return ""
 }
 
+func (d *Dnf) ShortDesc() string {
+	return "A package manager for RPM-based Linux distributions"
+}
+
+func (d *Dnf) LongDesc() string {
+	return "DNF is the next upcoming major version of YUM, a package manager for RPM-based Linux distributions. It roughly maintains CLI compatibility with YUM and defines a strict API for extensions and plugins."
+}
+
 func (d *Dnf) NeedsSudo() []shared.CommandName {
 	return []shared.CommandName{shared.CommandInstall, shared.CommandRemove, shared.CommandSync}
 }

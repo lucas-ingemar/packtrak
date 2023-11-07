@@ -50,8 +50,8 @@ func init() {
 	for _, pm := range packagemanagers.PackageManagers {
 		PmCmds[pm.Name()] = &cobra.Command{
 			Use:   pm.Name(),
-			Short: fmt.Sprintf("%s en liten beskrivning", pm.Icon()),
-			Long:  "En langre beskrivning",
+			Short: pm.ShortDesc(),
+			Long:  pm.LongDesc(),
 		}
 		rootCmd.AddCommand(PmCmds[pm.Name()])
 	}
@@ -68,6 +68,8 @@ func init() {
 	initInstall()
 	initList()
 	initRemove()
+
+	config.CheckConfig()
 
 	cobra.OnInitialize(initConfig)
 	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.cobra.yaml)")
