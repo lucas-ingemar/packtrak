@@ -48,6 +48,10 @@ func cmdSync(ctx context.Context, pms []shared.PackageManager) (err error) {
 		return err
 	}
 
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
 	for _, pm := range pms {
 		totUpdatedDeps = append(totUpdatedDeps, depStatus[pm.Name()].Missing...)
 		totUpdatedDeps = append(totUpdatedDeps, depStatus[pm.Name()].Updated...)
@@ -69,6 +73,8 @@ func cmdSync(ctx context.Context, pms []shared.PackageManager) (err error) {
 	printPackageList(depStatus, pkgStatus)
 
 	if len(totUpdatedDeps) == 0 && len(totUpdatedPkgs) == 0 {
+		tx := state.Begin()
+		defer tx.Rollback()
 		for _, pm := range pms {
 			err := state.UpdatePackageState(tx, pm.Name(), pkgsState[pm.Name()])
 			if err != nil {
@@ -96,6 +102,9 @@ func cmdSync(ctx context.Context, pms []shared.PackageManager) (err error) {
 
 	if result == "y" {
 		for _, pm := range pms {
+			tx := state.Begin()
+			defer tx.Rollback()
+
 			uw, err := pm.SyncDependencies(ctx, depStatus[pm.Name()])
 			_ = uw
 			if err != nil {
@@ -106,6 +115,13 @@ func cmdSync(ctx context.Context, pms []shared.PackageManager) (err error) {
 				return err
 			}
 
+			if err := tx.Commit().Error; err != nil {
+				return err
+			}
+
+			tx = state.Begin()
+			defer tx.Rollback()
+
 			uw, err = pm.SyncPackages(ctx, pkgStatus[pm.Name()])
 			_ = uw
 			if err != nil {
@@ -115,8 +131,12 @@ func cmdSync(ctx context.Context, pms []shared.PackageManager) (err error) {
 			if err != nil {
 				return err
 			}
+
+			if err := tx.Commit().Error; err != nil {
+				return err
+			}
 		}
 	}
 
-	return tx.Commit().Error
+	return nil
 }

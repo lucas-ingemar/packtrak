@@ -60,7 +60,7 @@ go:
 ```
 
 ### Host/environment specific
-Should add rules next to the global packages. For instance for host-specific packages, or `group(?): work` packages.
+~~Should add rules next to the global packages. For instance for host-specific packages, or `group(?): work` packages~~
 
 ## Package versions
 To start with only `latest` will be installed
@@ -71,7 +71,7 @@ Maybe there could be something like dependencies for each manager as well
 That have its own table in the state.
 
 # TODO:
-* Should probably commit db for each packagemanager in sync as well
+* ~~Should probably commit db for each packagemanager in sync as well~~
 * Rotate state file. Config option for how many rotations
 * ~~Make sure user is not sudo when cmd runs~~
 * ~~Add dependencies. Example: COPR/external sources for dnf~~
