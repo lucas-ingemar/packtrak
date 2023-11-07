@@ -7,6 +7,7 @@ import (
 	chigo "github.com/UltiRequiem/chigo/pkg"
 	"github.com/common-nighthawk/go-figure"
 	"github.com/lucas-ingemar/packtrak/internal/packagemanagers"
+	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/state"
 	"github.com/spf13/cobra"
 )
@@ -35,6 +36,11 @@ func Execute() {
 }
 
 func init() {
+	if shared.IsSudo() {
+		shared.PtermWarning.Println("This command can't be run under sudo. You will be prompted later if sudo is needed.")
+		os.Exit(1)
+	}
+
 	packagemanagers.InitPackageManagers()
 
 	for _, pm := range packagemanagers.PackageManagers {

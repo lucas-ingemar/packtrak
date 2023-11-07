@@ -73,10 +73,10 @@ That have its own table in the state.
 # TODO:
 * Should probably commit db for each packagemanager in sync as well
 * Rotate state file. Config option for how many rotations
-* Make sure user is not sudo when cmd runs
+* ~~Make sure user is not sudo when cmd runs~~
 * ~~Add dependencies. Example: COPR/external sources for dnf~~
 * Add update function
-* Handle add/remove commands with conditional
+* ~~Handle add/remove commands with conditional~~
 * Custom config variables
 * Add initCheck to make sure special config is correct
 * Add initCheckCommand to make sure the correct command exists on the host
