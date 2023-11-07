@@ -1,10 +1,9 @@
 package cmd
 
 import (
-	"fmt"
 	"strings"
 
-	"github.com/lucas-ingemar/packtrak/internal/config"
+	"github.com/lucas-ingemar/packtrak/internal/machinery"
 	"github.com/lucas-ingemar/packtrak/internal/manifest"
 	"github.com/lucas-ingemar/packtrak/internal/packagemanagers"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
@@ -56,84 +55,7 @@ func generateRemoveCmd(pm shared.PackageManager, pmManifest *shared.PmManifest) 
 			panic("sudo access not granted")
 		}
 		removeDependency := cmd.Flag("dependency").Value.String() == "true"
-
-		args = lo.Uniq(args)
-
-		objsToRemove := []string{}
-		warningPrinted := false
-
-		var objs []string
-		pkgs, deps, err := manifest.Filter(*pmManifest)
-		if err != nil {
-			panic(err)
-		}
-
-		if removeDependency {
-			objs = pm.GetDependencyNames(cmd.Context(), deps)
-		} else {
-			objs = pm.GetPackageNames(cmd.Context(), pkgs)
-		}
-
-		for _, arg := range args {
-			if !lo.Contains(objs, arg) {
-				shared.PtermWarning.Printfln("'%s' is not present in manifest", arg)
-				warningPrinted = true
-				continue
-			}
-			objsToRemove = append(objsToRemove, arg)
-		}
-
-		var toRemove, userWarnings []string
-
-		if removeDependency {
-			toRemove, userWarnings, err = pm.RemoveDependencies(cmd.Context(), deps, objsToRemove)
-			if err != nil {
-				panic(err)
-			}
-		} else {
-			toRemove, userWarnings, err = pm.RemovePackages(cmd.Context(), pkgs, objsToRemove)
-			if err != nil {
-				panic(err)
-			}
-		}
-
-		for _, uw := range userWarnings {
-			shared.PtermWarning.Println(uw)
-			warningPrinted = true
-		}
-
-		if warningPrinted {
-			fmt.Println("")
-		}
-
-		if removeDependency {
-			pmManifest.Global.RemoveDependencies(toRemove)
-		} else {
-			pmManifest.Global.RemovePackages(toRemove)
-
-		}
-
-		for idx := range pmManifest.Conditional {
-			match, err := manifest.MatchConditional(pmManifest.Conditional[idx])
-			if err != nil {
-				panic(err)
-			}
-			if match {
-				if removeDependency {
-					pmManifest.Conditional[idx].RemoveDependencies(toRemove)
-				} else {
-					pmManifest.Conditional[idx].RemovePackages(toRemove)
-				}
-			}
-		}
-
-		err = cmdSync(cmd.Context(), []shared.PackageManager{pm})
-		if err != nil {
-			panic(err)
-		}
-
-		err = manifest.SaveManifest(config.ManifestFile)
-		if err != nil {
+		if err := machinery.Remove(cmd.Context(), args, pm, pmManifest, removeDependency); err != nil {
 			panic(err)
 		}
 	}

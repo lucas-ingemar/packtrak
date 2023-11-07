@@ -98,21 +98,12 @@ func (d *Dnf) InstallValidArgs(ctx context.Context, toComplete string, dependenc
 		return []string{}, nil
 	}
 
-	cmd := execute.ExecTask{
-		Command:     "dnf",
-		Args:        []string{"list", "--available", toComplete + "*"},
-		StreamStdio: false,
-	}
-
-	res, err := cmd.Execute(ctx)
+	res, err := shared.Command(ctx, "dnf", []string{"list", "--available", toComplete + "*"}, false, nil)
 	if err != nil {
 		return nil, err
 	}
-	if res.ExitCode != 0 {
-		return nil, errors.New("Non-zero exit code: " + res.Stderr)
-	}
 
-	dnfList := strings.Split(strings.TrimSpace(res.Stdout), "\n")
+	dnfList := strings.Split(strings.TrimSpace(res), "\n")
 	for idx, line := range dnfList {
 		if strings.Contains(line, "Available Packages") {
 			dnfList = dnfList[idx+1:]
