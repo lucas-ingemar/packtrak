@@ -22,6 +22,11 @@ func InitPackageManagers() {
 	for _, pm := range PackageManagersRegistered {
 		if viper.GetBool(keyName(pm, "enabled")) {
 			//FIXME: Here we should also make the init checks
+			if err := pm.InitCheckCmd(); err != nil {
+				shared.PtermWarning.Printfln("Disabling %s manager: %s", pm.Name(), err.Error())
+				viper.Set(keyName(pm, "enabled"), false)
+				continue
+			}
 			PackageManagers = append(PackageManagers, pm)
 		}
 	}

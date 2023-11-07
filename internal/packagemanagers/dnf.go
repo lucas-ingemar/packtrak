@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
 
@@ -35,6 +36,14 @@ func (d *Dnf) Icon() string {
 
 func (d *Dnf) NeedsSudo() []shared.CommandName {
 	return []shared.CommandName{shared.CommandInstall, shared.CommandRemove, shared.CommandSync}
+}
+
+func (d *Dnf) InitCheckCmd() error {
+	_, err := exec.LookPath("dnf")
+	if err != nil {
+		return errors.New("'dnf' command not found on the computer")
+	}
+	return nil
 }
 
 func (d *Dnf) GetPackageNames(ctx context.Context, packages []string) []string {

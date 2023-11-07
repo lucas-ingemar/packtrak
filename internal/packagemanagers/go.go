@@ -3,7 +3,9 @@ package packagemanagers
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"regexp"
 	"strings"
@@ -32,6 +34,27 @@ func (g *Go) Icon() string {
 
 func (g *Go) NeedsSudo() []shared.CommandName {
 	return []shared.CommandName{}
+}
+
+func (g *Go) InitCheckCmd() error {
+	_, err := exec.LookPath("go")
+	if err != nil {
+		return errors.New("'go' command not found on the computer")
+	}
+	vString, err := shared.Command(context.Background(), "go", []string{"version"}, false, nil)
+	if err != nil {
+		return errors.New("failed to execute 'go version'")
+	}
+
+	r, err := regexp.Compile(`go(\d+\.\d+\.\d+)`)
+	if err != nil {
+		return errors.New("failed to match version")
+	}
+	v := r.FindStringSubmatch(vString)[1]
+	if v < "1.18.0" {
+		return fmt.Errorf("must use a go v1.18.0 or later. Current version %s", v)
+	}
+	return nil
 }
 
 func (g *Go) GetPackageNames(ctx context.Context, packages []string) []string {

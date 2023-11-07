@@ -11,6 +11,8 @@ type PackageManager interface {
 	Icon() string
 	NeedsSudo() []CommandName
 
+	InitCheckCmd() error
+
 	GetPackageNames(ctx context.Context, packages []string) []string
 	GetDependencyNames(ctx context.Context, deps []string) []string
 
