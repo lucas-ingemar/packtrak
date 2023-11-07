@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/lucas-ingemar/packtrak/internal/manifest"
 	"github.com/lucas-ingemar/packtrak/internal/packagemanagers"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/state"
@@ -38,31 +37,18 @@ func cmdSync(ctx context.Context) (err error) {
 	tx := state.Begin()
 	defer tx.Rollback()
 
-	// var fpkgM, fpkgU, fpkgR []shared.Package
 	totUpdatedPkgs := []shared.Package{}
 	totUpdatedDeps := []shared.Dependency{}
 
 	pkgsState := map[string][]shared.Package{}
-	pkgStatus := map[string]shared.PackageStatus{}
-
 	depsState := map[string][]shared.Dependency{}
-	depStatus := map[string]shared.DependenciesStatus{}
+
+	depStatus, pkgStatus, err := listStatus(ctx, tx, packagemanagers.PackageManagers)
+	if err != nil {
+		return err
+	}
 
 	for _, pm := range packagemanagers.PackageManagers {
-		packages, dependencies, errF := manifest.Filter(*manifest.Manifest.Pm(pm.Name()))
-		if errF != nil {
-			panic(err)
-		}
-		fmt.Printf("Listing %s dependencies...\n", pm.Name())
-		depStatus[pm.Name()], err = pm.ListDependencies(ctx, tx, dependencies)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Printf("Listing %s packages...\n", pm.Name())
-		pkgStatus[pm.Name()], err = pm.ListPackages(ctx, tx, packages)
-		if err != nil {
-			return
-		}
 		totUpdatedDeps = append(totUpdatedDeps, depStatus[pm.Name()].Missing...)
 		totUpdatedDeps = append(totUpdatedDeps, depStatus[pm.Name()].Updated...)
 		totUpdatedDeps = append(totUpdatedDeps, depStatus[pm.Name()].Removed...)
@@ -78,7 +64,6 @@ func cmdSync(ctx context.Context) (err error) {
 		pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgStatus[pm.Name()].Synced...)
 		pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgStatus[pm.Name()].Updated...)
 		pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgStatus[pm.Name()].Missing...)
-		// pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgStatus[pm.Name()].Removed...)
 	}
 
 	printPackageList(depStatus, pkgStatus)

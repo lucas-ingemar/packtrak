@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/state"
 	"github.com/spf13/cobra"
+	"gorm.io/gorm"
 )
 
 func initList() {
@@ -30,50 +32,48 @@ func initList() {
 	rootCmd.AddCommand(listGlobalCmd)
 }
 
-// FIXME: This is almost identical to the first part of sync. Should make a common function
 func generateListCmd(pms []shared.PackageManager) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		if !shared.MustDoSudo(cmd.Context(), pms, shared.CommandList) {
 			panic("sudo access not granted")
 		}
 
-		// var err error
-
 		tx := state.Begin()
 
-		depStatus := map[string]shared.DependenciesStatus{}
-		pkgStatus := map[string]shared.PackageStatus{}
-
-		for _, pm := range pms {
-			packages, dependencies, err := manifest.Filter(*manifest.Manifest.Pm(pm.Name()))
-			if err != nil {
-				panic(err)
-			}
-			// pkgsState := []shared.Package{}
-			fmt.Printf("Listing %s dependencies...\n", pm.Name())
-			depStatus[pm.Name()], err = pm.ListDependencies(cmd.Context(), tx, dependencies)
-			if err != nil {
-				panic(err)
-			}
-			fmt.Printf("Listing %s packages...\n", pm.Name())
-			pkgStatus[pm.Name()], err = pm.ListPackages(cmd.Context(), tx, packages)
-			if err != nil {
-				panic(err)
-			}
-
-			// FIXME: This is currently not used. Pretty sure I dont want to sync state on list?
-			// pkgsState = append(pkgsState, pkgStatus[pm.Name()].Synced...)
-			// pkgsState = append(pkgsState, pkgStatus[pm.Name()].Updated...)
-			// pkgsState = append(pkgsState, pkgStatus[pm.Name()].Missing...)
-
+		depStatus, pkgStatus, err := listStatus(cmd.Context(), tx, pms)
+		if err != nil {
+			panic(err)
 		}
 
 		res := tx.Commit()
 		if res.Error != nil {
 			panic(res.Error)
 		}
+
 		printPackageList(depStatus, pkgStatus)
 	}
+}
+
+func listStatus(ctx context.Context, tx *gorm.DB, pms []shared.PackageManager) (map[string]shared.DependenciesStatus, map[string]shared.PackageStatus, error) {
+	depStatus := map[string]shared.DependenciesStatus{}
+	pkgStatus := map[string]shared.PackageStatus{}
+	for _, pm := range pms {
+		packages, dependencies, err := manifest.Filter(*manifest.Manifest.Pm(pm.Name()))
+		if err != nil {
+			return nil, nil, err
+		}
+		fmt.Printf("Listing %s dependencies...\n", pm.Name())
+		depStatus[pm.Name()], err = pm.ListDependencies(ctx, tx, dependencies)
+		if err != nil {
+			return nil, nil, err
+		}
+		fmt.Printf("Listing %s packages...\n", pm.Name())
+		pkgStatus[pm.Name()], err = pm.ListPackages(ctx, tx, packages)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+	return depStatus, pkgStatus, nil
 }
 
 func printPackageList(depStatus map[string]shared.DependenciesStatus, pkgStatus map[string]shared.PackageStatus) {

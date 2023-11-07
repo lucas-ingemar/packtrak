@@ -34,6 +34,12 @@ func init() {
 	Refresh()
 }
 
+// type Hej struct {
+// 	// Type  types.String
+// 	Name  string
+// 	Value interface{}
+// }
+
 func Refresh() {
 	viper.SetEnvPrefix("packtrak")
 	viper.AutomaticEnv()
@@ -57,6 +63,15 @@ func Refresh() {
 			panic(fmt.Errorf("fatal error config file: %w", err))
 		}
 	}
+	// hh := Hej{
+	// 	Name:  "test",
+	// 	Value: []string{"hej"},
+	// }
+
+	// // rs := reflect.SliceOf(reflect.String)
+	// // bb := hh.Value.(hh.Type.Underlying)
+	// fmt.Println(reflect.ValueOf(hh.Value).Kind() == reflect.SliceOf(reflect.TypeOf("")).Kind())
+	// panic("hej")
 
 	mustCreateCacheDir()
 

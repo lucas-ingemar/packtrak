@@ -70,7 +70,7 @@ That have its own table in the state.
 * Should probably commit db for each packagemanager in sync as well
 * Rotate state file. Config option for how many rotations
 * Make sure user is not sudo when cmd runs
-~~* Add dependencies. Example: COPR/external sources for dnf~~
+* ~~Add dependencies. Example: COPR/external sources for dnf~~
 * Add update function
 * Handle add/remove commands with conditional
 
