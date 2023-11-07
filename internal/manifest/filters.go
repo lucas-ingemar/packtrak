@@ -9,6 +9,17 @@ import (
 	"github.com/samber/lo"
 )
 
+func MatchConditional(c shared.ManifestConditional) (match bool, err error) {
+	switch c.Type {
+	case shared.MConditionHost:
+		return filterHost(c)
+	case shared.MConditionGroup:
+		return filterGroup(c)
+	default:
+		return false, fmt.Errorf("unknown condition type '%s'", c.Type)
+	}
+}
+
 func Filter(pmManifest shared.PmManifest) (packages []string, dependencies []string, err error) {
 	packages = append(packages, pmManifest.Global.Packages...)
 	dependencies = append(dependencies, pmManifest.Global.Dependencies...)
@@ -16,19 +27,23 @@ func Filter(pmManifest shared.PmManifest) (packages []string, dependencies []str
 	for _, c := range pmManifest.Conditional {
 		switch c.Type {
 		case shared.MConditionHost:
-			p, d, err := filterHost(c)
+			match, err := filterHost(c)
 			if err != nil {
 				return nil, nil, err
 			}
-			packages = append(packages, p...)
-			dependencies = append(dependencies, d...)
+			if match {
+				packages = append(packages, c.Packages...)
+				dependencies = append(dependencies, c.Dependencies...)
+			}
 		case shared.MConditionGroup:
-			p, d, err := filterGroup(c)
+			match, err := filterGroup(c)
 			if err != nil {
 				return nil, nil, err
 			}
-			packages = append(packages, p...)
-			dependencies = append(dependencies, d...)
+			if match {
+				packages = append(packages, c.Packages...)
+				dependencies = append(dependencies, c.Dependencies...)
+			}
 		default:
 			return nil, nil, fmt.Errorf("unknown condition type '%s'", c.Type)
 		}
@@ -37,20 +52,22 @@ func Filter(pmManifest shared.PmManifest) (packages []string, dependencies []str
 	return
 }
 
-func filterHost(c shared.ManifestConditional) (packages []string, dependencies []string, err error) {
+func filterHost(c shared.ManifestConditional) (match bool, err error) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		return
 	}
 	if c.Value == hostname {
-		return c.Packages, c.Dependencies, nil
+		return true, nil
+		// return c.Packages, c.Dependencies, nil
 	}
 	return
 }
 
-func filterGroup(c shared.ManifestConditional) (packages []string, dependencies []string, err error) {
+func filterGroup(c shared.ManifestConditional) (match bool, err error) {
 	if lo.Contains(config.Groups, c.Value) {
-		return c.Packages, c.Dependencies, nil
+		return true, nil
+		// return c.Packages, c.Dependencies, nil
 	}
 	return
 }

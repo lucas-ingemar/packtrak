@@ -106,12 +106,25 @@ func generateRemoveCmd(pm shared.PackageManager, pmManifest *shared.PmManifest) 
 			fmt.Println("")
 		}
 
-		// FIXME: Manifestfilter: Must add a conditional flag
-		// FIXME: Also needs to do something smart. Otherwise a specific conditional needs to specified to be able to remove
 		if removeDependency {
 			pmManifest.Global.RemoveDependencies(toRemove)
 		} else {
 			pmManifest.Global.RemovePackages(toRemove)
+
+		}
+
+		for idx := range pmManifest.Conditional {
+			match, err := manifest.MatchConditional(pmManifest.Conditional[idx])
+			if err != nil {
+				panic(err)
+			}
+			if match {
+				if removeDependency {
+					pmManifest.Conditional[idx].RemoveDependencies(toRemove)
+				} else {
+					pmManifest.Conditional[idx].RemovePackages(toRemove)
+				}
+			}
 		}
 
 		err = cmdSync(cmd.Context(), []shared.PackageManager{pm})

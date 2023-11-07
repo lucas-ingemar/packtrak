@@ -86,6 +86,26 @@ type ManifestConditional struct {
 	Packages     []string                `yaml:"packages"`
 }
 
+func (m *ManifestConditional) AddPackages(packages []string) {
+	m.Packages = append(m.Packages, packages...)
+}
+
+func (m *ManifestConditional) RemovePackages(packages []string) {
+	m.Packages = lo.Filter(m.Packages, func(item string, index int) bool {
+		return !lo.Contains(packages, item)
+	})
+}
+
+func (m *ManifestConditional) AddDependencies(deps []string) {
+	m.Dependencies = append(m.Dependencies, deps...)
+}
+
+func (m *ManifestConditional) RemoveDependencies(deps []string) {
+	m.Dependencies = lo.Filter(m.Dependencies, func(item string, index int) bool {
+		return !lo.Contains(deps, item)
+	})
+}
+
 // type State struct {
 // 	Timestamp time.Time `yaml:"timestamp"`
 // 	Packages  Packages  `yaml:"packages"`
