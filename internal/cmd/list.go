@@ -9,6 +9,7 @@ import (
 	"github.com/lucas-ingemar/packtrak/internal/packagemanagers"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/state"
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"gorm.io/gorm"
 )
@@ -62,6 +63,10 @@ func listStatus(ctx context.Context, tx *gorm.DB, pms []shared.PackageManager) (
 		if err != nil {
 			return nil, nil, err
 		}
+
+		packages = lo.Uniq(packages)
+		dependencies = lo.Uniq(dependencies)
+
 		fmt.Printf("Listing %s dependencies...\n", pm.Name())
 		depStatus[pm.Name()], err = pm.ListDependencies(ctx, tx, dependencies)
 		if err != nil {

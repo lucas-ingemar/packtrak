@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/lucas-ingemar/packtrak/internal/config"
 	"github.com/lucas-ingemar/packtrak/internal/manifest"
@@ -21,6 +22,8 @@ func initInstall() {
 			Run:               generateInstallCmd(pm, manifest.Manifest.Pm(pm.Name())),
 		}
 		installCmd.PersistentFlags().BoolP("dependency", "d", false, "Install dependency")
+		installCmd.PersistentFlags().Bool("host", false, "Install only on current host")
+		installCmd.PersistentFlags().String("group", "", "Install only for specified group")
 		PmCmds[pm.Name()].AddCommand(installCmd)
 	}
 }
@@ -41,9 +44,10 @@ func generateInstallCmd(pm shared.PackageManager, pmManifest *shared.PmManifest)
 		if !shared.MustDoSudo(cmd.Context(), []shared.PackageManager{pm}, shared.CommandInstall) {
 			panic("sudo access not granted")
 		}
-		// FIXME: Manifestfilter: Must add a conditional flag
 
 		installDependency := cmd.Flag("dependency").Value.String() == "true"
+		group := cmd.Flag("group").Value.String()
+		host := cmd.Flag("host").Value.String() == "true"
 
 		args = lo.Uniq(args)
 		objsToAdd := []string{}
@@ -91,11 +95,37 @@ func generateInstallCmd(pm shared.PackageManager, pmManifest *shared.PmManifest)
 			fmt.Println("")
 		}
 
-		// FIXME: Manifestfilter: Must add a conditional flag
-		if installDependency {
-			manifest.Manifest.Pm(pm.Name()).Global.AddDependencies(toAdd)
+		//FIXME: This is not very nice, but it works
+		if host {
+			hostname, err := os.Hostname()
+			if err != nil {
+				panic(err)
+			}
+			mc, err := manifest.Manifest.Pm(pm.Name()).GetOrAddConditional(shared.MConditionHost, hostname)
+			if err != nil {
+				panic(err)
+			}
+			if installDependency {
+				mc.AddDependencies(toAdd)
+			} else {
+				mc.AddPackages(toAdd)
+			}
+		} else if group != "" {
+			mc, err := manifest.Manifest.Pm(pm.Name()).GetOrAddConditional(shared.MConditionGroup, group)
+			if err != nil {
+				panic(err)
+			}
+			if installDependency {
+				mc.AddDependencies(toAdd)
+			} else {
+				mc.AddPackages(toAdd)
+			}
 		} else {
-			manifest.Manifest.Pm(pm.Name()).Global.AddPackages(toAdd)
+			if installDependency {
+				manifest.Manifest.Pm(pm.Name()).Global.AddDependencies(toAdd)
+			} else {
+				manifest.Manifest.Pm(pm.Name()).Global.AddPackages(toAdd)
+			}
 		}
 
 		err = cmdSync(cmd.Context(), []shared.PackageManager{pm})

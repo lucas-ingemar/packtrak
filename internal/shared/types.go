@@ -54,6 +54,21 @@ type PmManifest struct {
 	Conditional []ManifestConditional `yaml:"conditional"`
 }
 
+func (pm *PmManifest) GetOrAddConditional(cType ManifestConditionalType, cValue string) (*ManifestConditional, error) {
+	for idx := range pm.Conditional {
+		if pm.Conditional[idx].Type == cType && pm.Conditional[idx].Value == cValue {
+			return &pm.Conditional[idx], nil
+		}
+	}
+	pm.Conditional = append(pm.Conditional, ManifestConditional{
+		Type:         cType,
+		Value:        cValue,
+		Dependencies: []string{},
+		Packages:     []string{},
+	})
+	return &pm.Conditional[len(pm.Conditional)-1], nil
+}
+
 type ManifestGlobal struct {
 	Dependencies []string `yaml:"dependencies"`
 	Packages     []string `yaml:"packages"`
