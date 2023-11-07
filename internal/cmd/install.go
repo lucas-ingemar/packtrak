@@ -13,18 +13,21 @@ import (
 
 func initInstall() {
 	for _, pm := range packagemanagers.PackageManagers {
-		PmCmds[pm.Name()].AddCommand(&cobra.Command{
+		installCmd := &cobra.Command{
 			Use:               "install",
 			Short:             "install a package or packages on your system",
 			Args:              cobra.MinimumNArgs(1),
 			ValidArgsFunction: generateInstallValidArgsFunc(pm, manifest.Manifest.Pm(pm.Name())),
 			Run:               generateInstallCmd(pm, manifest.Manifest.Pm(pm.Name())),
-		})
+		}
+		installCmd.PersistentFlags().BoolP("dependency", "d", false, "Install dependency")
+		PmCmds[pm.Name()].AddCommand(installCmd)
 	}
 }
 
 func generateInstallValidArgsFunc(pm shared.PackageManager, pmManifest *shared.PmManifest) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		//FIXME: add dependency[bool] as arg to InstallValidArgs
 		pkgs, err := pm.InstallValidArgs(cmd.Context(), toComplete)
 		if err != nil {
 			pkgs = []string{}
@@ -38,25 +41,45 @@ func generateInstallCmd(pm shared.PackageManager, pmManifest *shared.PmManifest)
 		if !shared.MustDoSudo(cmd.Context(), []shared.PackageManager{pm}, shared.CommandInstall) {
 			panic("sudo access not granted")
 		}
+		// FIXME: Manifestfilter: Must add a conditional flag
+
+		installDependency := cmd.Flag("dependency").Value.String() == "true"
 
 		args = lo.Uniq(args)
-		pkgsToAdd := []string{}
+		objsToAdd := []string{}
 		warningPrinted := false
 		for _, arg := range args {
-			// FIXME: Manifestfilter
-			if lo.Contains(pmManifest.Global.Packages, arg) {
-				shared.PtermWarning.Printfln("'%s' is already present in packages file", arg)
+			var objs []string
+			pkgs, deps, err := manifest.Filter(*pmManifest)
+			if err != nil {
+				panic(err)
+			}
+			if installDependency {
+				objs = deps
+			} else {
+				objs = pkgs
+			}
+			if lo.Contains(objs, arg) {
+				shared.PtermWarning.Printfln("'%s' is already present in manifest", arg)
 				warningPrinted = true
 				continue
 			}
-			pkgsToAdd = append(pkgsToAdd, arg)
+			objsToAdd = append(objsToAdd, arg)
 		}
 
-		//FIXME: pkgsToAdd might be enough!? concat arrays here instead...
-		// FIXME: Manifestfilter
-		pmPackages, userWarnings, err := pm.Add(cmd.Context(), pmManifest.Global.Packages, pkgsToAdd)
-		if err != nil {
-			panic(err)
+		var toAdd, userWarnings []string
+		var err error
+
+		if installDependency {
+			toAdd, userWarnings, err = pm.AddDependencies(cmd.Context(), objsToAdd)
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			toAdd, userWarnings, err = pm.AddPackages(cmd.Context(), objsToAdd)
+			if err != nil {
+				panic(err)
+			}
 		}
 
 		for _, uw := range userWarnings {
@@ -68,9 +91,14 @@ func generateInstallCmd(pm shared.PackageManager, pmManifest *shared.PmManifest)
 			fmt.Println("")
 		}
 
-		// FIXME: Manifestfilter
-		manifest.Manifest.Pm(pm.Name()).Global.AddPackages(pmPackages)
-		err = cmdSync(cmd.Context())
+		// FIXME: Manifestfilter: Must add a conditional flag
+		if installDependency {
+			manifest.Manifest.Pm(pm.Name()).Global.AddDependencies(toAdd)
+		} else {
+			manifest.Manifest.Pm(pm.Name()).Global.AddPackages(toAdd)
+		}
+
+		err = cmdSync(cmd.Context(), []shared.PackageManager{pm})
 		if err != nil {
 			panic(err)
 		}

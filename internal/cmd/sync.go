@@ -22,15 +22,15 @@ var syncCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	// Long:  `All software has versions. This is Hugo's`,
 	Run: func(cmd *cobra.Command, args []string) {
-		err := cmdSync(cmd.Context())
+		err := cmdSync(cmd.Context(), packagemanagers.PackageManagers)
 		if err != nil {
 			panic(err)
 		}
 	},
 }
 
-func cmdSync(ctx context.Context) (err error) {
-	if !shared.MustDoSudo(ctx, packagemanagers.PackageManagers, shared.CommandSync) {
+func cmdSync(ctx context.Context, pms []shared.PackageManager) (err error) {
+	if !shared.MustDoSudo(ctx, pms, shared.CommandSync) {
 		return errors.New("sudo access not granted")
 	}
 
@@ -43,12 +43,12 @@ func cmdSync(ctx context.Context) (err error) {
 	pkgsState := map[string][]shared.Package{}
 	depsState := map[string][]shared.Dependency{}
 
-	depStatus, pkgStatus, err := listStatus(ctx, tx, packagemanagers.PackageManagers)
+	depStatus, pkgStatus, err := listStatus(ctx, tx, pms)
 	if err != nil {
 		return err
 	}
 
-	for _, pm := range packagemanagers.PackageManagers {
+	for _, pm := range pms {
 		totUpdatedDeps = append(totUpdatedDeps, depStatus[pm.Name()].Missing...)
 		totUpdatedDeps = append(totUpdatedDeps, depStatus[pm.Name()].Updated...)
 		totUpdatedDeps = append(totUpdatedDeps, depStatus[pm.Name()].Removed...)
@@ -69,7 +69,7 @@ func cmdSync(ctx context.Context) (err error) {
 	printPackageList(depStatus, pkgStatus)
 
 	if len(totUpdatedDeps) == 0 && len(totUpdatedPkgs) == 0 {
-		for _, pm := range packagemanagers.PackageManagers {
+		for _, pm := range pms {
 			err := state.UpdatePackageState(tx, pm.Name(), pkgsState[pm.Name()])
 			if err != nil {
 				return err
@@ -95,7 +95,7 @@ func cmdSync(ctx context.Context) (err error) {
 	}.Show()
 
 	if result == "y" {
-		for _, pm := range packagemanagers.PackageManagers {
+		for _, pm := range pms {
 			uw, err := pm.SyncDependencies(ctx, depStatus[pm.Name()])
 			_ = uw
 			if err != nil {

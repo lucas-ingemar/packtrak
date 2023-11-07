@@ -69,6 +69,16 @@ func (m *ManifestGlobal) RemovePackages(packages []string) {
 	})
 }
 
+func (m *ManifestGlobal) AddDependencies(deps []string) {
+	m.Dependencies = append(m.Dependencies, deps...)
+}
+
+func (m *ManifestGlobal) RemoveDependencies(deps []string) {
+	m.Dependencies = lo.Filter(m.Dependencies, func(item string, index int) bool {
+		return !lo.Contains(deps, item)
+	})
+}
+
 type ManifestConditional struct {
 	Type         ManifestConditionalType `yaml:"type"`
 	Value        string                  `yaml:"value"`

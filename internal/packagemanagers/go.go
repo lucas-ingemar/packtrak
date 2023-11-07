@@ -42,10 +42,18 @@ func (g *Go) GetPackageNames(ctx context.Context, packages []string) []string {
 	return pkgNames
 }
 
-func (g *Go) Add(ctx context.Context, packages []string, pkgsToAdd []string) (packagesUpdated []string, userWarnings []string, err error) {
+func (g *Go) GetDependencyNames(ctx context.Context, deps []string) []string {
+	return []string{}
+}
+
+func (g *Go) AddPackages(ctx context.Context, pkgsToAdd []string) (packagesUpdated []string, userWarnings []string, err error) {
 	// FIXME: Could do something more fancy perhaps? See if the path exists and so on
 	// packagesConfig.Global.Packages = append(packagesConfig.Global.Packages, pkgs...)
 	return pkgsToAdd, nil, nil
+}
+
+func (g *Go) AddDependencies(ctx context.Context, depsToAdd []string) (depsUpdated []string, userWarnings []string, err error) {
+	return
 }
 
 func (g *Go) InstallValidArgs(ctx context.Context, toComplete string) ([]string, error) {
@@ -107,11 +115,17 @@ func (g *Go) ListPackages(ctx context.Context, tx *gorm.DB, packages []string) (
 	return
 }
 
-func (g *Go) Remove(ctx context.Context, packages []string, pkgs []string) (packagesToRemove []string, userWarnings []string, err error) {
-	packagesToRemove = lo.Filter(packages, func(item string, index int) bool {
-		return lo.Contains(pkgs, g.nameFromFullName(item))
-	})
+func (g *Go) RemovePackages(ctx context.Context, allPkgs []string, pkgs []string) (packagesUpdated []string, userWarnings []string, err error) {
+	for _, pkg := range pkgs {
+		packagesUpdated = append(packagesUpdated, g.nameFromFullName(pkg))
+	}
+	// packagesToRemove = lo.Filter(packages, func(item string, index int) bool {
+	// 	return lo.Contains(pkgs, g.nameFromFullName(item))
+	// })
+	return
+}
 
+func (g *Go) RemoveDependencies(ctx context.Context, allDeps []string, depsToRemove []string) (depsUpdated []string, userWarnings []string, err error) {
 	return
 }
 

@@ -41,7 +41,15 @@ func (d *Dnf) GetPackageNames(ctx context.Context, packages []string) []string {
 	return packages
 }
 
-func (d *Dnf) Add(ctx context.Context, packages []string, pkgsToAdd []string) (packagesUpdated []string, userWarnings []string, err error) {
+func (d *Dnf) GetDependencyNames(ctx context.Context, deps []string) []string {
+	fixedDeps := []string{}
+	for _, d := range deps {
+		fixedDeps = append(fixedDeps, strings.SplitN(d, ":", 2)[1])
+	}
+	return fixedDeps
+}
+
+func (d *Dnf) AddPackages(ctx context.Context, pkgsToAdd []string) (packagesUpdated []string, userWarnings []string, err error) {
 	for _, pkg := range pkgsToAdd {
 		isSysPkg, err := d.isSystemPackage(ctx, pkg)
 		if err != nil {
@@ -55,6 +63,17 @@ func (d *Dnf) Add(ctx context.Context, packages []string, pkgsToAdd []string) (p
 		}
 	}
 	return packagesUpdated, userWarnings, nil
+}
+
+func (d *Dnf) AddDependencies(ctx context.Context, depsToAdd []string) (depsUpdated []string, userWarnings []string, err error) {
+	for _, dep := range depsToAdd {
+		if strings.HasPrefix(dep, "copr:") || strings.HasPrefix(dep, "cm:") {
+			depsUpdated = append(depsUpdated, dep)
+		} else {
+			userWarnings = append(userWarnings, fmt.Sprintf("Dependency '%s' has an incorrect format", dep))
+		}
+	}
+	return
 }
 
 func (d *Dnf) InstallValidArgs(ctx context.Context, toComplete string) ([]string, error) {
@@ -203,7 +222,7 @@ func (d *Dnf) ListPackages(ctx context.Context, tx *gorm.DB, packages []string) 
 	return
 }
 
-func (d *Dnf) Remove(ctx context.Context, packages []string, pkgs []string) (packagesToRemove []string, userWarnings []string, err error) {
+func (d *Dnf) RemovePackages(ctx context.Context, allPkgs []string, pkgs []string) (packagesToRemove []string, userWarnings []string, err error) {
 	for _, pkg := range pkgs {
 		var isSysPkg bool
 		isSysPkg, err = d.isSystemPackage(ctx, pkg)
@@ -213,13 +232,28 @@ func (d *Dnf) Remove(ctx context.Context, packages []string, pkgs []string) (pac
 
 		if isSysPkg {
 			userWarnings = append(userWarnings, fmt.Sprintf("'%s' is a system package and cannot be managed", pkg))
+			continue
 		}
+		packagesToRemove = append(packagesToRemove, pkg)
 	}
 
-	packagesToRemove = lo.Filter(pkgs, func(item string, index int) bool {
-		return lo.Contains(packages, item)
-	})
+	// packagesToRemove = lo.Filter(pkgs, func(item string, index int) bool {
+	// 	return lo.Contains(packages, item)
+	// })
 
+	return
+}
+
+func (d *Dnf) RemoveDependencies(ctx context.Context, allDeps []string, depsToRemove []string) (depsUpdated []string, userWarnings []string, err error) {
+	for _, rDep := range depsToRemove {
+		for _, aDep := range allDeps {
+			fmt.Println(aDep)
+			if strings.SplitN(aDep, ":", 2)[1] == rDep {
+				depsUpdated = append(depsUpdated, aDep)
+				continue
+			}
+		}
+	}
 	return
 }
 

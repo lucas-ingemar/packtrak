@@ -10,6 +10,10 @@ import (
 	"github.com/samber/lo"
 )
 
+var (
+	isSudo bool
+)
+
 func IsSudo() bool {
 	if os.Getenv("SUDO_UID") != "" && os.Getenv("SUDO_GID") != "" && os.Getenv("SUDO_USER") != "" {
 		return true
@@ -27,6 +31,9 @@ func GetPackage(name string, packages []Package) (Package, error) {
 }
 
 func MustDoSudo(ctx context.Context, packageManagers []PackageManager, cmd CommandName) (success bool) {
+	if isSudo {
+		return isSudo
+	}
 	pmNames := []string{}
 	for _, pm := range packageManagers {
 		if lo.Contains(pm.NeedsSudo(), cmd) {
@@ -56,6 +63,8 @@ func MustDoSudo(ctx context.Context, packageManagers []PackageManager, cmd Comma
 	if err != nil {
 		panic(err)
 	}
+
+	isSudo = true
 
 	return true
 }

@@ -14,19 +14,22 @@ import (
 
 func initRemove() {
 	for _, pm := range packagemanagers.PackageManagers {
-		PmCmds[pm.Name()].AddCommand(&cobra.Command{
+		removeCmd := &cobra.Command{
 			Use:               "remove",
 			Short:             "remove a package or packages on your system",
 			Args:              cobra.MinimumNArgs(1),
 			ValidArgsFunction: generateRemoveValidArgsFunc(pm, manifest.Manifest.Pm(pm.Name())),
 			Run:               generateRemoveCmd(pm, manifest.Manifest.Pm(pm.Name())),
-		})
+		}
+		removeCmd.PersistentFlags().BoolP("dependency", "d", false, "Remove dependency")
+		PmCmds[pm.Name()].AddCommand(removeCmd)
 	}
 }
 
 func generateRemoveValidArgsFunc(pm shared.PackageManager, pmManifest *shared.PmManifest) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		// FIXME: Manifestfilter
+		// FIXME: Support dependencies
 		return lo.Filter(pm.GetPackageNames(cmd.Context(), pmManifest.Global.Packages),
 				func(item string, index int) bool {
 					return strings.HasPrefix(item, toComplete)
@@ -40,24 +43,46 @@ func generateRemoveCmd(pm shared.PackageManager, pmManifest *shared.PmManifest) 
 		if !shared.MustDoSudo(cmd.Context(), []shared.PackageManager{pm}, shared.CommandRemove) {
 			panic("sudo access not granted")
 		}
+		removeDependency := cmd.Flag("dependency").Value.String() == "true"
+
 		args = lo.Uniq(args)
 
-		pkgsToRemove := []string{}
+		objsToRemove := []string{}
 		warningPrinted := false
+
+		var objs []string
+		pkgs, deps, err := manifest.Filter(*pmManifest)
+		if err != nil {
+			panic(err)
+		}
+
+		if removeDependency {
+			objs = pm.GetDependencyNames(cmd.Context(), deps)
+		} else {
+			objs = pm.GetPackageNames(cmd.Context(), pkgs)
+		}
+
 		for _, arg := range args {
-			// FIXME: Manifestfilter
-			if !lo.Contains(pm.GetPackageNames(cmd.Context(), pmManifest.Global.Packages), arg) {
-				shared.PtermWarning.Printfln("'%s' is not present in packages file", arg)
+			if !lo.Contains(objs, arg) {
+				shared.PtermWarning.Printfln("'%s' is not present in manifest", arg)
 				warningPrinted = true
 				continue
 			}
-			pkgsToRemove = append(pkgsToRemove, arg)
+			objsToRemove = append(objsToRemove, arg)
 		}
 
-		//FIXME: pkgsToRemove might be enough!? concat arrays here instead...
-		pmPackages, userWarnings, err := pm.Remove(cmd.Context(), pmManifest.Global.Packages, pkgsToRemove)
-		if err != nil {
-			panic(err)
+		var toRemove, userWarnings []string
+
+		if removeDependency {
+			toRemove, userWarnings, err = pm.RemoveDependencies(cmd.Context(), deps, objsToRemove)
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			toRemove, userWarnings, err = pm.RemovePackages(cmd.Context(), pkgs, objsToRemove)
+			if err != nil {
+				panic(err)
+			}
 		}
 
 		for _, uw := range userWarnings {
@@ -69,10 +94,15 @@ func generateRemoveCmd(pm shared.PackageManager, pmManifest *shared.PmManifest) 
 			fmt.Println("")
 		}
 
-		// config.Packages[pm.Name()] = pmPackages
-		pmManifest.Global.RemovePackages(pmPackages)
+		// FIXME: Manifestfilter: Must add a conditional flag
+		// FIXME: Also needs to do something smart. Otherwise a specific conditional needs to specified to be able to remove
+		if removeDependency {
+			pmManifest.Global.RemoveDependencies(toRemove)
+		} else {
+			pmManifest.Global.RemovePackages(toRemove)
+		}
 
-		err = cmdSync(cmd.Context())
+		err = cmdSync(cmd.Context(), []shared.PackageManager{pm})
 		if err != nil {
 			panic(err)
 		}
