@@ -88,8 +88,11 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
 	s := state.NewState(db)
-	s.Init()
+	if err = s.Init(); err != nil {
+		panic(err)
+	}
 
 	a := app.NewApp(s)
 	initInstall(a)

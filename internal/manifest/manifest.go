@@ -11,6 +11,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// FIXME: This should be its own interface
 var (
 	Manifest shared.Manifest
 )

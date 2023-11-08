@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/lucas-ingemar/packtrak/internal/config"
 	"github.com/lucas-ingemar/packtrak/internal/core"
@@ -44,28 +43,12 @@ func (a App) Install(ctx context.Context, apkgs []string, pm shared.PackageManag
 
 	//FIXME: This is not very nice, but it works
 	if host {
-		hostname, err := os.Hostname()
-		if err != nil {
+		if err := manifest.AddToHost(toAdd, pm.Name(), installDependency); err != nil {
 			return err
-		}
-		mc, err := manifest.Manifest.Pm(pm.Name()).GetOrAddConditional(shared.MConditionHost, hostname)
-		if err != nil {
-			return err
-		}
-		if installDependency {
-			mc.AddDependencies(toAdd)
-		} else {
-			mc.AddPackages(toAdd)
 		}
 	} else if group != "" {
-		mc, err := manifest.Manifest.Pm(pm.Name()).GetOrAddConditional(shared.MConditionGroup, group)
-		if err != nil {
+		if err := manifest.AddToGroup(toAdd, pm.Name(), group, installDependency); err != nil {
 			return err
-		}
-		if installDependency {
-			mc.AddDependencies(toAdd)
-		} else {
-			mc.AddPackages(toAdd)
 		}
 	} else {
 		if installDependency {
@@ -75,8 +58,7 @@ func (a App) Install(ctx context.Context, apkgs []string, pm shared.PackageManag
 		}
 	}
 
-	err = a.Sync(ctx, []shared.PackageManager{pm})
-	if err != nil {
+	if err = a.Sync(ctx, []shared.PackageManager{pm}); err != nil {
 		return err
 	}
 

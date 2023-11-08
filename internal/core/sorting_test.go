@@ -30,6 +30,6 @@ func TestTotalUpdatedDeps(t *testing.T) {
 		Missing: []shared.Dependency{{Name: "test2", FullName: "test2_full"}},
 		Removed: []shared.Dependency{{Name: "test3", FullName: "test3_full"}},
 	}
-	tud := TotalUpdatedDeps([]shared.PackageManager{&packagemanagers.Go{}}, ds)
-	assert.Len(t, tud, 3, "number of dependencies")
+	tud := CountUpdatedDeps([]shared.PackageManager{&packagemanagers.Go{}}, ds)
+	assert.Equal(t, 3, tud, "number of dependencies")
 }

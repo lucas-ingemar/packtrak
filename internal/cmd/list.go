@@ -35,18 +35,10 @@ func generateListCmd(a app.AppFace, pms []shared.PackageManager) func(cmd *cobra
 			panic("sudo access not granted")
 		}
 
-		//FIXME:  begin should be inside liststatus
-		// tx := state.Begin()
-
 		depStatus, pkgStatus, err := a.ListStatus(cmd.Context(), pms)
 		if err != nil {
 			panic(err)
 		}
-
-		// res := tx.Commit()
-		// if res.Error != nil {
-		// 	panic(res.Error)
-		// }
 
 		core.PrintPackageList(depStatus, pkgStatus)
 	}

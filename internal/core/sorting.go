@@ -28,20 +28,20 @@ func FilterIncomingObjects(pkgs []string, pmManifest shared.PmManifest, dependen
 	return filteredObjs, nil
 }
 
-func TotalUpdatedDeps(pms []shared.PackageManager, depStatus map[string]shared.DependenciesStatus) (totUpdatedDeps []shared.Dependency) {
+func CountUpdatedDeps(pms []shared.PackageManager, depStatus map[string]shared.DependenciesStatus) (totUpdatedDeps int) {
 	for _, pm := range pms {
-		totUpdatedDeps = append(totUpdatedDeps, depStatus[pm.Name()].Missing...)
-		totUpdatedDeps = append(totUpdatedDeps, depStatus[pm.Name()].Updated...)
-		totUpdatedDeps = append(totUpdatedDeps, depStatus[pm.Name()].Removed...)
+		totUpdatedDeps += len(depStatus[pm.Name()].Missing)
+		totUpdatedDeps += len(depStatus[pm.Name()].Updated)
+		totUpdatedDeps += len(depStatus[pm.Name()].Removed)
 	}
 	return
 }
 
-func TotalUpdatedPkgs(pms []shared.PackageManager, pkgStatus map[string]shared.PackageStatus) (totUpdatedPkgs []shared.Package) {
+func CountUpdatedPkgs(pms []shared.PackageManager, pkgStatus map[string]shared.PackageStatus) (totUpdatedPkgs int) {
 	for _, pm := range pms {
-		totUpdatedPkgs = append(totUpdatedPkgs, pkgStatus[pm.Name()].Missing...)
-		totUpdatedPkgs = append(totUpdatedPkgs, pkgStatus[pm.Name()].Updated...)
-		totUpdatedPkgs = append(totUpdatedPkgs, pkgStatus[pm.Name()].Removed...)
+		totUpdatedPkgs += len(pkgStatus[pm.Name()].Missing)
+		totUpdatedPkgs += len(pkgStatus[pm.Name()].Updated)
+		totUpdatedPkgs += len(pkgStatus[pm.Name()].Removed)
 	}
 	return
 }

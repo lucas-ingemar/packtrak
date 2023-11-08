@@ -12,24 +12,17 @@ import (
 )
 
 func (a App) Sync(ctx context.Context, pms []shared.PackageManager) (err error) {
-	// tx := a.State.Begin(ctx)
-	// defer tx.Rollback()
-
 	depStatus, pkgStatus, err := a.ListStatus(ctx, pms)
 	if err != nil {
 		return err
 	}
-
-	// if err := tx.Commit().Error; err != nil {
-	// 	return err
-	// }
 
 	pkgsState := core.UpdatedPackageState(pms, pkgStatus)
 	depsState := core.UpdatedDependencyState(pms, depStatus)
 
 	core.PrintPackageList(depStatus, pkgStatus)
 
-	if len(core.TotalUpdatedPkgs(pms, pkgStatus)) == 0 && len(core.TotalUpdatedDeps(pms, depStatus)) == 0 {
+	if core.CountUpdatedPkgs(pms, pkgStatus) == 0 && core.CountUpdatedDeps(pms, depStatus) == 0 {
 		tx := a.State.Begin(ctx)
 		defer tx.Rollback()
 		for _, pm := range pms {
