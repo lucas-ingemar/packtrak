@@ -12,9 +12,7 @@ import (
 
 	"github.com/alexellis/go-execute/v2"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
-	"github.com/lucas-ingemar/packtrak/internal/state"
 	"github.com/samber/lo"
-	"gorm.io/gorm"
 )
 
 const (
@@ -91,11 +89,11 @@ func (g *Go) InstallValidArgs(ctx context.Context, toComplete string, dependenci
 	return []string{}, nil
 }
 
-func (g *Go) ListDependencies(ctx context.Context, tx *gorm.DB, deps []string) (depStatus shared.DependenciesStatus, err error) {
+func (g *Go) ListDependencies(ctx context.Context, deps []string, stateDeps []string) (depStatus shared.DependenciesStatus, err error) {
 	return
 }
 
-func (g *Go) ListPackages(ctx context.Context, tx *gorm.DB, packages []string) (packageStatus shared.PackageStatus, err error) {
+func (g *Go) ListPackages(ctx context.Context, packages []string, statePkgs []string) (packageStatus shared.PackageStatus, err error) {
 	installed, err := g.listInstalled(ctx)
 	if err != nil {
 		return
@@ -127,11 +125,6 @@ func (g *Go) ListPackages(ctx context.Context, tx *gorm.DB, packages []string) (
 				RepoUrl:       iPkg.RepoUrl,
 			})
 		}
-	}
-
-	statePkgs, err := state.GetPackageState(tx, "go")
-	if err != nil {
-		return shared.PackageStatus{}, err
 	}
 
 	for _, pkg := range statePkgs {

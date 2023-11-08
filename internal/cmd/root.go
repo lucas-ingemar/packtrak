@@ -2,16 +2,22 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"time"
 
 	chigo "github.com/UltiRequiem/chigo/pkg"
 	"github.com/common-nighthawk/go-figure"
+	"github.com/glebarez/sqlite"
+	"github.com/lucas-ingemar/packtrak/internal/app"
 	"github.com/lucas-ingemar/packtrak/internal/config"
 	"github.com/lucas-ingemar/packtrak/internal/manifest"
 	"github.com/lucas-ingemar/packtrak/internal/packagemanagers"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/state"
 	"github.com/spf13/cobra"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var PmCmds = map[string]*cobra.Command{}
@@ -58,16 +64,38 @@ func init() {
 
 	manifest.MustInitManifest()
 
-	err := state.InitDb()
-	if err != nil {
-		panic(err)
-	}
+	// err := state.InitDb()
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	// state.Test()
 
-	initInstall()
-	initList()
-	initRemove()
+	// FIXME: Connect verbose flag, below should be an input to NewState()
+	newLogger := logger.New(
+		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+		logger.Config{
+			SlowThreshold:             time.Second,   // Slow SQL threshold
+			LogLevel:                  logger.Silent, // Log level
+			IgnoreRecordNotFoundError: true,          // Ignore ErrRecordNotFound error for logger
+			ParameterizedQueries:      true,          // Don't include params in the SQL log
+			Colorful:                  false,         // Disable color
+		},
+	)
+	db, err := gorm.Open(sqlite.Open(config.StateFile), &gorm.Config{
+		Logger: newLogger,
+	})
+	if err != nil {
+		panic(err)
+	}
+	s := state.NewState(db)
+	s.Init()
+
+	a := app.NewApp(s)
+	initInstall(a)
+	initList(a)
+	initRemove(a)
+	initSync(a)
 
 	config.CheckConfig()
 

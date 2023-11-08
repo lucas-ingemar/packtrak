@@ -3,20 +3,20 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/lucas-ingemar/packtrak/internal/machinery"
+	"github.com/lucas-ingemar/packtrak/internal/app"
+	"github.com/lucas-ingemar/packtrak/internal/core"
 	"github.com/lucas-ingemar/packtrak/internal/packagemanagers"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
-	"github.com/lucas-ingemar/packtrak/internal/state"
 	"github.com/spf13/cobra"
 )
 
-func initList() {
+func initList(a app.AppFace) {
 	for _, pm := range packagemanagers.PackageManagers {
 		PmCmds[pm.Name()].AddCommand(&cobra.Command{
 			Use:   "list",
 			Short: fmt.Sprintf("List status of %s packages", pm.Name()),
 			Args:  cobra.NoArgs,
-			Run:   generateListCmd([]shared.PackageManager{pm}),
+			Run:   generateListCmd(a, []shared.PackageManager{pm}),
 		})
 	}
 
@@ -24,29 +24,30 @@ func initList() {
 		Use:   "list",
 		Short: "List status of dnf packages",
 		Args:  cobra.NoArgs,
-		Run:   generateListCmd(packagemanagers.PackageManagers),
+		Run:   generateListCmd(a, packagemanagers.PackageManagers),
 	}
 	rootCmd.AddCommand(listGlobalCmd)
 }
 
-func generateListCmd(pms []shared.PackageManager) func(cmd *cobra.Command, args []string) {
+func generateListCmd(a app.AppFace, pms []shared.PackageManager) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		if !shared.MustDoSudo(cmd.Context(), pms, shared.CommandList) {
 			panic("sudo access not granted")
 		}
 
-		tx := state.Begin()
+		//FIXME:  begin should be inside liststatus
+		// tx := state.Begin()
 
-		depStatus, pkgStatus, err := machinery.ListStatus(cmd.Context(), tx, pms)
+		depStatus, pkgStatus, err := a.ListStatus(cmd.Context(), pms)
 		if err != nil {
 			panic(err)
 		}
 
-		res := tx.Commit()
-		if res.Error != nil {
-			panic(res.Error)
-		}
+		// res := tx.Commit()
+		// if res.Error != nil {
+		// 	panic(res.Error)
+		// }
 
-		machinery.PrintPackageList(depStatus, pkgStatus)
+		core.PrintPackageList(depStatus, pkgStatus)
 	}
 }

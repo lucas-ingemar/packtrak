@@ -1,43 +1,44 @@
-package machinery
+package app
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/lucas-ingemar/packtrak/internal/config"
+	"github.com/lucas-ingemar/packtrak/internal/core"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/state"
 	"github.com/pterm/pterm"
 )
 
-func Sync(ctx context.Context, pms []shared.PackageManager) (err error) {
-	tx := state.Begin()
-	defer tx.Rollback()
+func (a App) Sync(ctx context.Context, pms []shared.PackageManager) (err error) {
+	// tx := a.State.Begin(ctx)
+	// defer tx.Rollback()
 
-	depStatus, pkgStatus, err := ListStatus(ctx, tx, pms)
+	depStatus, pkgStatus, err := a.ListStatus(ctx, pms)
 	if err != nil {
 		return err
 	}
 
-	if err := tx.Commit().Error; err != nil {
-		return err
-	}
+	// if err := tx.Commit().Error; err != nil {
+	// 	return err
+	// }
 
-	pkgsState := UpdatedPackageState(pms, pkgStatus)
-	depsState := UpdatedDependencyState(pms, depStatus)
+	pkgsState := core.UpdatedPackageState(pms, pkgStatus)
+	depsState := core.UpdatedDependencyState(pms, depStatus)
 
-	PrintPackageList(depStatus, pkgStatus)
+	core.PrintPackageList(depStatus, pkgStatus)
 
-	if len(TotalUpdatedPkgs(pms, pkgStatus)) == 0 && len(TotalUpdatedDeps(pms, depStatus)) == 0 {
-		tx := state.Begin()
+	if len(core.TotalUpdatedPkgs(pms, pkgStatus)) == 0 && len(core.TotalUpdatedDeps(pms, depStatus)) == 0 {
+		tx := a.State.Begin(ctx)
 		defer tx.Rollback()
 		for _, pm := range pms {
-			err := state.UpdatePackageState(tx, pm.Name(), pkgsState[pm.Name()])
+			err := a.State.UpdatePackageState(ctx, tx, pm.Name(), pkgsState[pm.Name()])
 			if err != nil {
 				return err
 			}
 
-			err = state.UpdateDependencyState(tx, pm.Name(), depsState[pm.Name()])
+			err = a.State.UpdateDependencyState(ctx, tx, pm.Name(), depsState[pm.Name()])
 			if err != nil {
 				return err
 			}
@@ -61,7 +62,7 @@ func Sync(ctx context.Context, pms []shared.PackageManager) (err error) {
 
 	if result == "y" {
 		for _, pm := range pms {
-			tx := state.Begin()
+			tx := a.State.Begin(ctx)
 			defer tx.Rollback()
 
 			uw, err := pm.SyncDependencies(ctx, depStatus[pm.Name()])
@@ -69,7 +70,7 @@ func Sync(ctx context.Context, pms []shared.PackageManager) (err error) {
 			if err != nil {
 				return err
 			}
-			err = state.UpdateDependencyState(tx, pm.Name(), depsState[pm.Name()])
+			err = a.State.UpdateDependencyState(ctx, tx, pm.Name(), depsState[pm.Name()])
 			if err != nil {
 				return err
 			}
@@ -78,7 +79,7 @@ func Sync(ctx context.Context, pms []shared.PackageManager) (err error) {
 				return err
 			}
 
-			tx = state.Begin()
+			tx = a.State.Begin(ctx)
 			defer tx.Rollback()
 
 			uw, err = pm.SyncPackages(ctx, pkgStatus[pm.Name()])
@@ -86,7 +87,7 @@ func Sync(ctx context.Context, pms []shared.PackageManager) (err error) {
 			if err != nil {
 				return err
 			}
-			err = state.UpdatePackageState(tx, pm.Name(), pkgsState[pm.Name()])
+			err = a.State.UpdatePackageState(ctx, tx, pm.Name(), pkgsState[pm.Name()])
 			if err != nil {
 				return err
 			}

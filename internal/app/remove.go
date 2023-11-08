@@ -1,4 +1,4 @@
-package machinery
+package app
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"github.com/samber/lo"
 )
 
-func Remove(ctx context.Context, apkgs []string, pm shared.PackageManager, pmManifest *shared.PmManifest, removeDependency bool) error {
+func (a App) Remove(ctx context.Context, apkgs []string, pm shared.PackageManager, pmManifest *shared.PmManifest, removeDependency bool) error {
 	apkgs = lo.Uniq(apkgs)
 
 	objsToRemove := []string{}
@@ -81,7 +81,7 @@ func Remove(ctx context.Context, apkgs []string, pm shared.PackageManager, pmMan
 		}
 	}
 
-	if err = Sync(ctx, []shared.PackageManager{pm}); err != nil {
+	if err = a.Sync(ctx, []shared.PackageManager{pm}); err != nil {
 		return err
 	}
 

@@ -15,9 +15,7 @@ import (
 	"github.com/alexellis/go-execute/v2"
 	"github.com/lucas-ingemar/packtrak/internal/config"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
-	"github.com/lucas-ingemar/packtrak/internal/state"
 	"github.com/samber/lo"
-	"gorm.io/gorm"
 )
 
 type Dnf struct {
@@ -120,7 +118,7 @@ func (d *Dnf) InstallValidArgs(ctx context.Context, toComplete string, dependenc
 	return pkgs, nil
 }
 
-func (d *Dnf) ListDependencies(ctx context.Context, tx *gorm.DB, deps []string) (depStatus shared.DependenciesStatus, err error) {
+func (d *Dnf) ListDependencies(ctx context.Context, deps []string, stateDeps []string) (depStatus shared.DependenciesStatus, err error) {
 	installedCoprs, err := d.listCoprs(ctx)
 	if err != nil {
 		return shared.DependenciesStatus{}, err
@@ -162,10 +160,10 @@ func (d *Dnf) ListDependencies(ctx context.Context, tx *gorm.DB, deps []string) 
 		}
 	}
 
-	stateDeps, err := state.GetDependencyState(tx, d.Name())
-	if err != nil {
-		return
-	}
+	// stateDeps, err := state.GetDependencyState(tx, d.Name())
+	// if err != nil {
+	// 	return
+	// }
 
 	sCoprs, sCms := d.sortDeps(stateDeps)
 
@@ -195,7 +193,7 @@ func (d *Dnf) ListDependencies(ctx context.Context, tx *gorm.DB, deps []string) 
 	return
 }
 
-func (d *Dnf) ListPackages(ctx context.Context, tx *gorm.DB, packages []string) (packageStatus shared.PackageStatus, err error) {
+func (d *Dnf) ListPackages(ctx context.Context, packages []string, statePkgs []string) (packageStatus shared.PackageStatus, err error) {
 	dnfList, err := d.listInstalled(ctx)
 	if err != nil {
 		return
@@ -215,10 +213,10 @@ func (d *Dnf) ListPackages(ctx context.Context, tx *gorm.DB, packages []string) 
 		}
 	}
 
-	statePkgs, err := state.GetPackageState(tx, d.Name())
-	if err != nil {
-		return
-	}
+	// statePkgs, err := state.GetPackageState(tx, d.Name())
+	// if err != nil {
+	// 	return
+	// }
 
 	for _, pkg := range statePkgs {
 		for _, dnfPkg := range dnfList {

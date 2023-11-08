@@ -1,4 +1,4 @@
-package machinery
+package core
 
 import (
 	"testing"
@@ -8,11 +8,21 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestFilterIncomingObjects(t *testing.T) {
+	pkgs := []string{"pkg1", "pkg2", "pkg2", "pkg4", "pkg4", "pkg5"}
+	pmManifest := shared.PmManifest{
+		Global: shared.ManifestGlobal{
+			Dependencies: []string{"dep1", "dep2", "dep3"},
+			Packages:     []string{"pkg1", "pkg2", "pkg3"},
+		},
+		Conditional: []shared.ManifestConditional{},
+	}
+	filteredObjs, err := FilterIncomingObjects(pkgs, pmManifest, false)
+	assert.Nil(t, err, "should be no error should")
+	assert.Equal(t, []string{"pkg4", "pkg5"}, filteredObjs, "incorrect filtering")
+}
+
 func TestTotalUpdatedDeps(t *testing.T) {
-	// name := "Gladys"
-	// if !want.MatchString(msg) || err != nil {
-	//     t.Fatalf(`Hello("Gladys") = %q, %v, want match for %#q, nil`, msg, err, want)
-	// }
 	ds := map[string]shared.DependenciesStatus{}
 	ds["go"] = shared.DependenciesStatus{
 		Synced:  []shared.Dependency{{Name: "test0", FullName: "test0_full"}},

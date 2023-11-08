@@ -1,20 +1,12 @@
 package state
 
 import (
-	"log"
-	"os"
+	"context"
 	"time"
 
-	"github.com/glebarez/sqlite"
-	"github.com/lucas-ingemar/packtrak/internal/config"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/samber/lo"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
-)
-
-var (
-	db gorm.DB
 )
 
 type PackageState struct {
@@ -31,27 +23,39 @@ type DependencyState struct {
 	Dependency string
 }
 
-func InitDb() error {
-	// FIXME: Connect verbose flag
-	newLogger := logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
-		logger.Config{
-			SlowThreshold:             time.Second,   // Slow SQL threshold
-			LogLevel:                  logger.Silent, // Log level
-			IgnoreRecordNotFoundError: true,          // Ignore ErrRecordNotFound error for logger
-			ParameterizedQueries:      true,          // Don't include params in the SQL log
-			Colorful:                  false,         // Disable color
-		},
-	)
-	dbInit, err := gorm.Open(sqlite.Open(config.StateFile), &gorm.Config{
-		Logger: newLogger,
-	})
-	if err != nil {
-		return err
-	}
-	db = *dbInit
+// FIXME: I think this can extend gorm.DB. Then we can: tx.UpdatedPackageStatus for a transaction, state.UpdatePackageStatus for hit and leave
+type StateFace interface {
+	Init() error
+	Begin(ctx context.Context) (tx *gorm.DB)
+	UpdatePackageState(ctx context.Context, tx *gorm.DB, manager string, packages []shared.Package) error
+	GetPackageState(ctx context.Context, tx *gorm.DB, manager string) (packages []string, err error)
+	UpdateDependencyState(ctx context.Context, tx *gorm.DB, manager string, deps []shared.Dependency) error
+	GetDependencyState(ctx context.Context, tx *gorm.DB, manager string) (dependencies []string, err error)
+}
 
-	err = db.AutoMigrate(&PackageState{}, &DependencyState{})
+type State struct {
+	db *gorm.DB
+}
+
+func (s State) Init() error {
+	// FIXME: Connect verbose flag, below should be an input to NewState()
+	// newLogger := logger.New(
+	// 	log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+	// 	logger.Config{
+	// 		SlowThreshold:             time.Second,   // Slow SQL threshold
+	// 		LogLevel:                  logger.Silent, // Log level
+	// 		IgnoreRecordNotFoundError: true,          // Ignore ErrRecordNotFound error for logger
+	// 		ParameterizedQueries:      true,          // Don't include params in the SQL log
+	// 		Colorful:                  false,         // Disable color
+	// 	},
+	// )
+	// dbInit, err := gorm.Open(sqlite.Open(config.StateFile), &gorm.Config{
+	// 	Logger: newLogger,
+	// })
+	// if err != nil {
+	// 	return err
+	// }
+	err := s.db.AutoMigrate(&PackageState{}, &DependencyState{})
 	if err != nil {
 		return err
 	}
@@ -59,16 +63,16 @@ func InitDb() error {
 	return nil
 }
 
-func Begin() (tx *gorm.DB) {
-	return db.Begin()
+func (s State) Begin(ctx context.Context) (tx *gorm.DB) {
+	return s.db.WithContext(ctx).Begin()
 }
 
-func BeginNoTrans() (tx *gorm.DB) {
-	return &db
-}
+// func BeginNoTrans() (tx *gorm.DB) {
+// 	return &db
+// }
 
-func UpdatePackageState(tx *gorm.DB, manager string, packages []shared.Package) error {
-	currentPkgs, err := GetPackageState(tx, manager)
+func (s State) UpdatePackageState(ctx context.Context, tx *gorm.DB, manager string, packages []shared.Package) error {
+	currentPkgs, err := s.GetPackageState(ctx, tx, manager)
 	if err != nil {
 		return err
 	}
@@ -80,7 +84,7 @@ func UpdatePackageState(tx *gorm.DB, manager string, packages []shared.Package) 
 
 	for _, pkg := range currentPkgs {
 		if !lo.Contains(pkgNames, pkg) {
-			result := tx.Where("manager LIKE ? AND package = ?", manager, pkg).Delete(&PackageState{Package: pkg})
+			result := tx.WithContext(ctx).Where("manager LIKE ? AND package = ?", manager, pkg).Delete(&PackageState{Package: pkg})
 			if result.Error != nil {
 				return result.Error
 			}
@@ -89,7 +93,7 @@ func UpdatePackageState(tx *gorm.DB, manager string, packages []shared.Package) 
 
 	for _, pkg := range pkgNames {
 		if !lo.Contains(currentPkgs, pkg) {
-			result := tx.Create(&PackageState{Package: pkg, Manager: manager})
+			result := tx.WithContext(ctx).Create(&PackageState{Package: pkg, Manager: manager})
 			if result.Error != nil {
 				return result.Error
 			}
@@ -98,10 +102,10 @@ func UpdatePackageState(tx *gorm.DB, manager string, packages []shared.Package) 
 	return nil
 }
 
-func GetPackageState(tx *gorm.DB, manager string) (packages []string, err error) {
+func (s State) GetPackageState(ctx context.Context, tx *gorm.DB, manager string) (packages []string, err error) {
 	packageStates := []PackageState{}
 
-	result := tx.Where("manager LIKE ?", manager).Find(&packageStates)
+	result := tx.WithContext(ctx).Where("manager LIKE ?", manager).Find(&packageStates)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -113,8 +117,8 @@ func GetPackageState(tx *gorm.DB, manager string) (packages []string, err error)
 	return packages, err
 }
 
-func UpdateDependencyState(tx *gorm.DB, manager string, deps []shared.Dependency) error {
-	currentDeps, err := GetDependencyState(tx, manager)
+func (s State) UpdateDependencyState(ctx context.Context, tx *gorm.DB, manager string, deps []shared.Dependency) error {
+	currentDeps, err := s.GetDependencyState(ctx, tx, manager)
 	if err != nil {
 		return err
 	}
@@ -126,7 +130,7 @@ func UpdateDependencyState(tx *gorm.DB, manager string, deps []shared.Dependency
 
 	for _, dep := range currentDeps {
 		if !lo.Contains(depNames, dep) {
-			result := tx.Where("manager LIKE ? AND dependency = ?", manager, dep).Delete(&DependencyState{Dependency: dep})
+			result := tx.WithContext(ctx).Where("manager LIKE ? AND dependency = ?", manager, dep).Delete(&DependencyState{Dependency: dep})
 			if result.Error != nil {
 				return result.Error
 			}
@@ -135,7 +139,7 @@ func UpdateDependencyState(tx *gorm.DB, manager string, deps []shared.Dependency
 
 	for _, dep := range depNames {
 		if !lo.Contains(currentDeps, dep) {
-			result := tx.Create(&DependencyState{Dependency: dep, Manager: manager})
+			result := tx.WithContext(ctx).Create(&DependencyState{Dependency: dep, Manager: manager})
 			if result.Error != nil {
 				return result.Error
 			}
@@ -144,10 +148,10 @@ func UpdateDependencyState(tx *gorm.DB, manager string, deps []shared.Dependency
 	return nil
 }
 
-func GetDependencyState(tx *gorm.DB, manager string) (dependencies []string, err error) {
+func (s State) GetDependencyState(ctx context.Context, tx *gorm.DB, manager string) (dependencies []string, err error) {
 	depStates := []DependencyState{}
 
-	result := tx.Where("manager LIKE ?", manager).Find(&depStates)
+	result := tx.WithContext(ctx).Where("manager LIKE ?", manager).Find(&depStates)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -159,31 +163,8 @@ func GetDependencyState(tx *gorm.DB, manager string) (dependencies []string, err
 	return dependencies, err
 }
 
-// func Test() {
-// 	tx := Begin()
-// 	defer tx.Rollback()
-
-// 	// p := []PackageState{}
-// 	// db.Find(&p)
-// 	// b, _ := json.Marshal(p)
-// 	// fmt.Println(string(b))
-
-// 	err := UpdatePackageState(tx, "go", []string{})
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	pkgs, err := GetPackageState(tx, "go")
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	fmt.Println(pkgs)
-
-// 	// tx.Delete(&[]PackageState{{Manager: "dnf"}})
-// 	// tx.Create(&PackageState{
-// 	// 	Manager: "go",
-// 	// 	Package: "pack1",
-// 	// })
-
-// 	res := tx.Commit()
-// 	fmt.Println(res.Error)
-// }
+func NewState(db *gorm.DB) State {
+	return State{
+		db: db,
+	}
+}

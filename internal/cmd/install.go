@@ -1,21 +1,21 @@
 package cmd
 
 import (
-	"github.com/lucas-ingemar/packtrak/internal/machinery"
+	"github.com/lucas-ingemar/packtrak/internal/app"
 	"github.com/lucas-ingemar/packtrak/internal/manifest"
 	"github.com/lucas-ingemar/packtrak/internal/packagemanagers"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/spf13/cobra"
 )
 
-func initInstall() {
+func initInstall(a app.AppFace) {
 	for _, pm := range packagemanagers.PackageManagers {
 		installCmd := &cobra.Command{
 			Use:               "install",
 			Short:             "install a package or packages on your system",
 			Args:              cobra.MinimumNArgs(1),
 			ValidArgsFunction: generateInstallValidArgsFunc(pm, manifest.Manifest.Pm(pm.Name())),
-			Run:               generateInstallCmd(pm, manifest.Manifest.Pm(pm.Name())),
+			Run:               generateInstallCmd(a, pm, manifest.Manifest.Pm(pm.Name())),
 		}
 		installCmd.PersistentFlags().BoolP("dependency", "d", false, "Install dependency")
 		installCmd.PersistentFlags().Bool("host", false, "Install only for the current host")
@@ -35,7 +35,7 @@ func generateInstallValidArgsFunc(pm shared.PackageManager, pmManifest *shared.P
 	}
 }
 
-func generateInstallCmd(pm shared.PackageManager, pmManifest *shared.PmManifest) func(cmd *cobra.Command, args []string) {
+func generateInstallCmd(a app.AppFace, pm shared.PackageManager, pmManifest *shared.PmManifest) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		if !shared.MustDoSudo(cmd.Context(), []shared.PackageManager{pm}, shared.CommandInstall) {
 			panic("sudo access not granted")
@@ -45,7 +45,7 @@ func generateInstallCmd(pm shared.PackageManager, pmManifest *shared.PmManifest)
 		group := cmd.Flag("group").Value.String()
 		host := cmd.Flag("host").Value.String() == "true"
 
-		if err := machinery.Install(cmd.Context(), args, pm, pmManifest, installDependency, host, group); err != nil {
+		if err := a.Install(cmd.Context(), args, pm, pmManifest, installDependency, host, group); err != nil {
 			panic(err)
 		}
 	}

@@ -3,7 +3,7 @@ package cmd
 import (
 	"strings"
 
-	"github.com/lucas-ingemar/packtrak/internal/machinery"
+	"github.com/lucas-ingemar/packtrak/internal/app"
 	"github.com/lucas-ingemar/packtrak/internal/manifest"
 	"github.com/lucas-ingemar/packtrak/internal/packagemanagers"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
@@ -11,14 +11,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func initRemove() {
+func initRemove(a app.AppFace) {
 	for _, pm := range packagemanagers.PackageManagers {
 		removeCmd := &cobra.Command{
 			Use:               "remove",
 			Short:             "remove a package or packages on your system",
 			Args:              cobra.MinimumNArgs(1),
 			ValidArgsFunction: generateRemoveValidArgsFunc(pm, manifest.Manifest.Pm(pm.Name())),
-			Run:               generateRemoveCmd(pm, manifest.Manifest.Pm(pm.Name())),
+			Run:               generateRemoveCmd(a, pm, manifest.Manifest.Pm(pm.Name())),
 		}
 		removeCmd.PersistentFlags().BoolP("dependency", "d", false, "Remove dependency")
 		PmCmds[pm.Name()].AddCommand(removeCmd)
@@ -49,13 +49,13 @@ func generateRemoveValidArgsFunc(pm shared.PackageManager, pmManifest *shared.Pm
 	}
 }
 
-func generateRemoveCmd(pm shared.PackageManager, pmManifest *shared.PmManifest) func(cmd *cobra.Command, args []string) {
+func generateRemoveCmd(a app.AppFace, pm shared.PackageManager, pmManifest *shared.PmManifest) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		if !shared.MustDoSudo(cmd.Context(), []shared.PackageManager{pm}, shared.CommandRemove) {
 			panic("sudo access not granted")
 		}
 		removeDependency := cmd.Flag("dependency").Value.String() == "true"
-		if err := machinery.Remove(cmd.Context(), args, pm, pmManifest, removeDependency); err != nil {
+		if err := a.Remove(cmd.Context(), args, pm, pmManifest, removeDependency); err != nil {
 			panic(err)
 		}
 	}

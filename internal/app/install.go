@@ -1,4 +1,4 @@
-package machinery
+package app
 
 import (
 	"context"
@@ -6,38 +6,20 @@ import (
 	"os"
 
 	"github.com/lucas-ingemar/packtrak/internal/config"
+	"github.com/lucas-ingemar/packtrak/internal/core"
 	"github.com/lucas-ingemar/packtrak/internal/manifest"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
-	"github.com/samber/lo"
 )
 
-func Install(ctx context.Context, apkgs []string, pm shared.PackageManager, pmManifest *shared.PmManifest, installDependency bool, host bool, group string) error {
-	objsToAdd := []string{}
+func (a App) Install(ctx context.Context, apkgs []string, pm shared.PackageManager, pmManifest *shared.PmManifest, installDependency bool, host bool, group string) error {
 	warningPrinted := false
 
-	apkgs = lo.Uniq(apkgs)
-
-	for _, arg := range apkgs {
-		var objs []string
-		pkgs, deps, err := manifest.Filter(*pmManifest)
-		if err != nil {
-			return err
-		}
-		if installDependency {
-			objs = deps
-		} else {
-			objs = pkgs
-		}
-		if lo.Contains(objs, arg) {
-			shared.PtermWarning.Printfln("'%s' is already present in manifest", arg)
-			warningPrinted = true
-			continue
-		}
-		objsToAdd = append(objsToAdd, arg)
+	objsToAdd, err := core.FilterIncomingObjects(apkgs, *pmManifest, installDependency)
+	if err != nil {
+		return err
 	}
 
 	var toAdd, userWarnings []string
-	var err error
 
 	if installDependency {
 		toAdd, userWarnings, err = pm.AddDependencies(ctx, objsToAdd)
@@ -93,7 +75,7 @@ func Install(ctx context.Context, apkgs []string, pm shared.PackageManager, pmMa
 		}
 	}
 
-	err = Sync(ctx, []shared.PackageManager{pm})
+	err = a.Sync(ctx, []shared.PackageManager{pm})
 	if err != nil {
 		return err
 	}
