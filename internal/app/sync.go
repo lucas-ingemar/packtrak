@@ -26,17 +26,17 @@ func (a App) Sync(ctx context.Context, pms []shared.PackageManager) (err error) 
 		tx := a.State.Begin(ctx)
 		defer tx.Rollback()
 		for _, pm := range pms {
-			err := a.State.UpdatePackageState(ctx, tx, pm.Name(), pkgsState[pm.Name()])
+			err := tx.UpdatePackageState(ctx, pm.Name(), pkgsState[pm.Name()])
 			if err != nil {
 				return err
 			}
 
-			err = a.State.UpdateDependencyState(ctx, tx, pm.Name(), depsState[pm.Name()])
+			err = tx.UpdateDependencyState(ctx, pm.Name(), depsState[pm.Name()])
 			if err != nil {
 				return err
 			}
 		}
-		if err := tx.Commit().Error; err != nil {
+		if err := tx.Commit(); err != nil {
 			return err
 		}
 		return state.Rotate(config.StateRotations)
@@ -63,12 +63,12 @@ func (a App) Sync(ctx context.Context, pms []shared.PackageManager) (err error) 
 			if err != nil {
 				return err
 			}
-			err = a.State.UpdateDependencyState(ctx, tx, pm.Name(), depsState[pm.Name()])
+			err = tx.UpdateDependencyState(ctx, pm.Name(), depsState[pm.Name()])
 			if err != nil {
 				return err
 			}
 
-			if err := tx.Commit().Error; err != nil {
+			if err := tx.Commit(); err != nil {
 				return err
 			}
 
@@ -80,12 +80,12 @@ func (a App) Sync(ctx context.Context, pms []shared.PackageManager) (err error) 
 			if err != nil {
 				return err
 			}
-			err = a.State.UpdatePackageState(ctx, tx, pm.Name(), pkgsState[pm.Name()])
+			err = tx.UpdatePackageState(ctx, pm.Name(), pkgsState[pm.Name()])
 			if err != nil {
 				return err
 			}
 
-			if err := tx.Commit().Error; err != nil {
+			if err := tx.Commit(); err != nil {
 				return err
 			}
 		}

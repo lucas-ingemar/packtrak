@@ -10,9 +10,6 @@ import (
 )
 
 func (a App) ListStatus(ctx context.Context, pms []shared.PackageManager) (map[string]shared.DependenciesStatus, map[string]shared.PackageStatus, error) {
-	tx := a.State.Begin(ctx)
-	defer tx.Rollback()
-
 	depStatus := map[string]shared.DependenciesStatus{}
 	pkgStatus := map[string]shared.PackageStatus{}
 	for _, pm := range pms {
@@ -24,7 +21,7 @@ func (a App) ListStatus(ctx context.Context, pms []shared.PackageManager) (map[s
 		packages = lo.Uniq(packages)
 		dependencies = lo.Uniq(dependencies)
 
-		stateDeps, err := a.State.GetDependencyState(ctx, tx, pm.Name())
+		stateDeps, err := a.State.GetDependencyState(ctx, pm.Name())
 		if err != nil {
 			return nil, nil, err
 		}
@@ -35,7 +32,7 @@ func (a App) ListStatus(ctx context.Context, pms []shared.PackageManager) (map[s
 			return nil, nil, err
 		}
 
-		statePkgs, err := a.State.GetPackageState(ctx, tx, pm.Name())
+		statePkgs, err := a.State.GetPackageState(ctx, pm.Name())
 		if err != nil {
 			return nil, nil, err
 		}
