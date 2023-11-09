@@ -24,7 +24,6 @@ type DependencyState struct {
 }
 
 type StateFace interface {
-	Init() error
 	Begin(ctx context.Context) StateFace
 	gorm.TxCommitter
 	UpdatePackageState(ctx context.Context, manager string, packages []shared.Package) error
@@ -35,14 +34,6 @@ type StateFace interface {
 
 type State struct {
 	db *gorm.DB
-}
-
-func (s State) Init() error {
-	err := s.db.AutoMigrate(&PackageState{}, &DependencyState{})
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (s State) Begin(ctx context.Context) StateFace {
@@ -152,8 +143,7 @@ func (s State) Rollback() error {
 	return s.db.Rollback().Error
 }
 
-func NewState(db *gorm.DB) State {
-	return State{
-		db,
-	}
+func NewState(db *gorm.DB) (State, error) {
+	err := db.AutoMigrate(&PackageState{}, &DependencyState{})
+	return State{db: db}, err
 }

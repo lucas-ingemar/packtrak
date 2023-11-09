@@ -89,8 +89,8 @@ func init() {
 		panic(err)
 	}
 
-	s := state.NewState(db)
-	if err = s.Init(); err != nil {
+	s, err := state.NewState(db)
+	if err != nil {
 		panic(err)
 	}
 
