@@ -13,7 +13,7 @@ func (a App) ListStatus(ctx context.Context, pms []shared.PackageManager) (map[s
 	depStatus := map[string]shared.DependenciesStatus{}
 	pkgStatus := map[string]shared.PackageStatus{}
 	for _, pm := range pms {
-		packages, dependencies, err := manifest.Filter(*manifest.Manifest.Pm(pm.Name()))
+		packages, dependencies, err := manifest.Filter(a.Manifest.Pm(pm.Name()))
 		if err != nil {
 			return nil, nil, err
 		}

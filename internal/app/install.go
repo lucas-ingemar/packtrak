@@ -10,17 +10,18 @@ import (
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 )
 
-func (a App) Install(ctx context.Context, apkgs []string, pm shared.PackageManager, pmManifest *shared.PmManifest, installDependency bool, host bool, group string) error {
+func (a App) Install(ctx context.Context, apkgs []string, pm shared.PackageManager, mType manifest.ManifestObjectType, host bool, group string) error {
+	pmManifest := a.Manifest.Pm(pm.Name())
 	warningPrinted := false
 
-	objsToAdd, err := core.FilterIncomingObjects(apkgs, *pmManifest, installDependency)
+	objsToAdd, err := core.FilterIncomingObjects(apkgs, pmManifest, mType)
 	if err != nil {
 		return err
 	}
 
 	var toAdd, userWarnings []string
 
-	if installDependency {
+	if mType == manifest.TypeDependency {
 		toAdd, userWarnings, err = pm.AddDependencies(ctx, objsToAdd)
 		if err != nil {
 			return err
@@ -43,24 +44,27 @@ func (a App) Install(ctx context.Context, apkgs []string, pm shared.PackageManag
 
 	//FIXME: This is not very nice, but it works
 	if host {
-		if err := manifest.AddToHost(toAdd, pm.Name(), installDependency); err != nil {
+		if err := a.Manifest.AddToHost(toAdd, pm.Name(), mType); err != nil {
 			return err
 		}
 	} else if group != "" {
-		if err := manifest.AddToGroup(toAdd, pm.Name(), group, installDependency); err != nil {
+		if err := a.Manifest.AddToGroup(toAdd, group, pm.Name(), mType); err != nil {
 			return err
 		}
 	} else {
-		if installDependency {
-			manifest.Manifest.Pm(pm.Name()).Global.AddDependencies(toAdd)
-		} else {
-			manifest.Manifest.Pm(pm.Name()).Global.AddPackages(toAdd)
+		if err = a.Manifest.AddGlobal(manifest.TypeDependency, pm.Name(), toAdd); err != nil {
+			return nil
 		}
+		// if installDependency {
+		// 	a.Manifest.Pm(pm.Name()).Global.AddDependencies(toAdd)
+		// } else {
+		// 	a.Manifest.Pm(pm.Name()).Global.AddPackages(toAdd)
+		// }
 	}
 
 	if err = a.Sync(ctx, []shared.PackageManager{pm}); err != nil {
 		return err
 	}
 
-	return manifest.SaveManifest(config.ManifestFile)
+	return a.Manifest.Save(config.ManifestFile)
 }

@@ -5,28 +5,27 @@ import (
 	"os"
 
 	"github.com/lucas-ingemar/packtrak/internal/config"
-	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/samber/lo"
 )
 
-func MatchConditional(c shared.ManifestConditional) (match bool, err error) {
+func MatchConditional(c Conditional) (match bool, err error) {
 	switch c.Type {
-	case shared.MConditionHost:
+	case MConditionHost:
 		return filterHost(c)
-	case shared.MConditionGroup:
+	case MConditionGroup:
 		return filterGroup(c)
 	default:
 		return false, fmt.Errorf("unknown condition type '%s'", c.Type)
 	}
 }
 
-func Filter(pmManifest shared.PmManifest) (packages []string, dependencies []string, err error) {
+func Filter(pmManifest PmManifest) (packages []string, dependencies []string, err error) {
 	packages = append(packages, pmManifest.Global.Packages...)
 	dependencies = append(dependencies, pmManifest.Global.Dependencies...)
 
 	for _, c := range pmManifest.Conditional {
 		switch c.Type {
-		case shared.MConditionHost:
+		case MConditionHost:
 			match, err := filterHost(c)
 			if err != nil {
 				return nil, nil, err
@@ -35,7 +34,7 @@ func Filter(pmManifest shared.PmManifest) (packages []string, dependencies []str
 				packages = append(packages, c.Packages...)
 				dependencies = append(dependencies, c.Dependencies...)
 			}
-		case shared.MConditionGroup:
+		case MConditionGroup:
 			match, err := filterGroup(c)
 			if err != nil {
 				return nil, nil, err
@@ -52,7 +51,7 @@ func Filter(pmManifest shared.PmManifest) (packages []string, dependencies []str
 	return
 }
 
-func filterHost(c shared.ManifestConditional) (match bool, err error) {
+func filterHost(c Conditional) (match bool, err error) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		return
@@ -64,7 +63,7 @@ func filterHost(c shared.ManifestConditional) (match bool, err error) {
 	return
 }
 
-func filterGroup(c shared.ManifestConditional) (match bool, err error) {
+func filterGroup(c Conditional) (match bool, err error) {
 	if lo.Contains(config.Groups, c.Value) {
 		return true, nil
 		// return c.Packages, c.Dependencies, nil

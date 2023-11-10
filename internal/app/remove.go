@@ -10,19 +10,21 @@ import (
 	"github.com/samber/lo"
 )
 
-func (a App) Remove(ctx context.Context, apkgs []string, pm shared.PackageManager, pmManifest *shared.PmManifest, removeDependency bool) error {
+func (a App) Remove(ctx context.Context, apkgs []string, pm shared.PackageManager, mType manifest.ManifestObjectType) error {
 	apkgs = lo.Uniq(apkgs)
+
+	pmManifest := a.Manifest.Pm(pm.Name())
 
 	objsToRemove := []string{}
 	warningPrinted := false
 
 	var objs []string
-	pkgs, deps, err := manifest.Filter(*pmManifest)
+	pkgs, deps, err := manifest.Filter(pmManifest)
 	if err != nil {
 		return err
 	}
 
-	if removeDependency {
+	if mType == manifest.TypeDependency {
 		objs = pm.GetDependencyNames(ctx, deps)
 	} else {
 		objs = pm.GetPackageNames(ctx, pkgs)
@@ -39,7 +41,7 @@ func (a App) Remove(ctx context.Context, apkgs []string, pm shared.PackageManage
 
 	var toRemove, userWarnings []string
 
-	if removeDependency {
+	if mType == manifest.TypeDependency {
 		toRemove, userWarnings, err = pm.RemoveDependencies(ctx, deps, objsToRemove)
 		if err != nil {
 			return err
@@ -60,24 +62,29 @@ func (a App) Remove(ctx context.Context, apkgs []string, pm shared.PackageManage
 		fmt.Println("")
 	}
 
-	if removeDependency {
-		pmManifest.Global.RemoveDependencies(toRemove)
-	} else {
-		pmManifest.Global.RemovePackages(toRemove)
-
+	if err = a.Manifest.RemoveGlobal(mType, pm.Name(), toRemove); err != nil {
+		return nil
 	}
+	// if removeDependency {
+	// 	pmManifest.Global.RemoveDependencies(toRemove)
+	// } else {
+	// 	pmManifest.Global.RemovePackages(toRemove)
+	// }
 
-	for idx := range pmManifest.Conditional {
-		match, err := manifest.MatchConditional(pmManifest.Conditional[idx])
+	for _, c := range pmManifest.Conditional {
+		match, err := manifest.MatchConditional(c)
 		if err != nil {
 			return err
 		}
 		if match {
-			if removeDependency {
-				pmManifest.Conditional[idx].RemoveDependencies(toRemove)
-			} else {
-				pmManifest.Conditional[idx].RemovePackages(toRemove)
+			if err = a.Manifest.RemoveConditional(mType, pm.Name(), c.Type, c.Value, toRemove); err != nil {
+				return err
 			}
+			// if removeDependency {
+			// 	pmManifest.Conditional[idx].RemoveDependencies(toRemove)
+			// } else {
+			// 	pmManifest.Conditional[idx].RemovePackages(toRemove)
+			// }
 		}
 	}
 
@@ -85,5 +92,5 @@ func (a App) Remove(ctx context.Context, apkgs []string, pm shared.PackageManage
 		return err
 	}
 
-	return manifest.SaveManifest(config.ManifestFile)
+	return a.Manifest.Save(config.ManifestFile)
 }

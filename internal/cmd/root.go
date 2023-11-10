@@ -62,8 +62,6 @@ func init() {
 		rootCmd.AddCommand(PmCmds[pm.Name()])
 	}
 
-	manifest.MustInitManifest()
-
 	// err := state.InitDb()
 	// if err != nil {
 	// 	panic(err)
@@ -82,6 +80,12 @@ func init() {
 			Colorful:                  false,         // Disable color
 		},
 	)
+
+	m, err := manifest.InitManifest()
+	if err != nil {
+		panic(err)
+	}
+
 	db, err := gorm.Open(sqlite.Open(config.StateFile), &gorm.Config{
 		Logger: newLogger,
 	})
@@ -94,7 +98,7 @@ func init() {
 		panic(err)
 	}
 
-	a := app.NewApp(s)
+	a := app.NewApp(&m, s)
 	initInstall(a)
 	initList(a)
 	initRemove(a)

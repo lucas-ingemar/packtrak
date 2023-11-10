@@ -6,7 +6,7 @@ import (
 	"github.com/samber/lo"
 )
 
-func FilterIncomingObjects(pkgs []string, pmManifest shared.PmManifest, dependencies bool) (filteredObjs []string, err error) {
+func FilterIncomingObjects(pkgs []string, pmManifest manifest.PmManifest, mType manifest.ManifestObjectType) (filteredObjs []string, err error) {
 	pkgs = lo.Uniq(pkgs)
 	for _, arg := range pkgs {
 		var objs []string
@@ -14,7 +14,7 @@ func FilterIncomingObjects(pkgs []string, pmManifest shared.PmManifest, dependen
 		if err != nil {
 			return nil, err
 		}
-		if dependencies {
+		if mType == manifest.TypeDependency {
 			objs = deps
 		} else {
 			objs = pkgs

@@ -1,14 +1,8 @@
 package shared
 
-import (
-	"fmt"
-
-	"github.com/samber/lo"
-)
-
 type (
-	CommandName             string
-	ManifestConditionalType string
+	CommandName string
+	// ManifestConditionalType string
 	// Manifest                map[string]PmManifest
 )
 
@@ -18,8 +12,8 @@ const (
 	CommandList    CommandName = "list"
 	CommandSync    CommandName = "sync"
 
-	MConditionHost  ManifestConditionalType = "host"
-	MConditionGroup ManifestConditionalType = "group"
+	// MConditionHost  ManifestConditionalType = "host"
+	// MConditionGroup ManifestConditionalType = "group"
 )
 
 // type Packages map[string]PmPackages
@@ -33,93 +27,93 @@ const (
 // 	return nil
 // }
 
-type Manifest struct {
-	Dnf PmManifest `yaml:"dnf"`
-	Go  PmManifest `yaml:"go"`
-}
+// type Manifest struct {
+// 	Dnf PmManifest `yaml:"dnf"`
+// 	Go  PmManifest `yaml:"go"`
+// }
 
-func (m *Manifest) Pm(name string) *PmManifest {
-	switch name {
-	case "dnf":
-		return &m.Dnf
-	case "go":
-		return &m.Go
-	default:
-		panic(fmt.Sprintf("%s is not a registered package manager", name))
-	}
-}
+// func (m *Manifest) Pm(name string) *PmManifest {
+// 	switch name {
+// 	case "dnf":
+// 		return &m.Dnf
+// 	case "go":
+// 		return &m.Go
+// 	default:
+// 		panic(fmt.Sprintf("%s is not a registered package manager", name))
+// 	}
+// }
 
-type PmManifest struct {
-	Global      ManifestGlobal        `yaml:"global"`
-	Conditional []ManifestConditional `yaml:"conditional"`
-}
+// type PmManifest struct {
+// 	Global      ManifestGlobal        `yaml:"global"`
+// 	Conditional []ManifestConditional `yaml:"conditional"`
+// }
 
-func (pm *PmManifest) GetOrAddConditional(cType ManifestConditionalType, cValue string) (*ManifestConditional, error) {
-	for idx := range pm.Conditional {
-		if pm.Conditional[idx].Type == cType && pm.Conditional[idx].Value == cValue {
-			return &pm.Conditional[idx], nil
-		}
-	}
-	pm.Conditional = append(pm.Conditional, ManifestConditional{
-		Type:         cType,
-		Value:        cValue,
-		Dependencies: []string{},
-		Packages:     []string{},
-	})
-	return &pm.Conditional[len(pm.Conditional)-1], nil
-}
+// func (pm *PmManifest) GetOrAddConditional(cType ManifestConditionalType, cValue string) (*ManifestConditional, error) {
+// 	for idx := range pm.Conditional {
+// 		if pm.Conditional[idx].Type == cType && pm.Conditional[idx].Value == cValue {
+// 			return &pm.Conditional[idx], nil
+// 		}
+// 	}
+// 	pm.Conditional = append(pm.Conditional, ManifestConditional{
+// 		Type:         cType,
+// 		Value:        cValue,
+// 		Dependencies: []string{},
+// 		Packages:     []string{},
+// 	})
+// 	return &pm.Conditional[len(pm.Conditional)-1], nil
+// }
 
-type ManifestGlobal struct {
-	Dependencies []string `yaml:"dependencies"`
-	Packages     []string `yaml:"packages"`
-}
+// type ManifestGlobal struct {
+// 	Dependencies []string `yaml:"dependencies"`
+// 	Packages     []string `yaml:"packages"`
+// }
 
-func (m *ManifestGlobal) AddPackages(packages []string) {
-	m.Packages = append(m.Packages, packages...)
-}
+// func (m *ManifestGlobal) AddPackages(packages []string) {
+// 	m.Packages = append(m.Packages, packages...)
+// }
 
-func (m *ManifestGlobal) RemovePackages(packages []string) {
-	m.Packages = lo.Filter(m.Packages, func(item string, index int) bool {
-		return !lo.Contains(packages, item)
-	})
-}
+// func (m *ManifestGlobal) RemovePackages(packages []string) {
+// 	m.Packages = lo.Filter(m.Packages, func(item string, index int) bool {
+// 		return !lo.Contains(packages, item)
+// 	})
+// }
 
-func (m *ManifestGlobal) AddDependencies(deps []string) {
-	m.Dependencies = append(m.Dependencies, deps...)
-}
+// func (m *ManifestGlobal) AddDependencies(deps []string) {
+// 	m.Dependencies = append(m.Dependencies, deps...)
+// }
 
-func (m *ManifestGlobal) RemoveDependencies(deps []string) {
-	m.Dependencies = lo.Filter(m.Dependencies, func(item string, index int) bool {
-		return !lo.Contains(deps, item)
-	})
-}
+// func (m *ManifestGlobal) RemoveDependencies(deps []string) {
+// 	m.Dependencies = lo.Filter(m.Dependencies, func(item string, index int) bool {
+// 		return !lo.Contains(deps, item)
+// 	})
+// }
 
-type ManifestConditional struct {
-	Type         ManifestConditionalType `yaml:"type"`
-	Value        string                  `yaml:"value"`
-	Dependencies []string                `yaml:"dependencies"`
-	Packages     []string                `yaml:"packages"`
-}
+// type ManifestConditional struct {
+// 	Type         ManifestConditionalType `yaml:"type"`
+// 	Value        string                  `yaml:"value"`
+// 	Dependencies []string                `yaml:"dependencies"`
+// 	Packages     []string                `yaml:"packages"`
+// }
 
-func (m *ManifestConditional) AddPackages(packages []string) {
-	m.Packages = append(m.Packages, packages...)
-}
+// func (m *ManifestConditional) AddPackages(packages []string) {
+// 	m.Packages = append(m.Packages, packages...)
+// }
 
-func (m *ManifestConditional) RemovePackages(packages []string) {
-	m.Packages = lo.Filter(m.Packages, func(item string, index int) bool {
-		return !lo.Contains(packages, item)
-	})
-}
+// func (m *ManifestConditional) RemovePackages(packages []string) {
+// 	m.Packages = lo.Filter(m.Packages, func(item string, index int) bool {
+// 		return !lo.Contains(packages, item)
+// 	})
+// }
 
-func (m *ManifestConditional) AddDependencies(deps []string) {
-	m.Dependencies = append(m.Dependencies, deps...)
-}
+// func (m *ManifestConditional) AddDependencies(deps []string) {
+// 	m.Dependencies = append(m.Dependencies, deps...)
+// }
 
-func (m *ManifestConditional) RemoveDependencies(deps []string) {
-	m.Dependencies = lo.Filter(m.Dependencies, func(item string, index int) bool {
-		return !lo.Contains(deps, item)
-	})
-}
+// func (m *ManifestConditional) RemoveDependencies(deps []string) {
+// 	m.Dependencies = lo.Filter(m.Dependencies, func(item string, index int) bool {
+// 		return !lo.Contains(deps, item)
+// 	})
+// }
 
 // type State struct {
 // 	Timestamp time.Time `yaml:"timestamp"`
