@@ -5,9 +5,10 @@ import (
 	"strings"
 
 	"github.com/lucas-ingemar/packtrak/internal/shared"
+	"github.com/lucas-ingemar/packtrak/internal/status"
 )
 
-func (a *App) PrintPackageList(depStatus map[shared.ManagerName]shared.DependenciesStatus, pkgStatus map[shared.ManagerName]shared.PackageStatus) error {
+func (a *App) PrintPackageList(s status.Status) error {
 	noSynced, noUpdated, noMissing, noRemoved := 0, 0, 0, 0
 
 	fmt.Println("\nDependencies:")
@@ -16,17 +17,17 @@ func (a *App) PrintPackageList(depStatus map[shared.ManagerName]shared.Dependenc
 		if err != nil {
 			return err
 		}
-		for _, dep := range depStatus[m.Name()].Synced {
+		for _, dep := range s.GetDependenciesByStatus(m.Name(), status.StatusSynced) {
 			shared.PtermInstalled.Printfln("%s %s", m.Icon(), dep.Name)
 			noSynced++
 		}
 
-		for _, dep := range depStatus[m.Name()].Missing {
+		for _, dep := range s.GetDependenciesByStatus(m.Name(), status.StatusMissing) {
 			shared.PtermMissing.Printfln("%s %s", m.Icon(), dep.Name)
 			noMissing++
 		}
 
-		for _, dep := range depStatus[m.Name()].Removed {
+		for _, dep := range s.GetDependenciesByStatus(m.Name(), status.StatusRemoved) {
 			shared.PtermRemoved.Printfln("%s %s", m.Icon(), dep.Name)
 			noRemoved++
 		}
@@ -38,22 +39,22 @@ func (a *App) PrintPackageList(depStatus map[shared.ManagerName]shared.Dependenc
 		if err != nil {
 			return err
 		}
-		for _, pkg := range pkgStatus[m.Name()].Synced {
+		for _, pkg := range s.GetPackagesByStatus(m.Name(), status.StatusSynced) {
 			shared.PtermInstalled.Printfln("%s %s", m.Icon(), pkg.Name)
 			noSynced++
 		}
 
-		for _, pkg := range pkgStatus[m.Name()].Updated {
+		for _, pkg := range s.GetPackagesByStatus(m.Name(), status.StatusUpdated) {
 			shared.PtermUpdated.Printfln("%s %s %s -> %s", m.Icon(), pkg.Name, pkg.Version, pkg.LatestVersion)
 			noUpdated++
 		}
 
-		for _, pkg := range pkgStatus[m.Name()].Missing {
+		for _, pkg := range s.GetPackagesByStatus(m.Name(), status.StatusMissing) {
 			shared.PtermMissing.Printfln("%s %s", m.Icon(), pkg.Name)
 			noMissing++
 		}
 
-		for _, pkg := range pkgStatus[m.Name()].Removed {
+		for _, pkg := range s.GetPackagesByStatus(m.Name(), status.StatusRemoved) {
 			shared.PtermRemoved.Printfln("%s %s", m.Icon(), pkg.Name)
 			noRemoved++
 		}

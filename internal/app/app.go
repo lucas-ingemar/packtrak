@@ -10,6 +10,7 @@ import (
 	"github.com/lucas-ingemar/packtrak/internal/manifest"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/state"
+	"github.com/lucas-ingemar/packtrak/internal/status"
 	"github.com/pterm/pterm"
 	"github.com/samber/lo"
 )
@@ -17,11 +18,11 @@ import (
 type AppFace interface {
 	Install(ctx context.Context, apkgs []string, managerName shared.ManagerName, mType manifest.ManifestObjectType, host bool, group string) error
 	InstallValidArgsFunc(ctx context.Context, managerName shared.ManagerName, toComplete string, mType manifest.ManifestObjectType) (pkgs []string, err error)
-	ListStatus(ctx context.Context, managerNames []shared.ManagerName) (map[shared.ManagerName]shared.DependenciesStatus, map[shared.ManagerName]shared.PackageStatus, error)
+	ListStatus(ctx context.Context, managerNames []shared.ManagerName) (status.Status, error)
 	Remove(ctx context.Context, apkgs []string, managerName shared.ManagerName, mType manifest.ManifestObjectType) error
 	RemoveValidArgsFunc(ctx context.Context, toComplete string, managerName shared.ManagerName, mType manifest.ManifestObjectType) ([]string, error)
 	Sync(ctx context.Context, managerNames []shared.ManagerName) (err error)
-	PrintPackageList(depStatus map[shared.ManagerName]shared.DependenciesStatus, pkgStatus map[shared.ManagerName]shared.PackageStatus) error
+	PrintPackageList(s status.Status) error
 	//FIXME: Might want to create a typ for manager names
 	ListManagers() []shared.ManagerName
 	mustDoSudo(ctx context.Context, managers []shared.ManagerName, cmd shared.CommandName) (success bool)

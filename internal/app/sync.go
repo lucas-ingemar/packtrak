@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/lucas-ingemar/packtrak/internal/config"
-	"github.com/lucas-ingemar/packtrak/internal/core"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/state"
 	"github.com/pterm/pterm"
@@ -21,17 +20,21 @@ func (a *App) Sync(ctx context.Context, managerNames []shared.ManagerName) (err 
 		panic("sudo access not granted")
 	}
 
-	depStatus, pkgStatus, err := a.ListStatus(ctx, managerNames)
+	statusObj, err := a.ListStatus(ctx, managerNames)
 	if err != nil {
 		return err
 	}
 
-	pkgsState := core.UpdatedPackageState(ms, pkgStatus)
-	depsState := core.UpdatedDependencyState(ms, depStatus)
+	// pkgsState := core.UpdatedPackageState(ms, pkgStatus)
+	// depsState := core.UpdatedDependencyState(ms, depStatus)
+	pkgsState := statusObj.GetUpdatedPackageState(managerNames)
+	depsState := statusObj.GetUpdatedDependenciesState(managerNames)
 
-	a.PrintPackageList(depStatus, pkgStatus)
+	if err = a.PrintPackageList(statusObj); err != nil {
+		return err
+	}
 
-	if core.CountUpdatedPkgs(ms, pkgStatus) == 0 && core.CountUpdatedDeps(ms, depStatus) == 0 {
+	if statusObj.CountUpdatedPackages() == 0 && statusObj.CountUpdatedDependencies() == 0 {
 		tx := a.State.Begin(ctx)
 		defer tx.Rollback()
 		for _, manager := range ms {
@@ -67,7 +70,7 @@ func (a *App) Sync(ctx context.Context, managerNames []shared.ManagerName) (err 
 			tx := a.State.Begin(ctx)
 			defer tx.Rollback()
 
-			uw, err := manager.SyncDependencies(ctx, depStatus[manager.Name()])
+			uw, err := manager.SyncDependencies(ctx, statusObj.GetDependencies(manager.Name()))
 			_ = uw
 			if err != nil {
 				return err
@@ -84,7 +87,7 @@ func (a *App) Sync(ctx context.Context, managerNames []shared.ManagerName) (err 
 			tx = a.State.Begin(ctx)
 			defer tx.Rollback()
 
-			uw, err = manager.SyncPackages(ctx, pkgStatus[manager.Name()])
+			uw, err = manager.SyncPackages(ctx, statusObj.GetPackages(manager.Name()))
 			_ = uw
 			if err != nil {
 				return err

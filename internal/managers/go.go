@@ -12,6 +12,7 @@ import (
 
 	"github.com/alexellis/go-execute/v2"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
+	"github.com/lucas-ingemar/packtrak/internal/status"
 	"github.com/samber/lo"
 )
 
@@ -90,11 +91,11 @@ func (g *Go) InstallValidArgs(ctx context.Context, toComplete string, dependenci
 	return []string{}, nil
 }
 
-func (g *Go) ListDependencies(ctx context.Context, deps []string, stateDeps []string) (depStatus shared.DependenciesStatus, err error) {
+func (g *Go) ListDependencies(ctx context.Context, deps []string, stateDeps []string) (depStatus status.DependenciesStatus, err error) {
 	return
 }
 
-func (g *Go) ListPackages(ctx context.Context, packages []string, statePkgs []string) (packageStatus shared.PackageStatus, err error) {
+func (g *Go) ListPackages(ctx context.Context, packages []string, statePkgs []string) (packageStatus status.PackageStatus, err error) {
 	installed, err := g.listInstalled(ctx)
 	if err != nil {
 		return
@@ -154,11 +155,11 @@ func (g *Go) RemoveDependencies(ctx context.Context, allDeps []string, depsToRem
 	return
 }
 
-func (g *Go) SyncDependencies(ctx context.Context, depStatus shared.DependenciesStatus) (userWarnings []string, err error) {
+func (g *Go) SyncDependencies(ctx context.Context, depStatus status.DependenciesStatus) (userWarnings []string, err error) {
 	return
 }
 
-func (g *Go) SyncPackages(ctx context.Context, packageStatus shared.PackageStatus) (userWarnings []string, err error) {
+func (g *Go) SyncPackages(ctx context.Context, packageStatus status.PackageStatus) (userWarnings []string, err error) {
 	// fmt.Println(packageStatus)
 	for _, pkg := range packageStatus.Missing {
 		err = shared.PtermSpinner(shared.PtermSpinnerInstall, pkg.Name, func() error {

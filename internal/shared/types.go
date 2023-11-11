@@ -129,12 +129,12 @@ type Package struct {
 	RepoUrl       string
 }
 
-type PackageStatus struct {
-	Synced  []Package
-	Updated []Package
-	Missing []Package
-	Removed []Package
-}
+// type PackageStatus struct {
+// 	Synced  []Package
+// 	Updated []Package
+// 	Missing []Package
+// 	Removed []Package
+// }
 
 type Dependency struct {
 	Name     string
@@ -144,9 +144,9 @@ type Dependency struct {
 	// RepoUrl       string
 }
 
-type DependenciesStatus struct {
-	Synced  []Dependency
-	Updated []Dependency
-	Missing []Dependency
-	Removed []Dependency
-}
+// type DependenciesStatus struct {
+// 	Synced  []Dependency
+// 	Updated []Dependency
+// 	Missing []Dependency
+// 	Removed []Dependency
+// }

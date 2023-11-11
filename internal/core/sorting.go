@@ -1,7 +1,6 @@
 package core
 
 import (
-	"github.com/lucas-ingemar/packtrak/internal/managers"
 	"github.com/lucas-ingemar/packtrak/internal/manifest"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/samber/lo"
@@ -29,42 +28,42 @@ func FilterIncomingObjects(pkgs []string, pmManifest manifest.PmManifest, mType 
 	return filteredObjs, nil
 }
 
-func CountUpdatedDeps(pms []managers.Manager, depStatus map[shared.ManagerName]shared.DependenciesStatus) (totUpdatedDeps int) {
-	for _, pm := range pms {
-		totUpdatedDeps += len(depStatus[pm.Name()].Missing)
-		totUpdatedDeps += len(depStatus[pm.Name()].Updated)
-		totUpdatedDeps += len(depStatus[pm.Name()].Removed)
-	}
-	return
-}
+// func CountUpdatedDeps(pms []managers.Manager, depStatus map[shared.ManagerName]shared.DependenciesStatus) (totUpdatedDeps int) {
+// 	for _, pm := range pms {
+// 		totUpdatedDeps += len(depStatus[pm.Name()].Missing)
+// 		totUpdatedDeps += len(depStatus[pm.Name()].Updated)
+// 		totUpdatedDeps += len(depStatus[pm.Name()].Removed)
+// 	}
+// 	return
+// }
 
-func CountUpdatedPkgs(pms []managers.Manager, pkgStatus map[shared.ManagerName]shared.PackageStatus) (totUpdatedPkgs int) {
-	for _, pm := range pms {
-		totUpdatedPkgs += len(pkgStatus[pm.Name()].Missing)
-		totUpdatedPkgs += len(pkgStatus[pm.Name()].Updated)
-		totUpdatedPkgs += len(pkgStatus[pm.Name()].Removed)
-	}
-	return
-}
+// func CountUpdatedPkgs(pms []managers.Manager, pkgStatus map[shared.ManagerName]shared.PackageStatus) (totUpdatedPkgs int) {
+// 	for _, pm := range pms {
+// 		totUpdatedPkgs += len(pkgStatus[pm.Name()].Missing)
+// 		totUpdatedPkgs += len(pkgStatus[pm.Name()].Updated)
+// 		totUpdatedPkgs += len(pkgStatus[pm.Name()].Removed)
+// 	}
+// 	return
+// }
 
-func UpdatedPackageState(pms []managers.Manager, pkgStatus map[shared.ManagerName]shared.PackageStatus) map[shared.ManagerName][]shared.Package {
-	pkgsState := map[shared.ManagerName][]shared.Package{}
-	for _, pm := range pms {
-		pkgsState[pm.Name()] = []shared.Package{}
-		pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgStatus[pm.Name()].Synced...)
-		pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgStatus[pm.Name()].Updated...)
-		pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgStatus[pm.Name()].Missing...)
-	}
-	return pkgsState
-}
+// func UpdatedPackageState1(pms []managers.Manager, pkgStatus map[shared.ManagerName]shared.PackageStatus) map[shared.ManagerName][]shared.Package {
+// 	pkgsState := map[shared.ManagerName][]shared.Package{}
+// 	for _, pm := range pms {
+// 		pkgsState[pm.Name()] = []shared.Package{}
+// 		pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgStatus[pm.Name()].Synced...)
+// 		pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgStatus[pm.Name()].Updated...)
+// 		pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgStatus[pm.Name()].Missing...)
+// 	}
+// 	return pkgsState
+// }
 
-func UpdatedDependencyState(pms []managers.Manager, depStatus map[shared.ManagerName]shared.DependenciesStatus) map[shared.ManagerName][]shared.Dependency {
-	depsState := map[shared.ManagerName][]shared.Dependency{}
-	for _, pm := range pms {
-		depsState[pm.Name()] = []shared.Dependency{}
-		depsState[pm.Name()] = append(depsState[pm.Name()], depStatus[pm.Name()].Synced...)
-		depsState[pm.Name()] = append(depsState[pm.Name()], depStatus[pm.Name()].Updated...)
-		depsState[pm.Name()] = append(depsState[pm.Name()], depStatus[pm.Name()].Missing...)
-	}
-	return depsState
-}
+// func UpdatedDependencyState1(pms []managers.Manager, depStatus map[shared.ManagerName]shared.DependenciesStatus) map[shared.ManagerName][]shared.Dependency {
+// 	depsState := map[shared.ManagerName][]shared.Dependency{}
+// 	for _, pm := range pms {
+// 		depsState[pm.Name()] = []shared.Dependency{}
+// 		depsState[pm.Name()] = append(depsState[pm.Name()], depStatus[pm.Name()].Synced...)
+// 		depsState[pm.Name()] = append(depsState[pm.Name()], depStatus[pm.Name()].Updated...)
+// 		depsState[pm.Name()] = append(depsState[pm.Name()], depStatus[pm.Name()].Missing...)
+// 	}
+// 	return depsState
+// }

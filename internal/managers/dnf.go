@@ -15,6 +15,7 @@ import (
 	"github.com/alexellis/go-execute/v2"
 	"github.com/lucas-ingemar/packtrak/internal/config"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
+	"github.com/lucas-ingemar/packtrak/internal/status"
 	"github.com/samber/lo"
 )
 
@@ -120,15 +121,15 @@ func (d *Dnf) InstallValidArgs(ctx context.Context, toComplete string, dependenc
 	return pkgs, nil
 }
 
-func (d *Dnf) ListDependencies(ctx context.Context, deps []string, stateDeps []string) (depStatus shared.DependenciesStatus, err error) {
+func (d *Dnf) ListDependencies(ctx context.Context, deps []string, stateDeps []string) (depStatus status.DependenciesStatus, err error) {
 	installedCoprs, err := d.listCoprs(ctx)
 	if err != nil {
-		return shared.DependenciesStatus{}, err
+		return status.DependenciesStatus{}, err
 	}
 
 	installedCms, err := d.listCm(ctx)
 	if err != nil {
-		return shared.DependenciesStatus{}, err
+		return status.DependenciesStatus{}, err
 	}
 
 	pCoprs, pCms := d.sortDeps(deps)
@@ -195,7 +196,7 @@ func (d *Dnf) ListDependencies(ctx context.Context, deps []string, stateDeps []s
 	return
 }
 
-func (d *Dnf) ListPackages(ctx context.Context, packages []string, statePkgs []string) (packageStatus shared.PackageStatus, err error) {
+func (d *Dnf) ListPackages(ctx context.Context, packages []string, statePkgs []string) (packageStatus status.PackageStatus, err error) {
 	dnfList, err := d.listInstalled(ctx)
 	if err != nil {
 		return
@@ -269,7 +270,7 @@ func (d *Dnf) RemoveDependencies(ctx context.Context, allDeps []string, depsToRe
 	return
 }
 
-func (d *Dnf) SyncDependencies(ctx context.Context, depStatus shared.DependenciesStatus) (userWarnings []string, err error) {
+func (d *Dnf) SyncDependencies(ctx context.Context, depStatus status.DependenciesStatus) (userWarnings []string, err error) {
 	if len(depStatus.Missing) > 0 {
 		fmt.Println("")
 		mCoprs := []string{}
@@ -320,7 +321,7 @@ func (d *Dnf) SyncDependencies(ctx context.Context, depStatus shared.Dependencie
 	return
 }
 
-func (d *Dnf) SyncPackages(ctx context.Context, packageStatus shared.PackageStatus) (userWarnings []string, err error) {
+func (d *Dnf) SyncPackages(ctx context.Context, packageStatus status.PackageStatus) (userWarnings []string, err error) {
 	if len(packageStatus.Missing) > 0 {
 		filteredPkgsInstall := lo.Filter(packageStatus.Missing, func(item shared.Package, _ int) bool {
 			isSysPkg, err := d.isSystemPackage(ctx, item.FullName)
