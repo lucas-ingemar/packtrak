@@ -6,32 +6,42 @@ import (
 
 	"github.com/lucas-ingemar/packtrak/internal/config"
 	"github.com/lucas-ingemar/packtrak/internal/core"
+	"github.com/lucas-ingemar/packtrak/internal/managers"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/state"
 	"github.com/pterm/pterm"
 )
 
-func (a App) Sync(ctx context.Context, pms []shared.PackageManager) (err error) {
-	depStatus, pkgStatus, err := a.ListStatus(ctx, pms)
+func (a App) Sync(ctx context.Context, managerNames []managers.ManagerName) (err error) {
+	ms, error := a.Managers.GetManagers(managerNames)
+	if error != nil {
+		return error
+	}
+
+	if !shared.MustDoSudo(ctx, ms, shared.CommandSync) {
+		panic("sudo access not granted")
+	}
+
+	depStatus, pkgStatus, err := a.ListStatus(ctx, managerNames)
 	if err != nil {
 		return err
 	}
 
-	pkgsState := core.UpdatedPackageState(pms, pkgStatus)
-	depsState := core.UpdatedDependencyState(pms, depStatus)
+	pkgsState := core.UpdatedPackageState(ms, pkgStatus)
+	depsState := core.UpdatedDependencyState(ms, depStatus)
 
-	core.PrintPackageList(depStatus, pkgStatus)
+	a.PrintPackageList(depStatus, pkgStatus)
 
-	if core.CountUpdatedPkgs(pms, pkgStatus) == 0 && core.CountUpdatedDeps(pms, depStatus) == 0 {
+	if core.CountUpdatedPkgs(ms, pkgStatus) == 0 && core.CountUpdatedDeps(ms, depStatus) == 0 {
 		tx := a.State.Begin(ctx)
 		defer tx.Rollback()
-		for _, pm := range pms {
-			err := tx.UpdatePackageState(ctx, pm.Name(), pkgsState[pm.Name()])
+		for _, manager := range ms {
+			err := tx.UpdatePackageState(ctx, manager.Name(), pkgsState[manager.Name()])
 			if err != nil {
 				return err
 			}
 
-			err = tx.UpdateDependencyState(ctx, pm.Name(), depsState[pm.Name()])
+			err = tx.UpdateDependencyState(ctx, manager.Name(), depsState[manager.Name()])
 			if err != nil {
 				return err
 			}
@@ -54,16 +64,16 @@ func (a App) Sync(ctx context.Context, pms []shared.PackageManager) (err error) 
 	}.Show()
 
 	if result == "y" {
-		for _, pm := range pms {
+		for _, manager := range ms {
 			tx := a.State.Begin(ctx)
 			defer tx.Rollback()
 
-			uw, err := pm.SyncDependencies(ctx, depStatus[pm.Name()])
+			uw, err := manager.SyncDependencies(ctx, depStatus[manager.Name()])
 			_ = uw
 			if err != nil {
 				return err
 			}
-			err = tx.UpdateDependencyState(ctx, pm.Name(), depsState[pm.Name()])
+			err = tx.UpdateDependencyState(ctx, manager.Name(), depsState[manager.Name()])
 			if err != nil {
 				return err
 			}
@@ -75,12 +85,12 @@ func (a App) Sync(ctx context.Context, pms []shared.PackageManager) (err error) 
 			tx = a.State.Begin(ctx)
 			defer tx.Rollback()
 
-			uw, err = pm.SyncPackages(ctx, pkgStatus[pm.Name()])
+			uw, err = manager.SyncPackages(ctx, pkgStatus[manager.Name()])
 			_ = uw
 			if err != nil {
 				return err
 			}
-			err = tx.UpdatePackageState(ctx, pm.Name(), pkgsState[pm.Name()])
+			err = tx.UpdatePackageState(ctx, manager.Name(), pkgsState[manager.Name()])
 			if err != nil {
 				return err
 			}

@@ -2,30 +2,42 @@ package cmd
 
 import (
 	"github.com/lucas-ingemar/packtrak/internal/app"
+	"github.com/lucas-ingemar/packtrak/internal/managers"
 	"github.com/lucas-ingemar/packtrak/internal/manifest"
-	"github.com/lucas-ingemar/packtrak/internal/packagemanagers"
-	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/spf13/cobra"
 )
 
 func initRemove(a app.AppFace) {
-	for _, pm := range packagemanagers.PackageManagers {
+	for _, managerName := range a.ListManagers() {
 		removeCmd := &cobra.Command{
 			Use:               "remove",
 			Short:             "remove a package or packages on your system",
 			Args:              cobra.MinimumNArgs(1),
-			ValidArgsFunction: generateRemoveValidArgsFunc(pm),
-			Run:               generateRemoveCmd(a, pm),
+			ValidArgsFunction: generateRemoveValidArgsFunc(a, managerName),
+			Run:               generateRemoveCmd(a, managerName),
 		}
 		removeCmd.PersistentFlags().BoolP("dependency", "d", false, "Remove dependency")
-		PmCmds[pm.Name()].AddCommand(removeCmd)
+		PmCmds[managerName].AddCommand(removeCmd)
 	}
 }
 
-func generateRemoveValidArgsFunc(pm shared.PackageManager) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func generateRemoveValidArgsFunc(a app.AppFace, managerName managers.ManagerName) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		var mType manifest.ManifestObjectType
+		if cmd.Flag("dependency").Value.String() == "true" {
+			mType = manifest.TypeDependency
+		} else {
+			mType = manifest.TypePackage
+		}
+
+		retArgs, err := a.RemoveValidArgsFunc(cmd.Context(), toComplete, managerName, mType)
+		if err != nil {
+			panic(err)
+		}
+
+		return retArgs, cobra.ShellCompDirectiveNoFileComp
+
 		// pmManifest := a.Manifest.Pm()
-		// removeDependency := cmd.Flag("dependency").Value.String() == "true"
 		// pkgs, deps, err := manifest.Filter(*pmManifest)
 		// if err != nil {
 		// 	panic(err)
@@ -44,15 +56,14 @@ func generateRemoveValidArgsFunc(pm shared.PackageManager) func(cmd *cobra.Comma
 		// 			}),
 		// 		cobra.ShellCompDirectiveNoFileComp
 		// }
-		return nil, 0
 	}
 }
 
-func generateRemoveCmd(a app.AppFace, pm shared.PackageManager) func(cmd *cobra.Command, args []string) {
+func generateRemoveCmd(a app.AppFace, managerName managers.ManagerName) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		if !shared.MustDoSudo(cmd.Context(), []shared.PackageManager{pm}, shared.CommandRemove) {
-			panic("sudo access not granted")
-		}
+		// if !shared.MustDoSudo(cmd.Context(), []shared.PackageManager{pm}, shared.CommandRemove) {
+		// 	panic("sudo access not granted")
+		// }
 
 		var mType manifest.ManifestObjectType
 		if cmd.Flag("dependency").Value.String() == "true" {
@@ -62,7 +73,7 @@ func generateRemoveCmd(a app.AppFace, pm shared.PackageManager) func(cmd *cobra.
 		}
 
 		// removeDependency := cmd.Flag("dependency").Value.String() == "true"
-		if err := a.Remove(cmd.Context(), args, pm, mType); err != nil {
+		if err := a.Remove(cmd.Context(), args, managerName, mType); err != nil {
 			panic(err)
 		}
 	}

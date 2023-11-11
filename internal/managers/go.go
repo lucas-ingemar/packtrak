@@ -1,4 +1,4 @@
-package packagemanagers
+package managers
 
 import (
 	"context"
@@ -16,14 +16,15 @@ import (
 )
 
 const (
-	goVersionCheckBaseUrl = "https://api.deps.dev/v3alpha/systems/go/packages"
+	goVersionCheckBaseUrl             = "https://api.deps.dev/v3alpha/systems/go/packages"
+	NameGo                ManagerName = "go"
 )
 
 type Go struct {
 }
 
-func (g *Go) Name() string {
-	return "go"
+func (g *Go) Name() ManagerName {
+	return NameGo
 }
 
 func (g *Go) Icon() string {
@@ -109,7 +110,7 @@ func (g *Go) ListPackages(ctx context.Context, packages []string, statePkgs []st
 			})
 			continue
 		}
-		dPkg, err := shared.GetDepsDevDefaultPackage(g.Name(), iPkg)
+		dPkg, err := shared.GetDepsDevDefaultPackage(string(g.Name()), iPkg)
 		if err != nil {
 			return packageStatus, err
 		}

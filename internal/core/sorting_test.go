@@ -3,8 +3,8 @@ package core
 import (
 	"testing"
 
+	"github.com/lucas-ingemar/packtrak/internal/managers"
 	"github.com/lucas-ingemar/packtrak/internal/manifest"
-	"github.com/lucas-ingemar/packtrak/internal/packagemanagers"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/stretchr/testify/assert"
 )
@@ -24,13 +24,13 @@ func TestFilterIncomingObjects(t *testing.T) {
 }
 
 func TestTotalUpdatedDeps(t *testing.T) {
-	ds := map[string]shared.DependenciesStatus{}
-	ds["go"] = shared.DependenciesStatus{
+	ds := map[managers.ManagerName]shared.DependenciesStatus{}
+	ds[managers.NameGo] = shared.DependenciesStatus{
 		Synced:  []shared.Dependency{{Name: "test0", FullName: "test0_full"}},
 		Updated: []shared.Dependency{{Name: "test1", FullName: "test1_full"}},
 		Missing: []shared.Dependency{{Name: "test2", FullName: "test2_full"}},
 		Removed: []shared.Dependency{{Name: "test3", FullName: "test3_full"}},
 	}
-	tud := CountUpdatedDeps([]shared.PackageManager{&packagemanagers.Go{}}, ds)
+	tud := CountUpdatedDeps([]managers.Manager{&managers.Go{}}, ds)
 	assert.Equal(t, 3, tud, "number of dependencies")
 }

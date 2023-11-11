@@ -1,6 +1,7 @@
 package core
 
 import (
+	"github.com/lucas-ingemar/packtrak/internal/managers"
 	"github.com/lucas-ingemar/packtrak/internal/manifest"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/samber/lo"
@@ -28,7 +29,7 @@ func FilterIncomingObjects(pkgs []string, pmManifest manifest.PmManifest, mType 
 	return filteredObjs, nil
 }
 
-func CountUpdatedDeps(pms []shared.PackageManager, depStatus map[string]shared.DependenciesStatus) (totUpdatedDeps int) {
+func CountUpdatedDeps(pms []managers.Manager, depStatus map[managers.ManagerName]shared.DependenciesStatus) (totUpdatedDeps int) {
 	for _, pm := range pms {
 		totUpdatedDeps += len(depStatus[pm.Name()].Missing)
 		totUpdatedDeps += len(depStatus[pm.Name()].Updated)
@@ -37,7 +38,7 @@ func CountUpdatedDeps(pms []shared.PackageManager, depStatus map[string]shared.D
 	return
 }
 
-func CountUpdatedPkgs(pms []shared.PackageManager, pkgStatus map[string]shared.PackageStatus) (totUpdatedPkgs int) {
+func CountUpdatedPkgs(pms []managers.Manager, pkgStatus map[managers.ManagerName]shared.PackageStatus) (totUpdatedPkgs int) {
 	for _, pm := range pms {
 		totUpdatedPkgs += len(pkgStatus[pm.Name()].Missing)
 		totUpdatedPkgs += len(pkgStatus[pm.Name()].Updated)
@@ -46,8 +47,8 @@ func CountUpdatedPkgs(pms []shared.PackageManager, pkgStatus map[string]shared.P
 	return
 }
 
-func UpdatedPackageState(pms []shared.PackageManager, pkgStatus map[string]shared.PackageStatus) map[string][]shared.Package {
-	pkgsState := map[string][]shared.Package{}
+func UpdatedPackageState(pms []managers.Manager, pkgStatus map[managers.ManagerName]shared.PackageStatus) map[managers.ManagerName][]shared.Package {
+	pkgsState := map[managers.ManagerName][]shared.Package{}
 	for _, pm := range pms {
 		pkgsState[pm.Name()] = []shared.Package{}
 		pkgsState[pm.Name()] = append(pkgsState[pm.Name()], pkgStatus[pm.Name()].Synced...)
@@ -57,8 +58,8 @@ func UpdatedPackageState(pms []shared.PackageManager, pkgStatus map[string]share
 	return pkgsState
 }
 
-func UpdatedDependencyState(pms []shared.PackageManager, depStatus map[string]shared.DependenciesStatus) map[string][]shared.Dependency {
-	depsState := map[string][]shared.Dependency{}
+func UpdatedDependencyState(pms []managers.Manager, depStatus map[managers.ManagerName]shared.DependenciesStatus) map[managers.ManagerName][]shared.Dependency {
+	depsState := map[managers.ManagerName][]shared.Dependency{}
 	for _, pm := range pms {
 		depsState[pm.Name()] = []shared.Dependency{}
 		depsState[pm.Name()] = append(depsState[pm.Name()], depStatus[pm.Name()].Synced...)

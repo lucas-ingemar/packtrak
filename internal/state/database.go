@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/lucas-ingemar/packtrak/internal/managers"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/samber/lo"
 	"gorm.io/gorm"
@@ -26,10 +27,10 @@ type DependencyState struct {
 type StateFace interface {
 	Begin(ctx context.Context) StateFace
 	gorm.TxCommitter
-	UpdatePackageState(ctx context.Context, manager string, packages []shared.Package) error
-	GetPackageState(ctx context.Context, manager string) (packages []string, err error)
-	UpdateDependencyState(ctx context.Context, manager string, deps []shared.Dependency) error
-	GetDependencyState(ctx context.Context, manager string) (dependencies []string, err error)
+	UpdatePackageState(ctx context.Context, manager managers.ManagerName, packages []shared.Package) error
+	GetPackageState(ctx context.Context, manager managers.ManagerName) (packages []string, err error)
+	UpdateDependencyState(ctx context.Context, manager managers.ManagerName, deps []shared.Dependency) error
+	GetDependencyState(ctx context.Context, manager managers.ManagerName) (dependencies []string, err error)
 }
 
 type State struct {
@@ -43,7 +44,7 @@ func (s State) Begin(ctx context.Context) StateFace {
 	}
 }
 
-func (s State) UpdatePackageState(ctx context.Context, manager string, packages []shared.Package) error {
+func (s State) UpdatePackageState(ctx context.Context, manager managers.ManagerName, packages []shared.Package) error {
 	currentPkgs, err := s.GetPackageState(ctx, manager)
 	if err != nil {
 		return err
@@ -65,7 +66,7 @@ func (s State) UpdatePackageState(ctx context.Context, manager string, packages 
 
 	for _, pkg := range pkgNames {
 		if !lo.Contains(currentPkgs, pkg) {
-			result := s.db.WithContext(ctx).Create(&PackageState{Package: pkg, Manager: manager})
+			result := s.db.WithContext(ctx).Create(&PackageState{Package: pkg, Manager: string(manager)})
 			if result.Error != nil {
 				return result.Error
 			}
@@ -74,7 +75,7 @@ func (s State) UpdatePackageState(ctx context.Context, manager string, packages 
 	return nil
 }
 
-func (s State) GetPackageState(ctx context.Context, manager string) (packages []string, err error) {
+func (s State) GetPackageState(ctx context.Context, manager managers.ManagerName) (packages []string, err error) {
 	packageStates := []PackageState{}
 
 	result := s.db.WithContext(ctx).Where("manager LIKE ?", manager).Find(&packageStates)
@@ -89,7 +90,7 @@ func (s State) GetPackageState(ctx context.Context, manager string) (packages []
 	return packages, err
 }
 
-func (s State) UpdateDependencyState(ctx context.Context, manager string, deps []shared.Dependency) error {
+func (s State) UpdateDependencyState(ctx context.Context, manager managers.ManagerName, deps []shared.Dependency) error {
 	currentDeps, err := s.GetDependencyState(ctx, manager)
 	if err != nil {
 		return err
@@ -111,7 +112,7 @@ func (s State) UpdateDependencyState(ctx context.Context, manager string, deps [
 
 	for _, dep := range depNames {
 		if !lo.Contains(currentDeps, dep) {
-			result := s.db.WithContext(ctx).Create(&DependencyState{Dependency: dep, Manager: manager})
+			result := s.db.WithContext(ctx).Create(&DependencyState{Dependency: dep, Manager: string(manager)})
 			if result.Error != nil {
 				return result.Error
 			}
@@ -120,7 +121,7 @@ func (s State) UpdateDependencyState(ctx context.Context, manager string, deps [
 	return nil
 }
 
-func (s State) GetDependencyState(ctx context.Context, manager string) (dependencies []string, err error) {
+func (s State) GetDependencyState(ctx context.Context, manager managers.ManagerName) (dependencies []string, err error) {
 	depStates := []DependencyState{}
 
 	result := s.db.WithContext(ctx).Where("manager LIKE ?", manager).Find(&depStates)

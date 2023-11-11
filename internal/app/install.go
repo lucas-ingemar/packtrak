@@ -2,16 +2,27 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/lucas-ingemar/packtrak/internal/config"
 	"github.com/lucas-ingemar/packtrak/internal/core"
+	"github.com/lucas-ingemar/packtrak/internal/managers"
 	"github.com/lucas-ingemar/packtrak/internal/manifest"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 )
 
-func (a App) Install(ctx context.Context, apkgs []string, pm shared.PackageManager, mType manifest.ManifestObjectType, host bool, group string) error {
-	pmManifest := a.Manifest.Pm(pm.Name())
+func (a App) Install(ctx context.Context, apkgs []string, managerName managers.ManagerName, mType manifest.ManifestObjectType, host bool, group string) error {
+	manager, error := a.Managers.GetManager(managerName)
+	if error != nil {
+		return error
+	}
+
+	if !shared.MustDoSudo(ctx, []managers.Manager{manager}, shared.CommandInstall) {
+		return errors.New("sudo access not granted")
+	}
+
+	pmManifest := a.Manifest.Pm(managerName)
 	warningPrinted := false
 
 	objsToAdd, err := core.FilterIncomingObjects(apkgs, pmManifest, mType)
@@ -22,12 +33,12 @@ func (a App) Install(ctx context.Context, apkgs []string, pm shared.PackageManag
 	var toAdd, userWarnings []string
 
 	if mType == manifest.TypeDependency {
-		toAdd, userWarnings, err = pm.AddDependencies(ctx, objsToAdd)
+		toAdd, userWarnings, err = manager.AddDependencies(ctx, objsToAdd)
 		if err != nil {
 			return err
 		}
 	} else {
-		toAdd, userWarnings, err = pm.AddPackages(ctx, objsToAdd)
+		toAdd, userWarnings, err = manager.AddPackages(ctx, objsToAdd)
 		if err != nil {
 			return err
 		}
@@ -44,27 +55,30 @@ func (a App) Install(ctx context.Context, apkgs []string, pm shared.PackageManag
 
 	//FIXME: This is not very nice, but it works
 	if host {
-		if err := a.Manifest.AddToHost(toAdd, pm.Name(), mType); err != nil {
+		if err := a.Manifest.AddToHost(toAdd, managerName, mType); err != nil {
 			return err
 		}
 	} else if group != "" {
-		if err := a.Manifest.AddToGroup(toAdd, group, pm.Name(), mType); err != nil {
+		if err := a.Manifest.AddToGroup(toAdd, group, managerName, mType); err != nil {
 			return err
 		}
 	} else {
-		if err = a.Manifest.AddGlobal(manifest.TypeDependency, pm.Name(), toAdd); err != nil {
+		if err = a.Manifest.AddGlobal(manifest.TypeDependency, managerName, toAdd); err != nil {
 			return nil
 		}
-		// if installDependency {
-		// 	a.Manifest.Pm(pm.Name()).Global.AddDependencies(toAdd)
-		// } else {
-		// 	a.Manifest.Pm(pm.Name()).Global.AddPackages(toAdd)
-		// }
 	}
 
-	if err = a.Sync(ctx, []shared.PackageManager{pm}); err != nil {
+	if err = a.Sync(ctx, []managers.ManagerName{manager.Name()}); err != nil {
 		return err
 	}
 
 	return a.Manifest.Save(config.ManifestFile)
+}
+func (a App) InstallValidArgsFunc(ctx context.Context, managerName managers.ManagerName, toComplete string, mType manifest.ManifestObjectType) (pkgs []string, err error) {
+	manager, err := a.Managers.GetManager(managerName)
+	if err != nil {
+		return nil, err
+	}
+
+	return manager.InstallValidArgs(ctx, toComplete, mType == manifest.TypeDependency)
 }

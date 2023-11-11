@@ -3,17 +3,53 @@ package app
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/lucas-ingemar/packtrak/internal/config"
+	"github.com/lucas-ingemar/packtrak/internal/managers"
 	"github.com/lucas-ingemar/packtrak/internal/manifest"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/samber/lo"
 )
 
-func (a App) Remove(ctx context.Context, apkgs []string, pm shared.PackageManager, mType manifest.ManifestObjectType) error {
+func (a App) RemoveValidArgsFunc(ctx context.Context, toComplete string, managerName managers.ManagerName, mType manifest.ManifestObjectType) ([]string, error) {
+	manager, err := a.Managers.GetManager(managerName)
+	if err != nil {
+		return nil, err
+	}
+
+	pmManifest := a.Manifest.Pm(managerName)
+	pkgs, deps, err := manifest.Filter(pmManifest)
+	if err != nil {
+		return nil, err
+	}
+
+	if mType != manifest.TypeDependency {
+		return lo.Filter(manager.GetPackageNames(ctx, pkgs),
+			func(item string, index int) bool {
+				return strings.HasPrefix(item, toComplete)
+			}), nil
+	} else {
+		return lo.Filter(manager.GetDependencyNames(ctx, deps),
+			func(item string, index int) bool {
+				return strings.HasPrefix(item, toComplete)
+			}), nil
+	}
+}
+
+func (a App) Remove(ctx context.Context, apkgs []string, managerName managers.ManagerName, mType manifest.ManifestObjectType) error {
+	manager, error := a.Managers.GetManager(managerName)
+	if error != nil {
+		return error
+	}
+
+	if !shared.MustDoSudo(ctx, []managers.Manager{manager}, shared.CommandRemove) {
+		panic("sudo access not granted")
+	}
+
 	apkgs = lo.Uniq(apkgs)
 
-	pmManifest := a.Manifest.Pm(pm.Name())
+	pmManifest := a.Manifest.Pm(manager.Name())
 
 	objsToRemove := []string{}
 	warningPrinted := false
@@ -25,9 +61,9 @@ func (a App) Remove(ctx context.Context, apkgs []string, pm shared.PackageManage
 	}
 
 	if mType == manifest.TypeDependency {
-		objs = pm.GetDependencyNames(ctx, deps)
+		objs = manager.GetDependencyNames(ctx, deps)
 	} else {
-		objs = pm.GetPackageNames(ctx, pkgs)
+		objs = manager.GetPackageNames(ctx, pkgs)
 	}
 
 	for _, arg := range apkgs {
@@ -42,12 +78,12 @@ func (a App) Remove(ctx context.Context, apkgs []string, pm shared.PackageManage
 	var toRemove, userWarnings []string
 
 	if mType == manifest.TypeDependency {
-		toRemove, userWarnings, err = pm.RemoveDependencies(ctx, deps, objsToRemove)
+		toRemove, userWarnings, err = manager.RemoveDependencies(ctx, deps, objsToRemove)
 		if err != nil {
 			return err
 		}
 	} else {
-		toRemove, userWarnings, err = pm.RemovePackages(ctx, pkgs, objsToRemove)
+		toRemove, userWarnings, err = manager.RemovePackages(ctx, pkgs, objsToRemove)
 		if err != nil {
 			return err
 		}
@@ -62,14 +98,9 @@ func (a App) Remove(ctx context.Context, apkgs []string, pm shared.PackageManage
 		fmt.Println("")
 	}
 
-	if err = a.Manifest.RemoveGlobal(mType, pm.Name(), toRemove); err != nil {
+	if err = a.Manifest.RemoveGlobal(mType, managerName, toRemove); err != nil {
 		return nil
 	}
-	// if removeDependency {
-	// 	pmManifest.Global.RemoveDependencies(toRemove)
-	// } else {
-	// 	pmManifest.Global.RemovePackages(toRemove)
-	// }
 
 	for _, c := range pmManifest.Conditional {
 		match, err := manifest.MatchConditional(c)
@@ -77,18 +108,13 @@ func (a App) Remove(ctx context.Context, apkgs []string, pm shared.PackageManage
 			return err
 		}
 		if match {
-			if err = a.Manifest.RemoveConditional(mType, pm.Name(), c.Type, c.Value, toRemove); err != nil {
+			if err = a.Manifest.RemoveConditional(mType, managerName, c.Type, c.Value, toRemove); err != nil {
 				return err
 			}
-			// if removeDependency {
-			// 	pmManifest.Conditional[idx].RemoveDependencies(toRemove)
-			// } else {
-			// 	pmManifest.Conditional[idx].RemovePackages(toRemove)
-			// }
 		}
 	}
 
-	if err = a.Sync(ctx, []shared.PackageManager{pm}); err != nil {
+	if err = a.Sync(ctx, []managers.ManagerName{manager.Name()}); err != nil {
 		return err
 	}
 

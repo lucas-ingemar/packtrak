@@ -1,4 +1,4 @@
-package packagemanagers
+package managers
 
 import (
 	"context"
@@ -18,14 +18,16 @@ import (
 	"github.com/samber/lo"
 )
 
+const nameDnf ManagerName = "dnf"
+
 type Dnf struct {
 	cacheAllInstalled  []string
 	cacheUserInstalled []string
 	cacheCoprs         []string
 }
 
-func (d *Dnf) Name() string {
-	return "dnf"
+func (d *Dnf) Name() ManagerName {
+	return nameDnf
 }
 
 func (d *Dnf) Icon() string {

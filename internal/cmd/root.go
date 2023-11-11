@@ -11,8 +11,8 @@ import (
 	"github.com/glebarez/sqlite"
 	"github.com/lucas-ingemar/packtrak/internal/app"
 	"github.com/lucas-ingemar/packtrak/internal/config"
+	"github.com/lucas-ingemar/packtrak/internal/managers"
 	"github.com/lucas-ingemar/packtrak/internal/manifest"
-	"github.com/lucas-ingemar/packtrak/internal/packagemanagers"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/state"
 	"github.com/spf13/cobra"
@@ -20,7 +20,7 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-var PmCmds = map[string]*cobra.Command{}
+var PmCmds = map[managers.ManagerName]*cobra.Command{}
 
 var rootCmd = &cobra.Command{
 	Use:   "packtrak",
@@ -49,17 +49,21 @@ func init() {
 		os.Exit(1)
 	}
 
-	packagemanagers.InitPackageManagerConfig()
+	managers.InitManagerConfig()
 	config.Refresh()
-	packagemanagers.InitPackageManagers()
+	mf := managers.InitManagerFactory()
 
-	for _, pm := range packagemanagers.PackageManagers {
-		PmCmds[pm.Name()] = &cobra.Command{
-			Use:   pm.Name(),
-			Short: pm.ShortDesc(),
-			Long:  pm.LongDesc(),
+	for _, mName := range mf.ListManagers() {
+		manager, err := mf.GetManager(mName)
+		if err != nil {
+			panic(err)
 		}
-		rootCmd.AddCommand(PmCmds[pm.Name()])
+		PmCmds[manager.Name()] = &cobra.Command{
+			Use:   string(manager.Name()),
+			Short: manager.ShortDesc(),
+			Long:  manager.LongDesc(),
+		}
+		rootCmd.AddCommand(PmCmds[manager.Name()])
 	}
 
 	// err := state.InitDb()
@@ -98,7 +102,7 @@ func init() {
 		panic(err)
 	}
 
-	a := app.NewApp(&m, s)
+	a := app.NewApp(mf, &m, s)
 	initInstall(a)
 	initList(a)
 	initRemove(a)

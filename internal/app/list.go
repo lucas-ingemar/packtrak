@@ -4,16 +4,22 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/lucas-ingemar/packtrak/internal/managers"
 	"github.com/lucas-ingemar/packtrak/internal/manifest"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/samber/lo"
 )
 
-func (a App) ListStatus(ctx context.Context, pms []shared.PackageManager) (map[string]shared.DependenciesStatus, map[string]shared.PackageStatus, error) {
-	depStatus := map[string]shared.DependenciesStatus{}
-	pkgStatus := map[string]shared.PackageStatus{}
-	for _, pm := range pms {
-		packages, dependencies, err := manifest.Filter(a.Manifest.Pm(pm.Name()))
+func (a App) ListStatus(ctx context.Context, managerNames []managers.ManagerName) (map[managers.ManagerName]shared.DependenciesStatus, map[managers.ManagerName]shared.PackageStatus, error) {
+	ms, err := a.Managers.GetManagers(managerNames)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	depStatus := map[managers.ManagerName]shared.DependenciesStatus{}
+	pkgStatus := map[managers.ManagerName]shared.PackageStatus{}
+	for _, manager := range ms {
+		packages, dependencies, err := manifest.Filter(a.Manifest.Pm(manager.Name()))
 		if err != nil {
 			return nil, nil, err
 		}
@@ -21,24 +27,24 @@ func (a App) ListStatus(ctx context.Context, pms []shared.PackageManager) (map[s
 		packages = lo.Uniq(packages)
 		dependencies = lo.Uniq(dependencies)
 
-		stateDeps, err := a.State.GetDependencyState(ctx, pm.Name())
+		stateDeps, err := a.State.GetDependencyState(ctx, manager.Name())
 		if err != nil {
 			return nil, nil, err
 		}
 
-		fmt.Printf("Listing %s dependencies...\n", pm.Name())
-		depStatus[pm.Name()], err = pm.ListDependencies(ctx, dependencies, stateDeps)
+		fmt.Printf("Listing %s dependencies...\n", manager.Name())
+		depStatus[manager.Name()], err = manager.ListDependencies(ctx, dependencies, stateDeps)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		statePkgs, err := a.State.GetPackageState(ctx, pm.Name())
+		statePkgs, err := a.State.GetPackageState(ctx, manager.Name())
 		if err != nil {
 			return nil, nil, err
 		}
 
-		fmt.Printf("Listing %s packages...\n", pm.Name())
-		pkgStatus[pm.Name()], err = pm.ListPackages(ctx, packages, statePkgs)
+		fmt.Printf("Listing %s packages...\n", manager.Name())
+		pkgStatus[manager.Name()], err = manager.ListPackages(ctx, packages, statePkgs)
 		if err != nil {
 			return nil, nil, err
 		}
