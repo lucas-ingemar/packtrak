@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lucas-ingemar/packtrak/internal/managers"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 )
 
-func (a App) PrintPackageList(depStatus map[managers.ManagerName]shared.DependenciesStatus, pkgStatus map[managers.ManagerName]shared.PackageStatus) error {
+func (a *App) PrintPackageList(depStatus map[shared.ManagerName]shared.DependenciesStatus, pkgStatus map[shared.ManagerName]shared.PackageStatus) error {
 	noSynced, noUpdated, noMissing, noRemoved := 0, 0, 0, 0
 
 	fmt.Println("\nDependencies:")

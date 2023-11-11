@@ -24,7 +24,7 @@ func TestFilterIncomingObjects(t *testing.T) {
 }
 
 func TestTotalUpdatedDeps(t *testing.T) {
-	ds := map[managers.ManagerName]shared.DependenciesStatus{}
+	ds := map[shared.ManagerName]shared.DependenciesStatus{}
 	ds[managers.NameGo] = shared.DependenciesStatus{
 		Synced:  []shared.Dependency{{Name: "test0", FullName: "test0_full"}},
 		Updated: []shared.Dependency{{Name: "test1", FullName: "test1_full"}},

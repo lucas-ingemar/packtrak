@@ -20,7 +20,7 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-var PmCmds = map[managers.ManagerName]*cobra.Command{}
+var PmCmds = map[shared.ManagerName]*cobra.Command{}
 
 var rootCmd = &cobra.Command{
 	Use:   "packtrak",

@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-type ManagerName string
+// type ManagerName string
 
 var (
 	managersRegistered = []Manager{&Dnf{}, &Go{}}
@@ -16,24 +16,24 @@ var (
 )
 
 type ManagerFactoryFace interface {
-	ListManagers() []ManagerName
-	GetManager(manager ManagerName) (Manager, error)
-	GetManagers(managers []ManagerName) ([]Manager, error)
+	ListManagers() []shared.ManagerName
+	GetManager(manager shared.ManagerName) (Manager, error)
+	GetManagers(managers []shared.ManagerName) ([]Manager, error)
 }
 
 type ManagerFactory struct {
 	managers []Manager
 }
 
-func (m ManagerFactory) ListManagers() []ManagerName {
-	managers := []ManagerName{}
+func (m ManagerFactory) ListManagers() []shared.ManagerName {
+	managers := []shared.ManagerName{}
 	for _, man := range m.managers {
 		managers = append(managers, man.Name())
 	}
 	return managers
 }
 
-func (m ManagerFactory) GetManager(manager ManagerName) (Manager, error) {
+func (m ManagerFactory) GetManager(manager shared.ManagerName) (Manager, error) {
 	for _, man := range m.managers {
 		if man.Name() == manager {
 			return man, nil
@@ -42,7 +42,7 @@ func (m ManagerFactory) GetManager(manager ManagerName) (Manager, error) {
 	return nil, fmt.Errorf("manager '%s' not found", manager)
 }
 
-func (m ManagerFactory) GetManagers(managerNames []ManagerName) ([]Manager, error) {
+func (m ManagerFactory) GetManagers(managerNames []shared.ManagerName) ([]Manager, error) {
 	managers := []Manager{}
 	for _, mn := range managerNames {
 		manager, err := m.GetManager(mn)
@@ -55,7 +55,7 @@ func (m ManagerFactory) GetManagers(managerNames []ManagerName) ([]Manager, erro
 }
 
 type Manager interface {
-	Name() ManagerName
+	Name() shared.ManagerName
 	Icon() string
 	ShortDesc() string
 	LongDesc() string

@@ -8,7 +8,7 @@ package core
 // 	"github.com/lucas-ingemar/packtrak/internal/shared"
 // )
 
-// func PrintPackageList(depStatus map[managers.ManagerName]shared.DependenciesStatus, pkgStatus map[managers.ManagerName]shared.PackageStatus) {
+// func PrintPackageList(depStatus map[shared.ManagerName]shared.DependenciesStatus, pkgStatus map[shared.ManagerName]shared.PackageStatus) {
 // 	noSynced, noUpdated, noMissing, noRemoved := 0, 0, 0, 0
 
 // 	fmt.Println("\nDependencies:")

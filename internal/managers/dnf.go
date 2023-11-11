@@ -18,7 +18,7 @@ import (
 	"github.com/samber/lo"
 )
 
-const nameDnf ManagerName = "dnf"
+const nameDnf shared.ManagerName = "dnf"
 
 type Dnf struct {
 	cacheAllInstalled  []string
@@ -26,7 +26,7 @@ type Dnf struct {
 	cacheCoprs         []string
 }
 
-func (d *Dnf) Name() ManagerName {
+func (d *Dnf) Name() shared.ManagerName {
 	return nameDnf
 }
 

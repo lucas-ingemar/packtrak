@@ -16,14 +16,14 @@ import (
 )
 
 const (
-	goVersionCheckBaseUrl             = "https://api.deps.dev/v3alpha/systems/go/packages"
-	NameGo                ManagerName = "go"
+	goVersionCheckBaseUrl                    = "https://api.deps.dev/v3alpha/systems/go/packages"
+	NameGo                shared.ManagerName = "go"
 )
 
 type Go struct {
 }
 
-func (g *Go) Name() ManagerName {
+func (g *Go) Name() shared.ManagerName {
 	return NameGo
 }
 

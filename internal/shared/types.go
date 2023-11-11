@@ -2,6 +2,7 @@ package shared
 
 type (
 	CommandName string
+	ManagerName string
 	// ManifestConditionalType string
 	// Manifest                map[string]PmManifest
 )

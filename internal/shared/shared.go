@@ -1,14 +1,13 @@
 package shared
 
 import (
-	"context"
 	"fmt"
 	"os"
 )
 
-var (
-	isSudo bool
-)
+// var (
+// 	isSudo bool
+// )
 
 func IsSudo() bool {
 	if os.Getenv("SUDO_UID") != "" && os.Getenv("SUDO_GID") != "" && os.Getenv("SUDO_USER") != "" {
@@ -26,11 +25,7 @@ func GetPackage(name string, packages []Package) (Package, error) {
 	return Package{}, fmt.Errorf("package %s not found", name)
 }
 
-func MustDoSudo(ctx context.Context, managers interface{}, cmd CommandName) (success bool) {
-	return true
-}
-
-// func MustDoSudo(ctx context.Context, managers []managers.Manager, cmd CommandName) (success bool) {
+// func MustDoSudo(ctx context.Context, managers []ManagerName, cmd CommandName) (success bool) {
 // 	if isSudo {
 // 		return isSudo
 // 	}

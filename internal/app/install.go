@@ -2,24 +2,22 @@ package app
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/lucas-ingemar/packtrak/internal/config"
 	"github.com/lucas-ingemar/packtrak/internal/core"
-	"github.com/lucas-ingemar/packtrak/internal/managers"
 	"github.com/lucas-ingemar/packtrak/internal/manifest"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 )
 
-func (a App) Install(ctx context.Context, apkgs []string, managerName managers.ManagerName, mType manifest.ManifestObjectType, host bool, group string) error {
+func (a *App) Install(ctx context.Context, apkgs []string, managerName shared.ManagerName, mType manifest.ManifestObjectType, host bool, group string) error {
 	manager, error := a.Managers.GetManager(managerName)
 	if error != nil {
 		return error
 	}
 
-	if !shared.MustDoSudo(ctx, []managers.Manager{manager}, shared.CommandInstall) {
-		return errors.New("sudo access not granted")
+	if !a.mustDoSudo(ctx, []shared.ManagerName{managerName}, shared.CommandInstall) {
+		panic("sudo access not granted")
 	}
 
 	pmManifest := a.Manifest.Pm(managerName)
@@ -68,13 +66,13 @@ func (a App) Install(ctx context.Context, apkgs []string, managerName managers.M
 		}
 	}
 
-	if err = a.Sync(ctx, []managers.ManagerName{manager.Name()}); err != nil {
+	if err = a.Sync(ctx, []shared.ManagerName{manager.Name()}); err != nil {
 		return err
 	}
 
 	return a.Manifest.Save(config.ManifestFile)
 }
-func (a App) InstallValidArgsFunc(ctx context.Context, managerName managers.ManagerName, toComplete string, mType manifest.ManifestObjectType) (pkgs []string, err error) {
+func (a *App) InstallValidArgsFunc(ctx context.Context, managerName shared.ManagerName, toComplete string, mType manifest.ManifestObjectType) (pkgs []string, err error) {
 	manager, err := a.Managers.GetManager(managerName)
 	if err != nil {
 		return nil, err

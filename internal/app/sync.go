@@ -6,19 +6,18 @@ import (
 
 	"github.com/lucas-ingemar/packtrak/internal/config"
 	"github.com/lucas-ingemar/packtrak/internal/core"
-	"github.com/lucas-ingemar/packtrak/internal/managers"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/state"
 	"github.com/pterm/pterm"
 )
 
-func (a App) Sync(ctx context.Context, managerNames []managers.ManagerName) (err error) {
+func (a *App) Sync(ctx context.Context, managerNames []shared.ManagerName) (err error) {
 	ms, error := a.Managers.GetManagers(managerNames)
 	if error != nil {
 		return error
 	}
 
-	if !shared.MustDoSudo(ctx, ms, shared.CommandSync) {
+	if !a.mustDoSudo(ctx, managerNames, shared.CommandSync) {
 		panic("sudo access not granted")
 	}
 

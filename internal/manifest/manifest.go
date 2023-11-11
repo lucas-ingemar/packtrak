@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/lucas-ingemar/packtrak/internal/config"
-	"github.com/lucas-ingemar/packtrak/internal/managers"
+	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/samber/lo"
 
 	"gopkg.in/yaml.v3"
@@ -26,14 +26,14 @@ var (
 
 type ManifestFace interface {
 	Save(filename string) error
-	Pm(name managers.ManagerName) PmManifest
-	AddConditional(oType ManifestObjectType, pmName managers.ManagerName, cType ManifestConditionalType, cValue string, objects []string) error
-	RemoveConditional(oType ManifestObjectType, pmName managers.ManagerName, cType ManifestConditionalType, cValue string, objects []string) error
-	AddGlobal(oType ManifestObjectType, pmName managers.ManagerName, objects []string) error
-	RemoveGlobal(oType ManifestObjectType, pmName managers.ManagerName, objects []string) error
+	Pm(name shared.ManagerName) PmManifest
+	AddConditional(oType ManifestObjectType, pmName shared.ManagerName, cType ManifestConditionalType, cValue string, objects []string) error
+	RemoveConditional(oType ManifestObjectType, pmName shared.ManagerName, cType ManifestConditionalType, cValue string, objects []string) error
+	AddGlobal(oType ManifestObjectType, pmName shared.ManagerName, objects []string) error
+	RemoveGlobal(oType ManifestObjectType, pmName shared.ManagerName, objects []string) error
 
-	AddToHost(toAdd []string, pmName managers.ManagerName, oType ManifestObjectType) error
-	AddToGroup(toAdd []string, group string, pmName managers.ManagerName, oType ManifestObjectType) error
+	AddToHost(toAdd []string, pmName shared.ManagerName, oType ManifestObjectType) error
+	AddToGroup(toAdd []string, group string, pmName shared.ManagerName, oType ManifestObjectType) error
 }
 
 type Manifest struct {
@@ -41,11 +41,11 @@ type Manifest struct {
 	Go  PmManifest `yaml:"go"`
 }
 
-func (m *Manifest) Pm(name managers.ManagerName) PmManifest {
+func (m *Manifest) Pm(name shared.ManagerName) PmManifest {
 	return *m.pmPnt(name)
 }
 
-func (m *Manifest) AddConditional(oType ManifestObjectType, pmName managers.ManagerName, cType ManifestConditionalType, cValue string, objects []string) error {
+func (m *Manifest) AddConditional(oType ManifestObjectType, pmName shared.ManagerName, cType ManifestConditionalType, cValue string, objects []string) error {
 	c, err := m.getOrAddConditional(pmName, cType, cValue)
 	if err != nil {
 		return err
@@ -59,7 +59,7 @@ func (m *Manifest) AddConditional(oType ManifestObjectType, pmName managers.Mana
 	return nil
 }
 
-func (m *Manifest) RemoveConditional(oType ManifestObjectType, pmName managers.ManagerName, cType ManifestConditionalType, cValue string, objects []string) error {
+func (m *Manifest) RemoveConditional(oType ManifestObjectType, pmName shared.ManagerName, cType ManifestConditionalType, cValue string, objects []string) error {
 	c, err := m.getOrAddConditional(pmName, cType, cValue)
 	if err != nil {
 		return err
@@ -78,7 +78,7 @@ func (m *Manifest) RemoveConditional(oType ManifestObjectType, pmName managers.M
 	return nil
 }
 
-func (m *Manifest) AddGlobal(oType ManifestObjectType, pmName managers.ManagerName, objects []string) error {
+func (m *Manifest) AddGlobal(oType ManifestObjectType, pmName shared.ManagerName, objects []string) error {
 	pm := m.pmPnt(pmName)
 	switch oType {
 	case TypePackage:
@@ -89,7 +89,7 @@ func (m *Manifest) AddGlobal(oType ManifestObjectType, pmName managers.ManagerNa
 	return nil
 }
 
-func (m *Manifest) RemoveGlobal(oType ManifestObjectType, pmName managers.ManagerName, objects []string) error {
+func (m *Manifest) RemoveGlobal(oType ManifestObjectType, pmName shared.ManagerName, objects []string) error {
 	pm := m.pmPnt(pmName)
 	switch oType {
 	case TypePackage:
@@ -105,7 +105,7 @@ func (m *Manifest) RemoveGlobal(oType ManifestObjectType, pmName managers.Manage
 }
 
 // FIXME: Somhow os.Hostname needs to be moved to an interface
-func (m *Manifest) AddToHost(toAdd []string, pmName managers.ManagerName, oType ManifestObjectType) error {
+func (m *Manifest) AddToHost(toAdd []string, pmName shared.ManagerName, oType ManifestObjectType) error {
 	hostname, err := os.Hostname()
 	if err != nil {
 		return err
@@ -113,11 +113,11 @@ func (m *Manifest) AddToHost(toAdd []string, pmName managers.ManagerName, oType 
 	return m.AddConditional(oType, pmName, MConditionHost, hostname, toAdd)
 }
 
-func (m *Manifest) AddToGroup(toAdd []string, group string, pmName managers.ManagerName, oType ManifestObjectType) error {
+func (m *Manifest) AddToGroup(toAdd []string, group string, pmName shared.ManagerName, oType ManifestObjectType) error {
 	return m.AddConditional(oType, pmName, MConditionGroup, group, toAdd)
 }
 
-func (m *Manifest) getOrAddConditional(pmName managers.ManagerName, cType ManifestConditionalType, cValue string) (*Conditional, error) {
+func (m *Manifest) getOrAddConditional(pmName shared.ManagerName, cType ManifestConditionalType, cValue string) (*Conditional, error) {
 	pm := m.pmPnt(pmName)
 	for idx := range pm.Conditional {
 		if pm.Conditional[idx].Type == cType && pm.Conditional[idx].Value == cValue {
@@ -133,7 +133,7 @@ func (m *Manifest) getOrAddConditional(pmName managers.ManagerName, cType Manife
 	return &pm.Conditional[len(pm.Conditional)-1], nil
 }
 
-func (m *Manifest) pmPnt(name managers.ManagerName) *PmManifest {
+func (m *Manifest) pmPnt(name shared.ManagerName) *PmManifest {
 	switch name {
 	case "dnf":
 		return &m.Dnf

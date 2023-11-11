@@ -6,13 +6,12 @@ import (
 	"strings"
 
 	"github.com/lucas-ingemar/packtrak/internal/config"
-	"github.com/lucas-ingemar/packtrak/internal/managers"
 	"github.com/lucas-ingemar/packtrak/internal/manifest"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/samber/lo"
 )
 
-func (a App) RemoveValidArgsFunc(ctx context.Context, toComplete string, managerName managers.ManagerName, mType manifest.ManifestObjectType) ([]string, error) {
+func (a *App) RemoveValidArgsFunc(ctx context.Context, toComplete string, managerName shared.ManagerName, mType manifest.ManifestObjectType) ([]string, error) {
 	manager, err := a.Managers.GetManager(managerName)
 	if err != nil {
 		return nil, err
@@ -37,13 +36,13 @@ func (a App) RemoveValidArgsFunc(ctx context.Context, toComplete string, manager
 	}
 }
 
-func (a App) Remove(ctx context.Context, apkgs []string, managerName managers.ManagerName, mType manifest.ManifestObjectType) error {
+func (a *App) Remove(ctx context.Context, apkgs []string, managerName shared.ManagerName, mType manifest.ManifestObjectType) error {
 	manager, error := a.Managers.GetManager(managerName)
 	if error != nil {
 		return error
 	}
 
-	if !shared.MustDoSudo(ctx, []managers.Manager{manager}, shared.CommandRemove) {
+	if !a.mustDoSudo(ctx, []shared.ManagerName{managerName}, shared.CommandRemove) {
 		panic("sudo access not granted")
 	}
 
@@ -114,7 +113,7 @@ func (a App) Remove(ctx context.Context, apkgs []string, managerName managers.Ma
 		}
 	}
 
-	if err = a.Sync(ctx, []managers.ManagerName{manager.Name()}); err != nil {
+	if err = a.Sync(ctx, []shared.ManagerName{manager.Name()}); err != nil {
 		return err
 	}
 

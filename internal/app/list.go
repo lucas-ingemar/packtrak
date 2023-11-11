@@ -4,20 +4,23 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/lucas-ingemar/packtrak/internal/managers"
 	"github.com/lucas-ingemar/packtrak/internal/manifest"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/samber/lo"
 )
 
-func (a App) ListStatus(ctx context.Context, managerNames []managers.ManagerName) (map[managers.ManagerName]shared.DependenciesStatus, map[managers.ManagerName]shared.PackageStatus, error) {
+func (a *App) ListStatus(ctx context.Context, managerNames []shared.ManagerName) (map[shared.ManagerName]shared.DependenciesStatus, map[shared.ManagerName]shared.PackageStatus, error) {
 	ms, err := a.Managers.GetManagers(managerNames)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	depStatus := map[managers.ManagerName]shared.DependenciesStatus{}
-	pkgStatus := map[managers.ManagerName]shared.PackageStatus{}
+	if !a.mustDoSudo(ctx, managerNames, shared.CommandList) {
+		panic("sudo access not granted")
+	}
+
+	depStatus := map[shared.ManagerName]shared.DependenciesStatus{}
+	pkgStatus := map[shared.ManagerName]shared.PackageStatus{}
 	for _, manager := range ms {
 		packages, dependencies, err := manifest.Filter(a.Manifest.Pm(manager.Name()))
 		if err != nil {

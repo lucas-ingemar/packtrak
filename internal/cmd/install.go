@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"github.com/lucas-ingemar/packtrak/internal/app"
-	"github.com/lucas-ingemar/packtrak/internal/managers"
 	"github.com/lucas-ingemar/packtrak/internal/manifest"
+	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +23,7 @@ func initInstall(a app.AppFace) {
 	}
 }
 
-func generateInstallValidArgsFunc(a app.AppFace, managerName managers.ManagerName) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func generateInstallValidArgsFunc(a app.AppFace, managerName shared.ManagerName) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 
 		var mType manifest.ManifestObjectType
@@ -41,7 +41,7 @@ func generateInstallValidArgsFunc(a app.AppFace, managerName managers.ManagerNam
 	}
 }
 
-func generateInstallCmd(a app.AppFace, managerName managers.ManagerName) func(cmd *cobra.Command, args []string) {
+func generateInstallCmd(a app.AppFace, managerName shared.ManagerName) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		// if !shared.MustDoSudo(cmd.Context(), []shared.PackageManager{pm}, shared.CommandInstall) {
 		// 	panic("sudo access not granted")
