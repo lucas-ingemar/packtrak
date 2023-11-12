@@ -67,6 +67,13 @@ func (g *Go) InitCheckCmd() error {
 	return nil
 }
 
+func (g *Go) InitCheckConfig() error {
+	return nil
+}
+
+func (g *Go) InitConfig() {
+}
+
 func (g *Go) GetPackageNames(ctx context.Context, packages []string) []string {
 	pkgNames := []string{}
 	for _, pkg := range packages {

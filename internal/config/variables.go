@@ -80,7 +80,7 @@ func Refresh() {
 
 	mustCreateCacheDir()
 
-	DataDir = getViperStringWithDefault("data_dir", filepath.Join(xdg.DataHome, "packtrak"))
+	DataDir = GetViperStringWithDefault("data_dir", filepath.Join(xdg.DataHome, "packtrak"))
 	StateFile = filepath.Join(DataDir, "state.db")
 
 	Groups = getViperStringSliceWithDefault(keyGroups, []string{})
@@ -109,7 +109,7 @@ func CheckConfig() {
 
 }
 
-func getViperStringWithDefault(key string, defaultValue string) string {
+func GetViperStringWithDefault(key string, defaultValue string) string {
 	viper.SetDefault(key, defaultValue)
 	return viper.GetString(key)
 }

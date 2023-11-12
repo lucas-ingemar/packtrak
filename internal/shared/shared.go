@@ -20,3 +20,7 @@ func GetPackage(name string, packages []Package) (Package, error) {
 	}
 	return Package{}, fmt.Errorf("package %s not found", name)
 }
+
+func ConfigKeyName(m ManagerName, key string) string {
+	return fmt.Sprintf("managers.%s.%s", m, key)
+}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/lucas-ingemar/packtrak/internal/managers/dnf"
+	"github.com/lucas-ingemar/packtrak/internal/managers/git"
 	"github.com/lucas-ingemar/packtrak/internal/managers/goman"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/status"
@@ -12,7 +13,7 @@ import (
 )
 
 var (
-	managersRegistered = []Manager{dnf.New(), goman.New()}
+	managersRegistered = []Manager{dnf.New(), git.New(), goman.New()}
 	PackageManagersOld = []Manager{}
 )
 
@@ -63,7 +64,9 @@ type Manager interface {
 
 	NeedsSudo() []shared.CommandName
 
+	InitConfig()
 	InitCheckCmd() error
+	InitCheckConfig() error
 
 	GetPackageNames(ctx context.Context, packages []string) []string
 	GetDependencyNames(ctx context.Context, deps []string) []string
@@ -86,6 +89,7 @@ type Manager interface {
 func InitManagerConfig() {
 	for _, pm := range managersRegistered {
 		viper.SetDefault(keyName(pm, "enabled"), true)
+		pm.InitConfig()
 	}
 }
 
@@ -94,6 +98,11 @@ func InitManagerFactory() (factory ManagerFactory) {
 		if viper.GetBool(keyName(m, "enabled")) {
 			//FIXME: Here we should also make the init checks
 			if err := m.InitCheckCmd(); err != nil {
+				shared.PtermWarning.Printfln("Disabling %s manager: %s", m.Name(), err.Error())
+				viper.Set(keyName(m, "enabled"), false)
+				continue
+			}
+			if err := m.InitCheckConfig(); err != nil {
 				shared.PtermWarning.Printfln("Disabling %s manager: %s", m.Name(), err.Error())
 				viper.Set(keyName(m, "enabled"), false)
 				continue

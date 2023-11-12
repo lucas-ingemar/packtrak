@@ -83,17 +83,17 @@ var PtermSpinnerStatusMsgs map[PtermSpinnerStatus]ptermMsgs = map[PtermSpinnerSt
 	PtermSpinnerInstall: {
 		Start:   "Installing %s...",
 		Success: "%s installed successfully",
-		Fail:    "%s failed to install",
+		Fail:    "%s failed to install: %s",
 	},
 	PtermSpinnerUpdate: {
 		Start:   "Updating %s...",
 		Success: "%s updated successfully",
-		Fail:    "%s failed to update",
+		Fail:    "%s failed to update: %s",
 	},
 	PtermSpinnerRemove: {
 		Start:   "Removing %s...",
 		Success: "%s removed successfully",
-		Fail:    "%s failed to be removed",
+		Fail:    "%s failed to be removed: %s",
 	},
 }
 
@@ -102,7 +102,7 @@ func PtermSpinner(spinnerStatus PtermSpinnerStatus, itemName string, f func() er
 	spinner.SuccessPrinter = &PtermInstalled
 	spinner.FailPrinter = &PtermRemoved
 	if err := f(); err != nil {
-		spinner.Fail(fmt.Sprintf(PtermSpinnerStatusMsgs[spinnerStatus].Fail, itemName)) // Resolve spinner with error message.
+		spinner.Fail(fmt.Sprintf(PtermSpinnerStatusMsgs[spinnerStatus].Fail, itemName, err.Error())) // Resolve spinner with error message.
 		return err
 	}
 	spinner.Success(fmt.Sprintf(PtermSpinnerStatusMsgs[spinnerStatus].Success, itemName)) // Resolve spinner with error message.

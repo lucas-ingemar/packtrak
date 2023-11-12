@@ -38,6 +38,7 @@ type ManifestFace interface {
 
 type Manifest struct {
 	Dnf PmManifest `yaml:"dnf"`
+	Git PmManifest `yaml:"git"`
 	Go  PmManifest `yaml:"go"`
 }
 
@@ -138,6 +139,8 @@ func (m *Manifest) pmPnt(name shared.ManagerName) *PmManifest {
 	switch name {
 	case "dnf":
 		return &m.Dnf
+	case "git":
+		return &m.Git
 	case "go":
 		return &m.Go
 	default:

@@ -52,6 +52,13 @@ func (d *Dnf) InitCheckCmd() error {
 	return nil
 }
 
+func (d *Dnf) InitConfig() {
+}
+
+func (d *Dnf) InitCheckConfig() error {
+	return nil
+}
+
 func (d *Dnf) GetPackageNames(ctx context.Context, packages []string) []string {
 	return packages
 }
