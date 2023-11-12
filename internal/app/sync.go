@@ -25,8 +25,6 @@ func (a *App) Sync(ctx context.Context, managerNames []shared.ManagerName) (err 
 		return err
 	}
 
-	// pkgsState := core.UpdatedPackageState(ms, pkgStatus)
-	// depsState := core.UpdatedDependencyState(ms, depStatus)
 	pkgsState := statusObj.GetUpdatedPackageState(managerNames)
 	depsState := statusObj.GetUpdatedDependenciesState(managerNames)
 

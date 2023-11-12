@@ -23,10 +23,8 @@ type AppFace interface {
 	RemoveValidArgsFunc(ctx context.Context, toComplete string, managerName shared.ManagerName, mType manifest.ManifestObjectType) ([]string, error)
 	Sync(ctx context.Context, managerNames []shared.ManagerName) (err error)
 	PrintPackageList(s status.Status) error
-	//FIXME: Might want to create a typ for manager names
 	ListManagers() []shared.ManagerName
 	mustDoSudo(ctx context.Context, managers []shared.ManagerName, cmd shared.CommandName) (success bool)
-	// GetManifest() manifest.ManifestFace
 }
 
 type App struct {

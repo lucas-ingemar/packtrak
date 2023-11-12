@@ -10,11 +10,7 @@ func initSync(a app.AppFace) {
 		Use:   "sync",
 		Short: "Sync DNF to match mDNF",
 		Args:  cobra.NoArgs,
-		// Long:  `All software has versions. This is Hugo's`,
 		Run: func(cmd *cobra.Command, args []string) {
-			// if !shared.MustDoSudo(cmd.Context(), managers.PackageManagers, shared.CommandSync) {
-			// 	panic("sudo access not granted")
-			// }
 			err := a.Sync(cmd.Context(), a.ListManagers())
 			if err != nil {
 				panic(err)

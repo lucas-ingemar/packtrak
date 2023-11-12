@@ -43,10 +43,6 @@ func generateInstallValidArgsFunc(a app.AppFace, managerName shared.ManagerName)
 
 func generateInstallCmd(a app.AppFace, managerName shared.ManagerName) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		// if !shared.MustDoSudo(cmd.Context(), []shared.PackageManager{pm}, shared.CommandInstall) {
-		// 	panic("sudo access not granted")
-		// }
-
 		var mType manifest.ManifestObjectType
 		if cmd.Flag("dependency").Value.String() == "true" {
 			mType = manifest.TypeDependency

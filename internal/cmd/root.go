@@ -32,7 +32,7 @@ var rootCmd = &cobra.Command{
 	// },
 }
 
-func Hej() *cobra.Command {
+func GetRootCmd() *cobra.Command {
 	return rootCmd
 }
 

@@ -58,7 +58,6 @@ func filterHost(c Conditional) (match bool, err error) {
 	}
 	if c.Value == hostname {
 		return true, nil
-		// return c.Packages, c.Dependencies, nil
 	}
 	return
 }
@@ -66,7 +65,6 @@ func filterHost(c Conditional) (match bool, err error) {
 func filterGroup(c Conditional) (match bool, err error) {
 	if lo.Contains(config.Groups, c.Value) {
 		return true, nil
-		// return c.Packages, c.Dependencies, nil
 	}
 	return
 }

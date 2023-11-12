@@ -11,8 +11,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-// type ManagerName string
-
 var (
 	managersRegistered = []Manager{dnf.New(), goman.New()}
 	PackageManagersOld = []Manager{}
