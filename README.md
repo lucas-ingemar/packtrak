@@ -81,6 +81,7 @@ That have its own table in the state.
 * Add initCheck to make sure special config is correct
 * ~~Add initCheckCommand to make sure the correct command exists on the host~~
 * Fix all cmd descriptions and such
+* Add verbose debug flag
 
 # KNOWN ISSUES:
 * ~~Must trigger sudo early on, so that dnf is running under sudo without password~~

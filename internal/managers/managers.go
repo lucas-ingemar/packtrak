@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/lucas-ingemar/packtrak/internal/managers/dnf"
+	"github.com/lucas-ingemar/packtrak/internal/managers/goman"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/status"
 	"github.com/spf13/viper"
@@ -12,7 +14,7 @@ import (
 // type ManagerName string
 
 var (
-	managersRegistered = []Manager{&Dnf{}, &Go{}}
+	managersRegistered = []Manager{dnf.New(), goman.New()}
 	PackageManagersOld = []Manager{}
 )
 

@@ -51,7 +51,6 @@ func (a *App) Install(ctx context.Context, apkgs []string, managerName shared.Ma
 		fmt.Println("")
 	}
 
-	//FIXME: This is not very nice, but it works
 	if host {
 		if err := a.Manifest.AddToHost(toAdd, managerName, mType); err != nil {
 			return err
@@ -61,7 +60,7 @@ func (a *App) Install(ctx context.Context, apkgs []string, managerName shared.Ma
 			return err
 		}
 	} else {
-		if err = a.Manifest.AddGlobal(manifest.TypeDependency, managerName, toAdd); err != nil {
+		if err = a.Manifest.AddGlobal(mType, managerName, toAdd); err != nil {
 			return nil
 		}
 	}

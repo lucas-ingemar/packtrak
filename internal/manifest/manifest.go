@@ -79,6 +79,7 @@ func (m *Manifest) RemoveConditional(oType ManifestObjectType, pmName shared.Man
 }
 
 func (m *Manifest) AddGlobal(oType ManifestObjectType, pmName shared.ManagerName, objects []string) error {
+	fmt.Println(oType, "manifest")
 	pm := m.pmPnt(pmName)
 	switch oType {
 	case TypePackage:
