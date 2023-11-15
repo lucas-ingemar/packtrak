@@ -3,38 +3,85 @@ package git
 import (
 	"context"
 	"errors"
+	"fmt"
+	"net/url"
 	"os"
 	"path"
 	"sort"
 	"strings"
 
+	"github.com/alexellis/go-execute/v2"
 	gogit "github.com/go-git/go-git/v5"
-	gitconfig "github.com/go-git/go-git/v5/config"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
+	"github.com/lucas-ingemar/packtrak/internal/system"
+	"github.com/samber/lo"
 )
 
 type CommandExecutorFace interface {
-	ListInstalledPkgs(ctx context.Context, folderPath string) ([]shared.Package, error)
-	GetRemotePkgMeta(ctx context.Context, pkgUrl string) (shared.Package, error)
+	ListInstalledPkgs(ctx context.Context, folderPath string, includeUnstableReleases bool) ([]shared.Package, error)
+	GetRemotePkgMeta(ctx context.Context, pkgUrl string, includeUnstableReleases bool) (shared.Package, error)
 	InstallPkg(ctx context.Context, pkg shared.Package, folderPath string) error
 	UpdatePkg(ctx context.Context, pkg shared.Package, folderPath string) error
 	RemovePkg(ctx context.Context, pkg shared.Package, folderPath string) error
 }
 
 type commandExecutor struct {
+	git system.Git
+}
+
+// FIXME:::::::
+// This could be done:
+// git clone ...
+// git tag -> get the latest good tag
+// git checkout *tag*
+//
+// When updating:
+// git describe --tags -> gives the current tag if existing, otherwise error I THINK. YES
+// if needs updating:
+// git pull origin HEAD
+// repeat steps above after clone
+
+func (c commandExecutor) checkoutTag(ctx context.Context, tag string, repoPath string) error {
+	cmd := execute.ExecTask{
+		Command:     "git",
+		Args:        []string{"checkout", "tags/" + tag},
+		Cwd:         repoPath,
+		Stdin:       nil,
+		StreamStdio: false,
+	}
+
+	res, err := cmd.Execute(ctx)
+	if err != nil {
+		return err
+	}
+
+	if res.ExitCode != 0 {
+		return errors.New("Non-zero exit code: " + res.Stderr)
+	}
+	fmt.Println(res.Stdout)
+	return nil
 }
 
 func (c commandExecutor) InstallPkg(ctx context.Context, pkg shared.Package, folderPath string) error {
-	_, err := gogit.PlainCloneContext(ctx, path.Join(folderPath, pkg.Name), false, &gogit.CloneOptions{
+	repoPath := path.Join(folderPath, pkg.Name)
+	_, err := gogit.PlainCloneContext(ctx, repoPath, false, &gogit.CloneOptions{
 		URL:               pkg.RepoUrl,
 		RecurseSubmodules: gogit.DefaultSubmoduleRecursionDepth,
 	})
 	if err != nil {
 		return err
 	}
-	return nil
+
+	// wt, err := r.Worktree()
+	// if err != nil {
+	// 	return err
+	// }
+
+	// return wt.Checkout(&gogit.CheckoutOptions{
+	// 	Hash: plumbing.NewHash(pkg.LatestVersion),
+	// })
+
+	return c.checkoutTag(ctx, pkg.LatestVersion, repoPath)
 }
 
 func (c commandExecutor) UpdatePkg(ctx context.Context, pkg shared.Package, folderPath string) error {
@@ -66,68 +113,42 @@ func (c commandExecutor) RemovePkg(ctx context.Context, pkg shared.Package, fold
 	return os.RemoveAll(pkgPath)
 }
 
-func (c commandExecutor) GetRemotePkgMeta(ctx context.Context, pkgUrl string) (pkg shared.Package, err error) {
+func (c commandExecutor) GetRemotePkgMeta(ctx context.Context, pkgUrl string, includeUnstableReleases bool) (pkg shared.Package, err error) {
+	pkg.Name = pkgNameFromUrl(pkgUrl)
 	pkg.RepoUrl = pkgUrl
 	pkg.FullName = pkgUrl
-	rem := gogit.NewRemote(memory.NewStorage(), &gitconfig.RemoteConfig{
-		Name: "origin",
-		URLs: []string{pkgUrl},
-	})
 
-	refs, err := rem.ListContext(ctx, &gogit.ListOptions{
-		PeelingOption: gogit.AppendPeeled,
-	})
-
+	tags, err := c.git.ListRemoteTags(ctx, pkgUrl)
 	if err != nil {
 		return shared.Package{}, err
 	}
-
-	tags := []string{}
-	for _, ref := range refs {
-		if ref.Name().IsTag() {
-			if ref.Name().Short() != "latest" {
-				tags = append(tags, strings.ReplaceAll(ref.Name().Short(), "^{}", ""))
-			}
-		}
-	}
-
 	sort.Sort(sort.Reverse(sort.StringSlice(tags)))
+	tags = lo.Filter(tags, func(item string, _ int) bool {
+		if item == "latest" {
+			return false
+		}
+		if !includeUnstableReleases && preReleaseTag(item) {
+			return false
+		}
+		return true
+	})
+
 	if len(tags) > 0 {
 		pkg.LatestVersion = tags[0]
 		return
 	}
 
-	r, err := gogit.Clone(memory.NewStorage(), nil, &gogit.CloneOptions{
-		URL: pkgUrl,
-	})
+	hash, err := c.git.GetGetRemoteLatestCommitHash(ctx, pkgUrl)
 	if err != nil {
 		return shared.Package{}, err
 	}
 
-	ref, err := r.Head()
-	if err != nil {
-		return shared.Package{}, err
-	}
-
-	commits, err := r.Log(&gogit.LogOptions{
-		From: ref.Hash(),
-	})
-
-	if err != nil {
-		return shared.Package{}, err
-	}
-
-	cm, err := commits.Next()
-	if err != nil {
-		return shared.Package{}, err
-	}
-
-	pkg.LatestVersion = cm.Hash.String()[:7]
+	pkg.LatestVersion = hash
 
 	return
 }
 
-func (c commandExecutor) ListInstalledPkgs(ctx context.Context, folderPath string) ([]shared.Package, error) {
+func (c commandExecutor) ListInstalledPkgs(ctx context.Context, folderPath string, includeUnstableReleases bool) ([]shared.Package, error) {
 	files, err := os.ReadDir(folderPath)
 	if err != nil {
 		return nil, err
@@ -139,72 +160,61 @@ func (c commandExecutor) ListInstalledPkgs(ctx context.Context, folderPath strin
 		if !e.IsDir() {
 			continue
 		}
+		repoPath := path.Join(folderPath, e.Name())
+
+		remoteUrl, err := c.git.GetRemoteUrl(ctx, repoPath)
+		if err != nil {
+			return nil, err
+		}
+
 		pkg := shared.Package{
-			Name:          e.Name(),
-			FullName:      "",
+			Name:          pkgNameFromUrl(remoteUrl),
+			FullName:      remoteUrl,
 			Version:       "",
 			LatestVersion: "",
 			RepoUrl:       "",
 		}
 
-		r, err := gogit.PlainOpen(path.Join(folderPath, e.Name()))
-		if err != nil {
-			return nil, err
-		}
-
-		remotes, err := r.Remotes()
-		if err != nil {
-			return nil, err
-		}
-
-		if len(remotes) > 0 {
-			pkg.FullName = remotes[0].Config().URLs[0]
-		}
-
-		tagrefs, err := r.Tags()
-		if err != nil {
-			return nil, err
-		}
-		tags := []string{}
-
-		err = tagrefs.ForEach(func(t *plumbing.Reference) error {
-			if t.Name().Short() != "latest" {
-				tags = append(tags, t.Name().Short())
-			}
-			return nil
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		sort.Sort(sort.Reverse(sort.StringSlice(tags)))
-		if len(tags) > 0 {
-			pkg.Version = tags[0]
+		tag, err := c.git.GetCurrentTag(ctx, repoPath)
+		if err == nil {
+			pkg.Version = tag
 			pkgs = append(pkgs, pkg)
 			continue
 		}
 
-		ref, err := r.Head()
+		cHash, err := c.git.GetCurrentCommitHash(ctx, repoPath)
 		if err != nil {
 			return nil, err
 		}
-
-		commits, err := r.Log(&gogit.LogOptions{
-			From: ref.Hash(),
-		})
-
-		if err != nil {
-			return nil, err
-		}
-
-		cm, err := commits.Next()
-		if err != nil {
-			return nil, err
-		}
-
-		pkg.Version = cm.Hash.String()[:7]
+		pkg.Version = cHash
 
 		pkgs = append(pkgs, pkg)
 	}
 	return pkgs, nil
+}
+
+func preReleaseTag(tag string) bool {
+	for _, t := range []string{"rc", "alpha", "beta", "pre"} {
+		if strings.Contains(tag, t) {
+			return true
+		}
+	}
+	return false
+}
+
+func pkgNameFromUrl(s string) string {
+	s = strings.TrimSpace(s)
+	u, err := url.Parse(s)
+	if err != nil {
+		return err.Error()
+	}
+	rString := strings.TrimPrefix(u.Path, "/")
+	rString = strings.TrimSuffix(rString, ".git")
+	return rString
+	// u = strings.TrimSpace(u)
+	// u = strings.TrimSuffix(u, ".git")
+	// up := strings.Split(u, "/")
+	// sort.Sort(sort.Reverse(sort.StringSlice(up)))
+	// fmt.Println(up)
+	// return fmt.Sprintf("%s/%s", up[1], up[0])
 }

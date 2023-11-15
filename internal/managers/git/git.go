@@ -21,11 +21,13 @@ func New() *Git {
 const Name shared.ManagerName = "git"
 
 const (
-	packageDirectoryKey = "package_directory"
+	packageDirectoryKey        = "package_directory"
+	includeUnstableReleasesKey = "include_unstable_releases"
 )
 
 type Git struct {
-	pkgDirectory string
+	pkgDirectory            string
+	includeUnstableReleases bool
 	CommandExecutorFace
 }
 
@@ -68,6 +70,8 @@ func (g *Git) InitCheckConfig() error {
 		return fmt.Errorf("'%s' is not pointing to a directory", packageDirectoryKey)
 	}
 
+	g.includeUnstableReleases = viper.GetBool(shared.ConfigKeyName(Name, includeUnstableReleasesKey))
+
 	return nil
 }
 
@@ -100,24 +104,24 @@ func (g *Git) ListDependencies(ctx context.Context, deps []string, stateDeps []s
 }
 
 func (g *Git) ListPackages(ctx context.Context, packages []string, statePkgs []string) (packageStatus status.PackageStatus, err error) {
-	installedPkgs, err := g.ListInstalledPkgs(ctx, g.pkgDirectory)
+	installedPkgs, err := g.ListInstalledPkgs(ctx, g.pkgDirectory, g.includeUnstableReleases)
 	if err != nil {
 		return status.PackageStatus{}, err
 	}
 
 	pkgObjs := []shared.Package{}
 	for _, pkgName := range packages {
-		pkg, err := g.GetRemotePkgMeta(ctx, pkgName)
+		pkg, err := g.GetRemotePkgMeta(ctx, pkgName, g.includeUnstableReleases)
 		if err != nil {
 			return status.PackageStatus{}, err
 		}
-		pParts := strings.Split(pkgName, "/")
-		pkg.Name = strings.TrimSuffix(pParts[len(pParts)-1], ".git")
 		pkgObjs = append(pkgObjs, pkg)
 	}
 
 	for _, pkg := range pkgObjs {
-		matchedPkgs := lo.Filter(installedPkgs, func(item shared.Package, _ int) bool { return item.Name == pkg.Name })
+		matchedPkgs := lo.Filter(installedPkgs, func(item shared.Package, _ int) bool {
+			return item.FullName == pkg.FullName
+		})
 		if len(matchedPkgs) > 0 {
 			pkg.Version = matchedPkgs[0].Version
 			if pkg.Version != pkg.LatestVersion {

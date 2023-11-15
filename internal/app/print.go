@@ -33,19 +33,21 @@ func (a *App) PrintPackageList(s status.Status) error {
 		}
 	}
 
+	syncStr, updatedStr, missingStr, removedStr := "", "", "", ""
 	fmt.Println("\nPackages:")
-	for _, mName := range a.ListManagers() {
+	for _, mName := range a.Managers.ListManagers() {
 		m, err := a.Managers.GetManager(mName)
 		if err != nil {
 			return err
 		}
 		for _, pkg := range s.GetPackagesByStatus(m.Name(), status.StatusSynced) {
-			shared.PtermInstalled.Printfln("%s %s", m.Icon(), pkg.Name)
+			// shared.PtermInstalled.Printfln("%s %s", m.Icon(), pkg.Name)
+			syncStr += shared.PtermInstalled.Sprintfln("%s %s", m.Icon(), pkg.Name)
 			noSynced++
 		}
 
 		for _, pkg := range s.GetPackagesByStatus(m.Name(), status.StatusUpdated) {
-			shared.PtermUpdated.Printfln("%s %s %s -> %s", m.Icon(), pkg.Name, pkg.Version, pkg.LatestVersion)
+			updatedStr shared.PtermUpdated.Printfln("%s %s %s -> %s", m.Icon(), pkg.Name, pkg.Version, pkg.LatestVersion)
 			noUpdated++
 		}
 
