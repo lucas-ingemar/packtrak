@@ -47,20 +47,28 @@ func (a *App) PrintPackageList(s status.Status) error {
 		}
 
 		for _, pkg := range s.GetPackagesByStatus(m.Name(), status.StatusUpdated) {
-			updatedStr shared.PtermUpdated.Printfln("%s %s %s -> %s", m.Icon(), pkg.Name, pkg.Version, pkg.LatestVersion)
+			// shared.PtermUpdated.Printfln("%s %s %s -> %s", m.Icon(), pkg.Name, pkg.Version, pkg.LatestVersion)
+			updatedStr += shared.PtermUpdated.Sprintfln("%s %s %s -> %s", m.Icon(), pkg.Name, pkg.Version, pkg.LatestVersion)
 			noUpdated++
 		}
 
 		for _, pkg := range s.GetPackagesByStatus(m.Name(), status.StatusMissing) {
-			shared.PtermMissing.Printfln("%s %s", m.Icon(), pkg.Name)
+			// shared.PtermMissing.Printfln("%s %s", m.Icon(), pkg.Name)
+			missingStr += shared.PtermMissing.Sprintfln("%s %s", m.Icon(), pkg.Name)
 			noMissing++
 		}
 
 		for _, pkg := range s.GetPackagesByStatus(m.Name(), status.StatusRemoved) {
-			shared.PtermRemoved.Printfln("%s %s", m.Icon(), pkg.Name)
+			// shared.PtermRemoved.Printfln("%s %s", m.Icon(), pkg.Name)
+			removedStr += shared.PtermRemoved.Sprintfln("%s %s", m.Icon(), pkg.Name)
 			noRemoved++
 		}
 	}
+
+	fmt.Print(syncStr)
+	fmt.Print(updatedStr)
+	fmt.Print(missingStr)
+	fmt.Print(removedStr)
 
 	infoStrings := []string{}
 	if noSynced > 0 {

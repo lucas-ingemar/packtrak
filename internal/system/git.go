@@ -86,3 +86,18 @@ func (g Git) GetGetRemoteLatestCommitHash(ctx context.Context, repoUrl string) (
 	}
 	return hashes[0][:7], nil
 }
+
+func (g Git) Clone(ctx context.Context, repoUrl string, folderPath string) error {
+	_, err := Call().Cmd("git").Args([]string{"clone", repoUrl, folderPath}).Exec(ctx)
+	return err
+}
+
+func (g Git) Pull(ctx context.Context, folderPath string) error {
+	_, err := Call().Cmd("git").Args([]string{"pull", "origin", "HEAD"}).Cwd(folderPath).Exec(ctx)
+	return err
+}
+
+func (g Git) Checkout(ctx context.Context, folderPath string, hash string) error {
+	_, err := Call().Cmd("git").Args([]string{"checkout", hash}).Cwd(folderPath).Exec(ctx)
+	return err
+}

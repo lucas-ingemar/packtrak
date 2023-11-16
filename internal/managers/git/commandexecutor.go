@@ -3,15 +3,12 @@ package git
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/url"
 	"os"
 	"path"
 	"sort"
 	"strings"
 
-	"github.com/alexellis/go-execute/v2"
-	gogit "github.com/go-git/go-git/v5"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/system"
 	"github.com/samber/lo"
@@ -29,79 +26,35 @@ type commandExecutor struct {
 	git system.Git
 }
 
-// FIXME:::::::
-// This could be done:
-// git clone ...
-// git tag -> get the latest good tag
-// git checkout *tag*
-//
-// When updating:
-// git describe --tags -> gives the current tag if existing, otherwise error I THINK. YES
-// if needs updating:
-// git pull origin HEAD
-// repeat steps above after clone
-
-func (c commandExecutor) checkoutTag(ctx context.Context, tag string, repoPath string) error {
-	cmd := execute.ExecTask{
-		Command:     "git",
-		Args:        []string{"checkout", "tags/" + tag},
-		Cwd:         repoPath,
-		Stdin:       nil,
-		StreamStdio: false,
-	}
-
-	res, err := cmd.Execute(ctx)
-	if err != nil {
-		return err
-	}
-
-	if res.ExitCode != 0 {
-		return errors.New("Non-zero exit code: " + res.Stderr)
-	}
-	fmt.Println(res.Stdout)
-	return nil
-}
-
 func (c commandExecutor) InstallPkg(ctx context.Context, pkg shared.Package, folderPath string) error {
-	repoPath := path.Join(folderPath, pkg.Name)
-	_, err := gogit.PlainCloneContext(ctx, repoPath, false, &gogit.CloneOptions{
-		URL:               pkg.RepoUrl,
-		RecurseSubmodules: gogit.DefaultSubmoduleRecursionDepth,
-	})
+	repoPath := path.Join(folderPath, strings.ReplaceAll(pkg.Name, "/", "."))
+	err := c.git.Clone(ctx, pkg.FullName, repoPath)
 	if err != nil {
 		return err
 	}
-
-	// wt, err := r.Worktree()
-	// if err != nil {
-	// 	return err
-	// }
-
-	// return wt.Checkout(&gogit.CheckoutOptions{
-	// 	Hash: plumbing.NewHash(pkg.LatestVersion),
-	// })
-
-	return c.checkoutTag(ctx, pkg.LatestVersion, repoPath)
+	return c.git.Checkout(ctx, repoPath, pkg.LatestVersion)
 }
 
 func (c commandExecutor) UpdatePkg(ctx context.Context, pkg shared.Package, folderPath string) error {
-	r, err := gogit.PlainOpen(path.Join(folderPath, pkg.Name))
+	repoPath := path.Join(folderPath, strings.ReplaceAll(pkg.Name, "/", "."))
+	err := c.git.Pull(ctx, repoPath)
 	if err != nil {
-		return err
+		err = c.RemovePkg(ctx, pkg, folderPath)
+		if err != nil {
+			return err
+		}
+		err = c.InstallPkg(ctx, pkg, folderPath)
+		if err != nil {
+			return err
+		}
 	}
-
-	w, err := r.Worktree()
-	if err != nil {
-		return err
-	}
-
-	return w.Pull(&gogit.PullOptions{RemoteName: "origin"})
+	return c.git.Checkout(ctx, repoPath, pkg.LatestVersion)
 }
 
 func (c commandExecutor) RemovePkg(ctx context.Context, pkg shared.Package, folderPath string) error {
-	pkgPath := path.Join(folderPath, pkg.Name)
+	repoPath := path.Join(folderPath, strings.ReplaceAll(pkg.Name, "/", "."))
 
-	filePath, err := os.Stat(pkgPath)
+	filePath, err := os.Stat(repoPath)
 	if err != nil {
 		return err
 	}
@@ -110,7 +63,7 @@ func (c commandExecutor) RemovePkg(ctx context.Context, pkg shared.Package, fold
 		return errors.New("is not a directory")
 	}
 
-	return os.RemoveAll(pkgPath)
+	return os.RemoveAll(repoPath)
 }
 
 func (c commandExecutor) GetRemotePkgMeta(ctx context.Context, pkgUrl string, includeUnstableReleases bool) (pkg shared.Package, err error) {
@@ -211,10 +164,4 @@ func pkgNameFromUrl(s string) string {
 	rString := strings.TrimPrefix(u.Path, "/")
 	rString = strings.TrimSuffix(rString, ".git")
 	return rString
-	// u = strings.TrimSpace(u)
-	// u = strings.TrimSuffix(u, ".git")
-	// up := strings.Split(u, "/")
-	// sort.Sort(sort.Reverse(sort.StringSlice(up)))
-	// fmt.Println(up)
-	// return fmt.Sprintf("%s/%s", up[1], up[0])
 }
