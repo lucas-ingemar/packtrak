@@ -24,7 +24,7 @@ func initInstall(a app.AppFace) {
 }
 
 func generateInstallValidArgsFunc(a app.AppFace, managerName shared.ManagerName) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return func(cmd *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 
 		var mType manifest.ManifestObjectType
 		if cmd.Flag("dependency").Value.String() == "true" {

@@ -10,7 +10,7 @@ func initSync(a app.AppFace) {
 		Use:   "sync",
 		Short: "Sync DNF to match mDNF",
 		Args:  cobra.NoArgs,
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(cmd *cobra.Command, _ []string) {
 			err := a.Sync(cmd.Context(), a.ListManagers())
 			if err != nil {
 				panic(err)

@@ -34,7 +34,7 @@ func (a *App) Sync(ctx context.Context, managerNames []shared.ManagerName) (err 
 
 	if statusObj.CountUpdatedPackages() == 0 && statusObj.CountUpdatedDependencies() == 0 {
 		tx := a.State.Begin(ctx)
-		defer tx.Rollback()
+		defer func() { _ = tx.Rollback() }()
 		for _, manager := range ms {
 			err := tx.UpdatePackageState(ctx, manager.Name(), pkgsState[manager.Name()])
 			if err != nil {
@@ -66,7 +66,7 @@ func (a *App) Sync(ctx context.Context, managerNames []shared.ManagerName) (err 
 	if result == "y" {
 		for _, manager := range ms {
 			tx := a.State.Begin(ctx)
-			defer tx.Rollback()
+			defer func() { _ = tx.Rollback() }()
 
 			uw, err := manager.SyncDependencies(ctx, statusObj.GetDependencies(manager.Name()))
 			_ = uw
@@ -83,7 +83,7 @@ func (a *App) Sync(ctx context.Context, managerNames []shared.ManagerName) (err 
 			}
 
 			tx = a.State.Begin(ctx)
-			defer tx.Rollback()
+			defer func() { _ = tx.Rollback() }()
 
 			uw, err = manager.SyncPackages(ctx, statusObj.GetPackages(manager.Name()))
 			_ = uw

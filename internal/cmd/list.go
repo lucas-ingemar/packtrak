@@ -28,12 +28,15 @@ func initList(a app.AppFace) {
 }
 
 func generateListCmd(a app.AppFace, pms []shared.ManagerName) func(cmd *cobra.Command, args []string) {
-	return func(cmd *cobra.Command, args []string) {
+	return func(cmd *cobra.Command, _ []string) {
 		status, err := a.ListStatus(cmd.Context(), pms)
 		if err != nil {
 			panic(err)
 		}
 
-		a.PrintPackageList(status)
+		err = a.PrintPackageList(status)
+		if err != nil {
+			panic(err)
+		}
 	}
 }

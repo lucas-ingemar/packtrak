@@ -111,11 +111,6 @@ func getViperStringSliceWithDefault(key string, defaultValue []string) []string 
 	return viper.GetStringSlice(key)
 }
 
-func getViperBoolWithDefault(key string, defaultValue bool) bool {
-	viper.SetDefault(key, defaultValue)
-	return viper.GetBool(key)
-}
-
 func configFileExists() bool {
 	_, err := os.Stat(ConfigFile)
 	return !os.IsNotExist(err)

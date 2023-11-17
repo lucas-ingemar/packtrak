@@ -174,7 +174,7 @@ func (d *commandExecutor) RemoveCm(ctx context.Context, cm string) error {
 }
 
 func (d *commandExecutor) InstallCopr(ctx context.Context, copr string) error {
-	_, err := shared.Command(ctx, "sudo", append([]string{"dnf", "copr", "enable", copr}), true, os.Stdin)
+	_, err := shared.Command(ctx, "sudo", []string{"dnf", "copr", "enable", copr}, true, os.Stdin)
 	return err
 }
 
