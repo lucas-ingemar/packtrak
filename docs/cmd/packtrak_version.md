@@ -1,15 +1,15 @@
-## packtrak sync
+## packtrak version
 
-Sync DNF to match mDNF
+Display app version
 
 ```
-packtrak sync [flags]
+packtrak version [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for sync
+  -h, --help   help for version
 ```
 
 ### Options inherited from parent commands
