@@ -8,6 +8,7 @@ import (
 	"github.com/adrg/xdg"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/spf13/viper"
+	"golang.org/x/mod/semver"
 
 	"path/filepath"
 )
@@ -30,20 +31,10 @@ var (
 )
 
 const (
-	// keyDnfEnabled = "dnf.enabled"
 	keyGroups         = "groups"
 	keyStateRotations = "state_rotations"
+	keyVersion        = "_version"
 )
-
-// func init() {
-// 	Refresh()
-// }
-
-// type Hej struct {
-// 	// Type  types.String
-// 	Name  string
-// 	Value interface{}
-// }
 
 func Refresh() {
 	viper.SetEnvPrefix("packtrak")
@@ -68,15 +59,6 @@ func Refresh() {
 			panic(fmt.Errorf("fatal error config file: %w", err))
 		}
 	}
-	// hh := Hej{
-	// 	Name:  "test",
-	// 	Value: []string{"hej"},
-	// }
-
-	// // rs := reflect.SliceOf(reflect.String)
-	// // bb := hh.Value.(hh.Type.Underlying)
-	// fmt.Println(reflect.ValueOf(hh.Value).Kind() == reflect.SliceOf(reflect.TypeOf("")).Kind())
-	// panic("hej")
 
 	mustCreateCacheDir()
 
@@ -86,15 +68,20 @@ func Refresh() {
 	Groups = getViperStringSliceWithDefault(keyGroups, []string{})
 	StateRotations = getViperIntWithDefault(keyStateRotations, 3)
 
-	// DnfEnabled = getViperBoolWithDefault(keyDnfEnabled, true)
-	// fmt.Println(DnfEnabled)
-
 	if !configFileExists() {
 		err := os.MkdirAll(ConfigDir, os.ModePerm)
 		if err != nil {
 			panic(err)
 		}
 		err = viper.WriteConfigAs(ConfigFile)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	if semver.Compare(Version, viper.GetString(keyVersion)) > 0 {
+		viper.Set(keyVersion, Version)
+		err := viper.WriteConfigAs(ConfigFile)
 		if err != nil {
 			panic(err)
 		}

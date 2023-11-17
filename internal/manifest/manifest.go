@@ -37,9 +37,10 @@ type ManifestFace interface {
 }
 
 type Manifest struct {
-	Dnf PmManifest `yaml:"dnf"`
-	Git PmManifest `yaml:"git"`
-	Go  PmManifest `yaml:"go"`
+	Dnf     PmManifest `yaml:"dnf"`
+	Git     PmManifest `yaml:"git"`
+	Go      PmManifest `yaml:"go"`
+	Version string     `yaml:"_version"`
 }
 
 func (m *Manifest) Pm(name shared.ManagerName) PmManifest {
@@ -149,6 +150,7 @@ func (m *Manifest) pmPnt(name shared.ManagerName) *PmManifest {
 }
 
 func (m *Manifest) Save(filename string) error {
+	m.Version = config.Version
 	var b bytes.Buffer
 	yamlEncoder := yaml.NewEncoder(&b)
 	yamlEncoder.SetIndent(2)

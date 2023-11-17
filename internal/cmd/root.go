@@ -43,7 +43,7 @@ func Execute() {
 	}
 }
 
-func init() {
+func InitCmd() {
 	if shared.IsSudo() {
 		shared.PtermWarning.Println("This command can't be run under sudo. You will be prompted later if sudo is needed.")
 		os.Exit(1)
