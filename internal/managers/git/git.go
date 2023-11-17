@@ -2,9 +2,10 @@ package git
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
-	"strings"
+	"os/exec"
 
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/status"
@@ -44,7 +45,7 @@ func (g *Git) ShortDesc() string {
 }
 
 func (g *Git) LongDesc() string {
-	return ""
+	return "Keep track of your wanted git repos. Will keep repos up to date. If tags are found the latest tag will be checked out, if not the latest commit will be used."
 }
 
 func (g *Git) NeedsSudo() []shared.CommandName {
@@ -52,6 +53,10 @@ func (g *Git) NeedsSudo() []shared.CommandName {
 }
 
 func (g *Git) InitCheckCmd() error {
+	_, err := exec.LookPath("git")
+	if err != nil {
+		return errors.New("'git' command not found on the computer")
+	}
 	return nil
 }
 
@@ -77,10 +82,15 @@ func (g *Git) InitCheckConfig() error {
 
 func (g *Git) InitConfig() {
 	viper.SetDefault(shared.ConfigKeyName(Name, packageDirectoryKey), "")
+	viper.SetDefault(shared.ConfigKeyName(Name, includeUnstableReleasesKey), false)
 }
 
 func (g *Git) GetPackageNames(ctx context.Context, packages []string) []string {
-	return nil
+	var retpkgs []string
+	for _, p := range packages {
+		retpkgs = append(retpkgs, g.PkgNameFromUrl(p))
+	}
+	return retpkgs
 }
 
 func (g *Git) GetDependencyNames(ctx context.Context, deps []string) []string {
@@ -136,9 +146,8 @@ func (g *Git) ListPackages(ctx context.Context, packages []string, statePkgs []s
 
 	for _, pkg := range statePkgs {
 		if !lo.Contains(packages, pkg) {
-			pParts := strings.Split(pkg, "/")
 			packageStatus.Removed = append(packageStatus.Removed, shared.Package{
-				Name:     strings.TrimSuffix(pParts[len(pParts)-1], ".git"),
+				Name:     g.PkgNameFromUrl(pkg),
 				FullName: pkg,
 			})
 		}
@@ -148,6 +157,13 @@ func (g *Git) ListPackages(ctx context.Context, packages []string, statePkgs []s
 }
 
 func (g *Git) RemovePackages(ctx context.Context, allPkgs []string, pkgsToRemove []string) (packagesToRemove []string, userWarnings []string, err error) {
+	for _, p := range pkgsToRemove {
+		pkg, err := g.GetBasicPkgInfo(ctx, p, g.pkgDirectory)
+		if err != nil {
+			return nil, nil, err
+		}
+		packagesToRemove = append(packagesToRemove, pkg.FullName)
+	}
 	return
 }
 

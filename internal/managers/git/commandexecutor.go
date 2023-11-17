@@ -20,6 +20,8 @@ type CommandExecutorFace interface {
 	InstallPkg(ctx context.Context, pkg shared.Package, folderPath string) error
 	UpdatePkg(ctx context.Context, pkg shared.Package, folderPath string) error
 	RemovePkg(ctx context.Context, pkg shared.Package, folderPath string) error
+	PkgNameFromUrl(s string) string
+	GetBasicPkgInfo(ctx context.Context, pkgNickname string, folderPath string) (shared.Package, error)
 }
 
 type commandExecutor struct {
@@ -67,7 +69,7 @@ func (c commandExecutor) RemovePkg(ctx context.Context, pkg shared.Package, fold
 }
 
 func (c commandExecutor) GetRemotePkgMeta(ctx context.Context, pkgUrl string, includeUnstableReleases bool) (pkg shared.Package, err error) {
-	pkg.Name = pkgNameFromUrl(pkgUrl)
+	pkg.Name = c.PkgNameFromUrl(pkgUrl)
 	pkg.RepoUrl = pkgUrl
 	pkg.FullName = pkgUrl
 
@@ -121,7 +123,7 @@ func (c commandExecutor) ListInstalledPkgs(ctx context.Context, folderPath strin
 		}
 
 		pkg := shared.Package{
-			Name:          pkgNameFromUrl(remoteUrl),
+			Name:          c.PkgNameFromUrl(remoteUrl),
 			FullName:      remoteUrl,
 			Version:       "",
 			LatestVersion: "",
@@ -146,16 +148,24 @@ func (c commandExecutor) ListInstalledPkgs(ctx context.Context, folderPath strin
 	return pkgs, nil
 }
 
-func preReleaseTag(tag string) bool {
-	for _, t := range []string{"rc", "alpha", "beta", "pre"} {
-		if strings.Contains(tag, t) {
-			return true
-		}
+func (c commandExecutor) GetBasicPkgInfo(ctx context.Context, pkgNickname string, folderPath string) (shared.Package, error) {
+	repoPath := path.Join(folderPath, strings.ReplaceAll(pkgNickname, "/", "."))
+	remoteUrl, err := c.git.GetRemoteUrl(ctx, repoPath)
+	if err != nil {
+		return shared.Package{}, err
 	}
-	return false
+
+	pkg := shared.Package{
+		Name:          c.PkgNameFromUrl(remoteUrl),
+		FullName:      remoteUrl,
+		Version:       "",
+		LatestVersion: "",
+		RepoUrl:       "",
+	}
+	return pkg, nil
 }
 
-func pkgNameFromUrl(s string) string {
+func (c commandExecutor) PkgNameFromUrl(s string) string {
 	s = strings.TrimSpace(s)
 	u, err := url.Parse(s)
 	if err != nil {
@@ -164,4 +174,13 @@ func pkgNameFromUrl(s string) string {
 	rString := strings.TrimPrefix(u.Path, "/")
 	rString = strings.TrimSuffix(rString, ".git")
 	return rString
+}
+
+func preReleaseTag(tag string) bool {
+	for _, t := range []string{"rc", "alpha", "beta", "pre"} {
+		if strings.Contains(tag, t) {
+			return true
+		}
+	}
+	return false
 }

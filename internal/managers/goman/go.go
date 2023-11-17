@@ -156,7 +156,6 @@ func (g *Go) RemovePackages(ctx context.Context, allPkgs []string, pkgs []string
 		return nil, nil, err
 	}
 	for _, pkg := range pkgs {
-		fmt.Println(pkg)
 		pkgObj, err := g.GetBinaryInfo(ctx, path.Join(binPath, pkg))
 		if err != nil {
 			return nil, nil, err
