@@ -4,6 +4,7 @@ import (
 	"github.com/lucas-ingemar/packtrak/internal/app"
 	"github.com/lucas-ingemar/packtrak/internal/manifest"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +33,7 @@ func generateRemoveValidArgsFunc(a app.AppFace, managerName shared.ManagerName) 
 
 		retArgs, err := a.RemoveValidArgsFunc(cmd.Context(), toComplete, managerName, mType)
 		if err != nil {
-			panic(err)
+			log.Fatal().Err(err).Msg("generateRemoveValidArgsFunc")
 		}
 
 		return retArgs, cobra.ShellCompDirectiveNoFileComp
@@ -49,7 +50,7 @@ func generateRemoveCmd(a app.AppFace, managerName shared.ManagerName) func(cmd *
 		}
 
 		if err := a.Remove(cmd.Context(), args, managerName, mType); err != nil {
-			panic(err)
+			log.Fatal().Err(err).Msg("generateRemoveCmd")
 		}
 	}
 }

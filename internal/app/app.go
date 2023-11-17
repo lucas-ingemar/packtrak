@@ -12,6 +12,7 @@ import (
 	"github.com/lucas-ingemar/packtrak/internal/state"
 	"github.com/lucas-ingemar/packtrak/internal/status"
 	"github.com/pterm/pterm"
+	"github.com/rs/zerolog/log"
 	"github.com/samber/lo"
 )
 
@@ -41,7 +42,7 @@ func (a *App) mustDoSudo(ctx context.Context, managerNames []shared.ManagerName,
 	}
 	managers, err := a.Managers.GetManagers(managerNames)
 	if err != nil {
-		panic(err)
+		log.Fatal().Err(err).Msg("mustDoSudo")
 	}
 
 	pmNames := []string{}
@@ -71,7 +72,7 @@ func (a *App) mustDoSudo(ctx context.Context, managerNames []shared.ManagerName,
 
 	_, err = shared.Command(ctx, "sudo", []string{"echo", ""}, true, os.Stdin)
 	if err != nil {
-		panic(err)
+		log.Fatal().Err(err).Msg("mustDoSudo")
 	}
 
 	a.isSudo = true

@@ -11,6 +11,7 @@ import (
 
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/status"
+	"github.com/rs/zerolog/log"
 	"github.com/samber/lo"
 )
 
@@ -178,24 +179,30 @@ func (g *Go) SyncPackages(ctx context.Context, packageStatus status.PackageStatu
 		err = shared.PtermSpinner(shared.PtermSpinnerInstall, pkg.Name, func() error {
 			return g.Install(ctx, pkg)
 		})
-		//NOTE: Not sure what to do with err here. Maybe just verbose log?
-		err = nil
+		if err != nil {
+			log.Err(err).Str("manager", string(Name)).Str("package", pkg.Name)
+			err = nil
+		}
 	}
 
 	for _, pkg := range packageStatus.Updated {
 		err = shared.PtermSpinner(shared.PtermSpinnerUpdate, pkg.Name, func() error {
 			return g.Install(ctx, pkg)
 		})
-		//NOTE: Not sure what to do with err here. Maybe just verbose log?
-		err = nil
+		if err != nil {
+			log.Err(err).Str("manager", string(Name)).Str("package", pkg.Name)
+			err = nil
+		}
 	}
 
 	for _, pkg := range packageStatus.Removed {
 		err = shared.PtermSpinner(shared.PtermSpinnerRemove, pkg.Name, func() error {
 			return g.Remove(pkg)
 		})
-		//NOTE: Not sure what to do with err here. Maybe just verbose log?
-		err = nil
+		if err != nil {
+			log.Err(err).Str("manager", string(Name)).Str("package", pkg.Name)
+			err = nil
+		}
 	}
 	return
 }

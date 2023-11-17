@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/lucas-ingemar/packtrak/internal/manifest"
@@ -17,7 +18,7 @@ func (a *App) ListStatus(ctx context.Context, managerNames []shared.ManagerName)
 	}
 
 	if !a.mustDoSudo(ctx, managerNames, shared.CommandList) {
-		panic("sudo access not granted")
+		return status.Status{}, errors.New("sudo access not granted")
 	}
 
 	statusObj := status.Status{}

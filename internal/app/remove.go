@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -43,7 +44,7 @@ func (a *App) Remove(ctx context.Context, apkgs []string, managerName shared.Man
 	}
 
 	if !a.mustDoSudo(ctx, []shared.ManagerName{managerName}, shared.CommandRemove) {
-		panic("sudo access not granted")
+		return errors.New("sudo access not granted")
 	}
 
 	apkgs = lo.Uniq(apkgs)

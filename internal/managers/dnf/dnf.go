@@ -9,6 +9,7 @@ import (
 
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/status"
+	"github.com/rs/zerolog/log"
 	"github.com/samber/lo"
 )
 
@@ -286,8 +287,10 @@ func (d *Dnf) SyncDependencies(ctx context.Context, depStatus status.Dependencie
 			err = shared.PtermSpinner(shared.PtermSpinnerInstall, cm, func() error {
 				return d.InstallCm(ctx, cm)
 			})
-			//NOTE: Not sure what to do with err here. Maybe just verbose log?
-			err = nil
+			if err != nil {
+				log.Err(err).Str("manager", string(Name)).Str("dependency", cm)
+				err = nil
+			}
 		}
 	}
 
@@ -297,14 +300,18 @@ func (d *Dnf) SyncDependencies(ctx context.Context, depStatus status.Dependencie
 			err = shared.PtermSpinner(shared.PtermSpinnerRemove, dep.Name, func() error {
 				return d.RemoveCopr(ctx, dep.Name)
 			})
-			//NOTE: Not sure what to do with err here. Maybe just verbose log?
-			err = nil
+			if err != nil {
+				log.Err(err).Str("manager", string(Name)).Str("dependency", dep.Name)
+				err = nil
+			}
 		} else if strings.HasPrefix(dep.FullName, "cm:") {
 			err = shared.PtermSpinner(shared.PtermSpinnerRemove, dep.Name, func() error {
 				return d.RemoveCm(ctx, dep.Name)
 			})
-			//NOTE: Not sure what to do with err here. Maybe just verbose log?
-			err = nil
+			if err != nil {
+				log.Err(err).Str("manager", string(Name)).Str("dependency", dep.Name)
+				err = nil
+			}
 		}
 	}
 

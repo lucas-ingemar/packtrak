@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/lucas-ingemar/packtrak/internal/config"
@@ -17,7 +18,7 @@ func (a *App) Sync(ctx context.Context, managerNames []shared.ManagerName) (err 
 	}
 
 	if !a.mustDoSudo(ctx, managerNames, shared.CommandSync) {
-		panic("sudo access not granted")
+		return errors.New("sudo access not granted")
 	}
 
 	statusObj, err := a.ListStatus(ctx, managerNames)

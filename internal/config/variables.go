@@ -1,12 +1,12 @@
 package config
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
 	"github.com/adrg/xdg"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"golang.org/x/mod/semver"
 
@@ -56,7 +56,7 @@ func Refresh() {
 	if configFileExists() {
 		err := viper.ReadInConfig() // Find and read the config file
 		if err != nil {             // Handle errors reading the config file
-			panic(fmt.Errorf("fatal error config file: %w", err))
+			log.Fatal().Err(err).Msg("Refresh")
 		}
 	}
 
@@ -71,11 +71,11 @@ func Refresh() {
 	if !configFileExists() {
 		err := os.MkdirAll(ConfigDir, os.ModePerm)
 		if err != nil {
-			panic(err)
+			log.Fatal().Err(err).Msg("Refresh")
 		}
 		err = viper.WriteConfigAs(ConfigFile)
 		if err != nil {
-			panic(err)
+			log.Fatal().Err(err).Msg("Refresh")
 		}
 	}
 
@@ -83,7 +83,7 @@ func Refresh() {
 		viper.Set(keyVersion, Version)
 		err := viper.WriteConfigAs(ConfigFile)
 		if err != nil {
-			panic(err)
+			log.Fatal().Err(err).Msg("Refresh")
 		}
 	}
 }
@@ -119,6 +119,6 @@ func configFileExists() bool {
 func mustCreateCacheDir() {
 	err := os.MkdirAll(CacheDir, os.ModePerm)
 	if err != nil {
-		panic(err)
+		log.Fatal().Err(err).Msg("mustCreateCacheDir")
 	}
 }

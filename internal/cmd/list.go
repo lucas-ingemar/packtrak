@@ -5,6 +5,7 @@ import (
 
 	"github.com/lucas-ingemar/packtrak/internal/app"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
@@ -31,12 +32,12 @@ func generateListCmd(a app.AppFace, pms []shared.ManagerName) func(cmd *cobra.Co
 	return func(cmd *cobra.Command, _ []string) {
 		status, err := a.ListStatus(cmd.Context(), pms)
 		if err != nil {
-			panic(err)
+			log.Fatal().Err(err).Msg("generateListCmd")
 		}
 
 		err = a.PrintPackageList(status)
 		if err != nil {
-			panic(err)
+			log.Fatal().Err(err).Msg("generateListCmd")
 		}
 	}
 }

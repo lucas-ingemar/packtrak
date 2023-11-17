@@ -4,6 +4,7 @@ import (
 	"github.com/lucas-ingemar/packtrak/internal/app"
 	"github.com/lucas-ingemar/packtrak/internal/manifest"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
@@ -54,7 +55,7 @@ func generateInstallCmd(a app.AppFace, managerName shared.ManagerName) func(cmd 
 		host := cmd.Flag("host").Value.String() == "true"
 
 		if err := a.Install(cmd.Context(), args, managerName, mType, host, group); err != nil {
-			panic(err)
+			log.Fatal().Err(err).Msg("generateInstallCmd")
 		}
 	}
 }

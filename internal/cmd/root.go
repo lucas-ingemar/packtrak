@@ -2,9 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
-	"time"
 
 	chigo "github.com/UltiRequiem/chigo/pkg"
 	"github.com/common-nighthawk/go-figure"
@@ -15,9 +13,9 @@ import (
 	"github.com/lucas-ingemar/packtrak/internal/manifest"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/state"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 var PmCmds = map[shared.ManagerName]*cobra.Command{}
@@ -56,7 +54,7 @@ func InitCmd() {
 	for _, mName := range mf.ListManagers() {
 		manager, err := mf.GetManager(mName)
 		if err != nil {
-			panic(err)
+			log.Fatal().Err(err).Msg("InitCmd")
 		}
 		PmCmds[manager.Name()] = &cobra.Command{
 			Use:   string(manager.Name()),
@@ -67,32 +65,34 @@ func InitCmd() {
 	}
 
 	// FIXME: Connect verbose flag, below should be an input to NewState()
-	newLogger := logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
-		logger.Config{
-			SlowThreshold:             time.Second,   // Slow SQL threshold
-			LogLevel:                  logger.Silent, // Log level
-			IgnoreRecordNotFoundError: true,          // Ignore ErrRecordNotFound error for logger
-			ParameterizedQueries:      true,          // Don't include params in the SQL log
-			Colorful:                  false,         // Disable color
-		},
-	)
+	// FIXME: Connect zerolog
+	// newLogger := logger.New(
+	// 	log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+	// 	logger.Config{
+	// 		SlowThreshold:             time.Second,   // Slow SQL threshold
+	// 		LogLevel:                  logger.Silent, // Log level
+	// 		IgnoreRecordNotFoundError: true,          // Ignore ErrRecordNotFound error for logger
+	// 		ParameterizedQueries:      true,          // Don't include params in the SQL log
+	// 		Colorful:                  false,         // Disable color
+	// 	},
+	// )
 
 	m, err := manifest.InitManifest()
 	if err != nil {
-		panic(err)
+		log.Fatal().Err(err).Msg("InitCmd")
 	}
 
 	db, err := gorm.Open(sqlite.Open(config.StateFile), &gorm.Config{
-		Logger: newLogger,
+		// FIXME
+		// Logger: newLogger,
 	})
 	if err != nil {
-		panic(err)
+		log.Fatal().Err(err).Msg("InitCmd")
 	}
 
 	s, err := state.NewState(db)
 	if err != nil {
-		panic(err)
+		log.Fatal().Err(err).Msg("InitCmd")
 	}
 
 	a := app.NewApp(mf, &m, s)

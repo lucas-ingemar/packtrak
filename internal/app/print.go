@@ -41,25 +41,21 @@ func (a *App) PrintPackageList(s status.Status) error {
 			return err
 		}
 		for _, pkg := range s.GetPackagesByStatus(m.Name(), status.StatusSynced) {
-			// shared.PtermInstalled.Printfln("%s %s", m.Icon(), pkg.Name)
 			syncStr += shared.PtermInstalled.Sprintfln("%s %s", m.Icon(), pkg.Name)
 			noSynced++
 		}
 
 		for _, pkg := range s.GetPackagesByStatus(m.Name(), status.StatusUpdated) {
-			// shared.PtermUpdated.Printfln("%s %s %s -> %s", m.Icon(), pkg.Name, pkg.Version, pkg.LatestVersion)
 			updatedStr += shared.PtermUpdated.Sprintfln("%s %s %s -> %s", m.Icon(), pkg.Name, pkg.Version, pkg.LatestVersion)
 			noUpdated++
 		}
 
 		for _, pkg := range s.GetPackagesByStatus(m.Name(), status.StatusMissing) {
-			// shared.PtermMissing.Printfln("%s %s", m.Icon(), pkg.Name)
 			missingStr += shared.PtermMissing.Sprintfln("%s %s", m.Icon(), pkg.Name)
 			noMissing++
 		}
 
 		for _, pkg := range s.GetPackagesByStatus(m.Name(), status.StatusRemoved) {
-			// shared.PtermRemoved.Printfln("%s %s", m.Icon(), pkg.Name)
 			removedStr += shared.PtermRemoved.Sprintfln("%s %s", m.Icon(), pkg.Name)
 			noRemoved++
 		}

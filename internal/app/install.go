@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/lucas-ingemar/packtrak/internal/config"
@@ -17,7 +18,7 @@ func (a *App) Install(ctx context.Context, apkgs []string, managerName shared.Ma
 	}
 
 	if !a.mustDoSudo(ctx, []shared.ManagerName{managerName}, shared.CommandInstall) {
-		panic("sudo access not granted")
+		return errors.New("sudo access not granted")
 	}
 
 	pmManifest := a.Manifest.Pm(managerName)

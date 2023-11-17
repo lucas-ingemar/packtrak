@@ -7,6 +7,7 @@ import (
 
 	"github.com/lucas-ingemar/packtrak/internal/config"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
+	"github.com/rs/zerolog/log"
 	"github.com/samber/lo"
 
 	"gopkg.in/yaml.v3"
@@ -145,7 +146,8 @@ func (m *Manifest) pmPnt(name shared.ManagerName) *PmManifest {
 	case "go":
 		return &m.Go
 	default:
-		panic(fmt.Sprintf("%s is not a registered package manager", name))
+		log.Fatal().Msgf("%s is not a registered package manager", name)
+		panic("")
 	}
 }
 

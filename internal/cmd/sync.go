@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/lucas-ingemar/packtrak/internal/app"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
@@ -13,7 +14,7 @@ func initSync(a app.AppFace) {
 		Run: func(cmd *cobra.Command, _ []string) {
 			err := a.Sync(cmd.Context(), a.ListManagers())
 			if err != nil {
-				panic(err)
+				log.Fatal().Err(err).Msg("initSync")
 			}
 		},
 	}
