@@ -1,3 +1,9 @@
+<p align="center">
+    <picture>
+      <img alt="packtrak" title="packtrak" src="docs/assets/img/logowtext.png">
+    </picture>
+</p>
+
 ![GitHub stars](https://img.shields.io/github/stars/lucas-ingemar/packtrak.svg?label=github%20stars)
 ![Latest GitHub release](https://img.shields.io/github/release/lucas-ingemar/packtrak.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/lucas-ingemar/packtrak)](https://goreportcard.com/report/github.com/lucas-ingemar/packtrak)
