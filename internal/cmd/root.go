@@ -22,12 +22,8 @@ var PmCmds = map[shared.ManagerName]*cobra.Command{}
 
 var rootCmd = &cobra.Command{
 	Use:   "packtrak",
-	Short: "Managed DNF",
+	Short: "Track your package managers",
 	Long:  chigo.Colorize(figure.NewFigure("packtrak", "speed", true).String()),
-	// Run: func(cmd *cobra.Command, args []string) {
-	// 	// Do Stuff Here
-	// 	fmt.Println("tjof;ljt")
-	// },
 }
 
 func GetRootCmd() *cobra.Command {
