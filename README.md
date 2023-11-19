@@ -15,7 +15,7 @@ The manifest is easily revisioned and can just like your dotfiles be shared acro
 
 ## Install
 
-### Go install
+### Go 
 Use go install to compile locally. 
 
 ``` bash
@@ -59,7 +59,7 @@ Packtrak generates its own autocompletion for the commands. Simply put the follo
 source <(./build/packtrak completion [shell])
 ```
 
-## Manifest file
+## Manifest File
 The wanted package state for the managers is listed in `~/.config/packtrak/manifest.yaml`. This file can be shared between computers to sync the state between them. When installing and removing packages this file will be updated.
 
 An example of the file layout:
