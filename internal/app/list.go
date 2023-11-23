@@ -78,6 +78,8 @@ func (a *App) ListStatus(ctx context.Context, managerNames []shared.ManagerName)
 		}(manager)
 	}
 	multi.Start()
+	err = g.Wait()
+	multi.Stop()
 
-	return statusObj, g.Wait()
+	return statusObj, err
 }
