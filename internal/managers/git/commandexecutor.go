@@ -50,6 +50,11 @@ func (c commandExecutor) UpdatePkg(ctx context.Context, pkg shared.Package, fold
 			return err
 		}
 	}
+
+	if err = c.git.Fetch(ctx, repoPath); err != nil {
+		return err
+	}
+
 	return c.git.Checkout(ctx, repoPath, pkg.LatestVersion)
 }
 
