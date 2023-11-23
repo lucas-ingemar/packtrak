@@ -1,11 +1,17 @@
 <p align="center">
-![GitHub tag (with filter)](https://img.shields.io/github/v/tag/lucas-ingemar/packtrak?style=flat-square&label=Latest%20Version)
-![GitHub Repo stars](https://img.shields.io/github/stars/lucas-ingemar/packtrak?style=flat-square&logo=github&label=Stars)
-![GitHub go.mod Go version (subdirectory of monorepo)](https://img.shields.io/github/go-mod/go-version/lucas-ingemar/packtrak?style=flat-square&logo=go&label=Version)
-![GitHub License](https://img.shields.io/github/license/lucas-ingemar/packtrak?style=flat-square&label=License)
-[![Go Report Card](https://goreportcard.com/badge/github.com/lucas-ingemar/packtrak)](https://goreportcard.com/badge/github.com/lucas-ingemar/packtrak?style=flat-square)
-</p>
+  <a href="https://github.com/lucas-ingemage/packtrack/releases" style="text-decoration: none">
+    <img alt="GitHub release" src="https://img.shields.io/github/v/release/lucas-ingemar/packtrak?style=flat-square&label=Latest%20Version">
+  </a>
 
+  <img alt="GitHub Stars" src="https://img.shields.io/github/stars/lucas-ingemar/packtrak?style=flat-square&logo=github&label=Stars">
+  <img alt="Go Version" src="https://img.shields.io/github/go-mod/go-version/lucas-ingemar/packtrak?style=flat-square&logo=go&label=Version">
+  <img alt="License" src="https://img.shields.io/github/license/lucas-ingemar/packtrak?style=flat-square&label=License">
+
+  <a href="https://goreportcard.com/badge/github.com/lucas-ingemar/packtrak" style="text-decoration: none">
+    <img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/lucas-ingemar/packtrak?style=flat-square">
+  </a>
+
+</p>
 
 <p align="center">
     <picture>
