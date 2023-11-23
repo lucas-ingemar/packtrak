@@ -101,3 +101,8 @@ func (g Git) Checkout(ctx context.Context, folderPath string, hash string) error
 	_, err := Call().Cmd("git").Args([]string{"checkout", hash}).Cwd(folderPath).Exec(ctx)
 	return err
 }
+
+func (g Git) Fetch(ctx context.Context, folderPath string) error {
+	_, err := Call().Cmd("git").Args([]string{"fetch"}).Cwd(folderPath).Exec(ctx)
+	return err
+}
