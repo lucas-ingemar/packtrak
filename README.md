@@ -17,6 +17,8 @@
     <img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/lucas-ingemar/packtrak?style=flat-square">
   </a>
 
+  <img alt="Build" src="https://img.shields.io/github/actions/workflow/status/lucas-ingemar/packtrak/go-test.yml?style=flat-square&logo=github&label=Tests">
+
 </p>
 
 
