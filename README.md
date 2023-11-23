@@ -1,4 +1,10 @@
 <p align="center">
+    <picture>
+      <img alt="packtrak" title="packtrak" src="docs/assets/img/logowtext.png">
+    </picture>
+</p>
+
+<p align="center">
   <a href="https://github.com/lucas-ingemage/packtrack/releases" style="text-decoration: none">
     <img alt="GitHub release" src="https://img.shields.io/github/v/release/lucas-ingemar/packtrak?style=flat-square&label=Latest%20Version">
   </a>
@@ -11,12 +17,6 @@
     <img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/lucas-ingemar/packtrak?style=flat-square">
   </a>
 
-</p>
-
-<p align="center">
-    <picture>
-      <img alt="packtrak" title="packtrak" src="docs/assets/img/logowtext.png">
-    </picture>
 </p>
 
 
