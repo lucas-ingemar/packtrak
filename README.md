@@ -1,12 +1,18 @@
 <p align="center">
+![GitHub tag (with filter)](https://img.shields.io/github/v/tag/lucas-ingemar/packtrak?style=flat-square&label=Latest%20Version)
+![GitHub Repo stars](https://img.shields.io/github/stars/lucas-ingemar/packtrak?style=flat-square&logo=github&label=Stars)
+![GitHub go.mod Go version (subdirectory of monorepo)](https://img.shields.io/github/go-mod/go-version/lucas-ingemar/packtrak?style=flat-square&logo=go&label=Version)
+![GitHub License](https://img.shields.io/github/license/lucas-ingemar/packtrak?style=flat-square&label=License)
+[![Go Report Card](https://goreportcard.com/badge/github.com/lucas-ingemar/packtrak)](https://goreportcard.com/badge/github.com/lucas-ingemar/packtrak?style=flat-square)
+</p>
+
+
+<p align="center">
     <picture>
       <img alt="packtrak" title="packtrak" src="docs/assets/img/logowtext.png">
     </picture>
 </p>
 
-![GitHub stars](https://img.shields.io/github/stars/lucas-ingemar/packtrak.svg?label=github%20stars)
-![Latest GitHub release](https://img.shields.io/github/release/lucas-ingemar/packtrak.svg)
-[![Go Report Card](https://goreportcard.com/badge/github.com/lucas-ingemar/packtrak)](https://goreportcard.com/report/github.com/lucas-ingemar/packtrak)
 
 ## Track Your Package Managers
 You have all your dotfiles in sync between your systems and you know you can set up a new system instantly. You get a new computer, download your dotfiles and think you are ready to go. But now you remember - I need to install a lot of system packages to get my setup working...
