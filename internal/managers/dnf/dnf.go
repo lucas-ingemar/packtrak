@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"path"
 	"strings"
 
 	"github.com/lucas-ingemar/packtrak/internal/shared"
@@ -143,7 +144,7 @@ func (d *Dnf) ListDependencies(ctx context.Context, deps []string, stateDeps []s
 	for _, dep := range pCoprs {
 		depFound := false
 		for _, dnfDep := range installedCoprs {
-			if dnfDep == dep.Name {
+			if dnfDep == d.coprFilename(dep.Name) {
 				depStatus.Synced = append(depStatus.Synced, dep)
 				depFound = true
 				break
@@ -173,7 +174,7 @@ func (d *Dnf) ListDependencies(ctx context.Context, deps []string, stateDeps []s
 	// COPR
 	for _, dep := range sCoprs {
 		for _, dnfDep := range installedCoprs {
-			if dnfDep == dep.Name {
+			if dnfDep == d.coprFilename(dep.Name) {
 				if !lo.Contains(deps, dep.FullName) {
 					depStatus.Removed = append(depStatus.Removed, dep)
 				}
@@ -251,7 +252,6 @@ func (d *Dnf) RemovePackages(ctx context.Context, allPkgs []string, pkgs []strin
 func (d *Dnf) RemoveDependencies(ctx context.Context, allDeps []string, depsToRemove []string) (depsUpdated []string, userWarnings []string, err error) {
 	for _, rDep := range depsToRemove {
 		for _, aDep := range allDeps {
-			fmt.Println(aDep)
 			if strings.SplitN(aDep, ":", 2)[1] == rDep {
 				depsUpdated = append(depsUpdated, aDep)
 				continue
@@ -385,3 +385,11 @@ func (d *Dnf) sortDeps(deps []string) (pCoprs, pCms []shared.Dependency) {
 	}
 	return
 }
+
+func (d *Dnf) coprFilename(coprName string) string {
+	if strings.Count(coprName, "/") == 1 {
+		return path.Join("copr.fedorainfracloud.org", coprName)
+	}
+	return coprName
+}
+
