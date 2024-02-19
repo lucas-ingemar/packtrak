@@ -1,6 +1,6 @@
 module github.com/lucas-ingemar/packtrak
 
-go 1.21.2
+go 1.22.0
 
 require (
 	github.com/alexellis/go-execute/v2 v2.2.1
