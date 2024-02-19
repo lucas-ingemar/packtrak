@@ -41,6 +41,7 @@ type Manifest struct {
 	Dnf     PmManifest `yaml:"dnf"`
 	Git     PmManifest `yaml:"git"`
 	Go      PmManifest `yaml:"go"`
+	Github  PmManifest `yaml:"github"`
 	Version string     `yaml:"_version"`
 }
 
@@ -145,6 +146,8 @@ func (m *Manifest) pmPnt(name shared.ManagerName) *PmManifest {
 		return &m.Git
 	case "go":
 		return &m.Go
+	case "github":
+		return &m.Github
 	default:
 		log.Fatal().Msgf("%s is not a registered package manager", name)
 		panic("")
