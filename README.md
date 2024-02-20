@@ -70,7 +70,7 @@ See the [documentation](docs/cmd/packtrak.md) for more information.
 Packtrak generates its own autocompletion for the commands. Simply put the following command in your `.bashrc`, `.zshrc` or the corresponding file for your setup:
 
 ``` bash
-source <(./build/packtrak completion [shell])
+source <(packtrak completion [shell])
 ```
 
 ## Manifest File
