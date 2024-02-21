@@ -10,12 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### TODO
 
 - Add tests
+- Add scaffold config for failing managers
 
 ### Added
+- Github Manager
 
 ### Fixed
+- Go Manager: Bug when bin folder did not exist 
 
 ### Changed
+- Go updated to v1.22.0
 
 ### Removed
 
@@ -51,7 +55,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release
 
-[unreleased]: https://github.com/lucas-ingemar/packtrak/compare/v0.9.3...HEAD
+[unreleased]: https://github.com/lucas-ingemar/packtrak/compare/v0.9.4...HEAD
+[0.9.4]: https://github.com/lucas-ingemar/packtrak/compare/v0.9.3...v0.9.4
 [0.9.3]: https://github.com/lucas-ingemar/packtrak/compare/v0.9.2...v0.9.3
 [0.9.2]: https://github.com/lucas-ingemar/packtrak/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/lucas-ingemar/packtrak/compare/v0.9.0...v0.9.1

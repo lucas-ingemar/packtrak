@@ -26,11 +26,13 @@ var (
 	Version string
 	RepoUrl string
 
+	CompactPrint   bool
 	Groups         []string
 	StateRotations int
 )
 
 const (
+	keyCompactPrint   = "compact_print"
 	keyGroups         = "groups"
 	keyStateRotations = "state_rotations"
 	keyVersion        = "_version"
@@ -68,6 +70,8 @@ func Refresh() {
 	Groups = getViperStringSliceWithDefault(keyGroups, []string{})
 	StateRotations = getViperIntWithDefault(keyStateRotations, 3)
 
+	CompactPrint = getViperBoolWithDefault(keyCompactPrint, false)
+
 	if !configFileExists() {
 		err := os.MkdirAll(ConfigDir, os.ModePerm)
 		if err != nil {
@@ -94,6 +98,11 @@ func CheckConfig() {
 		shared.PtermWarning.Printfln("'%s' (%d) has a limit of 10. Value set to 10.", keyStateRotations, StateRotations)
 	}
 
+}
+
+func getViperBoolWithDefault(key string, defaultValue bool) bool {
+	viper.SetDefault(key, defaultValue)
+	return viper.GetBool(key)
 }
 
 func GetViperStringWithDefault(key string, defaultValue string) string {
