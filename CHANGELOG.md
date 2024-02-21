@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add scaffold config for failing managers
 
 ### Added
+- DNF: Versions in list function
+- Enhanced terminal printer
 - Github Manager
 
 ### Fixed

@@ -15,7 +15,7 @@ func init() {
 }
 
 func main() {
-	config.Version = "v0.9.2"
+	config.Version = "v0.9.4"
 	config.RepoUrl = "https://github.com/lucas-ingemar/packtrak"
 	cmd.InitCmd()
 	cmd.Execute()

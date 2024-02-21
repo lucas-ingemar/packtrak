@@ -20,7 +20,7 @@ import (
 type CommandExecutorFace interface {
 	InstallPkg(ctx context.Context, pkgs []shared.Package) error
 	RemovePkg(ctx context.Context, pkgs []shared.Package) error
-	ListInstalledPkgs(ctx context.Context) ([]string, error)
+	ListInstalledPkgs(ctx context.Context) ([]string, []string, error)
 	ListUserInstalledPkgs(ctx context.Context) ([]string, error)
 	InstallCm(ctx context.Context, cms string) error
 	RemoveCm(ctx context.Context, cm string) error
@@ -31,9 +31,10 @@ type CommandExecutorFace interface {
 }
 
 type commandExecutor struct {
-	cacheAllInstalled  []string
-	cacheUserInstalled []string
-	cacheCoprs         []string
+	cacheAllInstalled         []string
+	cacheAllInstalledVersions []string
+	cacheUserInstalled        []string
+	cacheCoprs                []string
 }
 
 func (d *commandExecutor) yumRepoFolder() string {
@@ -200,9 +201,9 @@ func (d *commandExecutor) ListCoprs(ctx context.Context) ([]string, error) {
 	return d.cacheCoprs, nil
 }
 
-func (d *commandExecutor) ListInstalledPkgs(ctx context.Context) ([]string, error) {
-	if len(d.cacheAllInstalled) > 0 {
-		return d.cacheAllInstalled, nil
+func (d *commandExecutor) ListInstalledPkgs(ctx context.Context) ([]string, []string, error) {
+	if len(d.cacheAllInstalled) > 0 && len(d.cacheAllInstalledVersions) > 0 {
+		return d.cacheAllInstalled, d.cacheAllInstalledVersions, nil
 	}
 
 	cmd := execute.ExecTask{
@@ -213,18 +214,23 @@ func (d *commandExecutor) ListInstalledPkgs(ctx context.Context) ([]string, erro
 
 	res, err := cmd.Execute(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if res.ExitCode != 0 {
-		return nil, errors.New("Non-zero exit code: " + res.Stderr)
+		return nil, nil, errors.New("Non-zero exit code: " + res.Stderr)
 	}
 
 	dnfList := strings.Split(res.Stdout, "\n")
 	for _, pkg := range dnfList[1:] {
 		d.cacheAllInstalled = append(d.cacheAllInstalled, strings.Split(pkg, ".")[0])
+		parts := strings.Fields(pkg)
+		if len(parts) > 1 {
+			d.cacheAllInstalledVersions = append(d.cacheAllInstalledVersions, parts[1])
+		} else {
+			d.cacheAllInstalledVersions = append(d.cacheAllInstalledVersions, "")
+		}
 	}
-
-	return d.cacheAllInstalled, nil
+	return d.cacheAllInstalled, d.cacheAllInstalledVersions, nil
 }
 
 func (d *commandExecutor) ListUserInstalledPkgs(ctx context.Context) ([]string, error) {
