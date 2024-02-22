@@ -8,11 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### TODO
-
 - Add tests
 - Add scaffold config for failing managers
 
 ### Added
+
+### Fixed
+
+### Changed
+
+### Removed
+
+
+## [0.9.4] - 2024-02-22
+
+### Added
+- Git: Possility to add :latest flag to always pull the latest commit from main
 - DNF: Versions in list function
 - Enhanced terminal printer
 - Github Manager
@@ -22,8 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Go updated to v1.22.0
-
-### Removed
 
 
 ## [0.9.3] - 2024-02-01
