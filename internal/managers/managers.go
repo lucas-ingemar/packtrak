@@ -6,6 +6,7 @@ import (
 
 	"github.com/lucas-ingemar/packtrak/internal/managers/dnf"
 	"github.com/lucas-ingemar/packtrak/internal/managers/git"
+	"github.com/lucas-ingemar/packtrak/internal/managers/github"
 	"github.com/lucas-ingemar/packtrak/internal/managers/goman"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/status"
@@ -13,8 +14,7 @@ import (
 )
 
 var (
-	managersRegistered = []Manager{dnf.New(), git.New(), goman.New()}
-	PackageManagersOld = []Manager{}
+	managersRegistered = []Manager{dnf.New(), git.New(), goman.New(), github.New()}
 )
 
 type ManagerFactoryFace interface {

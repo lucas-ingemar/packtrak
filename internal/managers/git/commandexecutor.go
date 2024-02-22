@@ -15,8 +15,8 @@ import (
 )
 
 type CommandExecutorFace interface {
-	ListInstalledPkgs(ctx context.Context, folderPath string, includeUnstableReleases bool) ([]shared.Package, error)
-	GetRemotePkgMeta(ctx context.Context, pkgUrl string, includeUnstableReleases bool) (shared.Package, error)
+	ListInstalledPkgs(ctx context.Context, manifestPackages []string, folderPath string, includeUnstableReleases bool) ([]shared.Package, error)
+	GetRemotePkgMeta(ctx context.Context, pkgUrl string, includeUnstableReleases, useHeadRelease bool) (shared.Package, error)
 	InstallPkg(ctx context.Context, pkg shared.Package, folderPath string) error
 	UpdatePkg(ctx context.Context, pkg shared.Package, folderPath string) error
 	RemovePkg(ctx context.Context, pkg shared.Package, folderPath string) error
@@ -73,7 +73,7 @@ func (c commandExecutor) RemovePkg(ctx context.Context, pkg shared.Package, fold
 	return os.RemoveAll(repoPath)
 }
 
-func (c commandExecutor) GetRemotePkgMeta(ctx context.Context, pkgUrl string, includeUnstableReleases bool) (pkg shared.Package, err error) {
+func (c commandExecutor) GetRemotePkgMeta(ctx context.Context, pkgUrl string, includeUnstableReleases, useHeadRelease bool) (pkg shared.Package, err error) {
 	pkg.Name = c.PkgNameFromUrl(pkgUrl)
 	pkg.RepoUrl = pkgUrl
 	pkg.FullName = pkgUrl
@@ -93,7 +93,7 @@ func (c commandExecutor) GetRemotePkgMeta(ctx context.Context, pkgUrl string, in
 		return true
 	})
 
-	if len(tags) > 0 {
+	if !useHeadRelease && len(tags) > 0 {
 		pkg.LatestVersion = tags[0]
 		return
 	}
@@ -108,7 +108,7 @@ func (c commandExecutor) GetRemotePkgMeta(ctx context.Context, pkgUrl string, in
 	return
 }
 
-func (c commandExecutor) ListInstalledPkgs(ctx context.Context, folderPath string, includeUnstableReleases bool) ([]shared.Package, error) {
+func (c commandExecutor) ListInstalledPkgs(ctx context.Context, manifestPackages []string, folderPath string, includeUnstableReleases bool) ([]shared.Package, error) {
 	files, err := os.ReadDir(folderPath)
 	if err != nil {
 		return nil, err
@@ -135,11 +135,13 @@ func (c commandExecutor) ListInstalledPkgs(ctx context.Context, folderPath strin
 			RepoUrl:       "",
 		}
 
-		tag, err := c.git.GetCurrentTag(ctx, repoPath)
-		if err == nil {
-			pkg.Version = tag
-			pkgs = append(pkgs, pkg)
-			continue
+		if !lo.Contains(manifestPackages, remoteUrl+":latest") {
+			tag, err := c.git.GetCurrentTag(ctx, repoPath)
+			if err == nil {
+				pkg.Version = tag
+				pkgs = append(pkgs, pkg)
+				continue
+			}
 		}
 
 		cHash, err := c.git.GetCurrentCommitHash(ctx, repoPath)

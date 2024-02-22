@@ -63,6 +63,30 @@ var (
 			Text:  "",
 		},
 	}
+	PtermBlue = pterm.PrefixPrinter{
+		MessageStyle: &pterm.ThemeDefault.InfoMessageStyle,
+		Prefix: pterm.Prefix{
+			Style: &pterm.ThemeDefault.InfoMessageStyle,
+			Text:  "",
+		},
+	}
+
+	PtermTablePrinter = pterm.TablePrinter{
+		Style:                   &pterm.ThemeDefault.TableStyle,
+		HasHeader:               false,
+		HeaderStyle:             &pterm.ThemeDefault.TableHeaderStyle,
+		HeaderRowSeparator:      "",
+		HeaderRowSeparatorStyle: &pterm.ThemeDefault.TableSeparatorStyle,
+		Separator:               "  ",
+		SeparatorStyle:          &pterm.ThemeDefault.TableSeparatorStyle,
+		RowSeparator:            "",
+		RowSeparatorStyle:       &pterm.ThemeDefault.TableSeparatorStyle,
+		Data:                    [][]string{},
+		Boxed:                   false,
+		LeftAlignment:           true,
+		RightAlignment:          false,
+		Writer:                  nil,
+	}
 )
 
 type ptermMsgs struct {

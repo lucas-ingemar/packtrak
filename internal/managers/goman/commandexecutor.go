@@ -55,6 +55,11 @@ func (c *commandExecutor) ListInstalled(ctx context.Context) (packages []shared.
 	if err != nil {
 		return nil, err
 	}
+
+	if _, err = os.Stat(binPath); os.IsNotExist(err) {
+		return nil, nil
+	}
+
 	binaries, err := os.ReadDir(binPath)
 	if err != nil {
 		return

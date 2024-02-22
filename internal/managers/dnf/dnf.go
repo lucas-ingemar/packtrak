@@ -198,16 +198,16 @@ func (d *Dnf) ListDependencies(ctx context.Context, deps []string, stateDeps []s
 }
 
 func (d *Dnf) ListPackages(ctx context.Context, packages []string, statePkgs []string) (packageStatus status.PackageStatus, err error) {
-	dnfList, err := d.ListInstalledPkgs(ctx)
+	dnfList, dnfVersions, err := d.ListInstalledPkgs(ctx)
 	if err != nil {
 		return
 	}
 
 	for _, pkg := range packages {
 		pkgFound := false
-		for _, dnfPkg := range dnfList {
+		for idx, dnfPkg := range dnfList {
 			if dnfPkg == pkg {
-				packageStatus.Synced = append(packageStatus.Synced, shared.Package{Name: pkg, FullName: pkg})
+				packageStatus.Synced = append(packageStatus.Synced, shared.Package{Name: pkg, FullName: pkg, Version: dnfVersions[idx]})
 				pkgFound = true
 				break
 			}
@@ -354,7 +354,7 @@ func (d *Dnf) SyncPackages(ctx context.Context, packageStatus status.PackageStat
 }
 
 func (d *Dnf) isSystemPackage(ctx context.Context, pkg string) (bool, error) {
-	allPkgs, err := d.ListInstalledPkgs(ctx)
+	allPkgs, _, err := d.ListInstalledPkgs(ctx)
 	if err != nil {
 		return false, err
 	}
@@ -392,4 +392,3 @@ func (d *Dnf) coprFilename(coprName string) string {
 	}
 	return coprName
 }
-
