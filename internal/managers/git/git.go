@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/lucas-ingemar/packtrak/internal/shared"
 	"github.com/lucas-ingemar/packtrak/internal/status"
@@ -115,14 +116,21 @@ func (g *Git) ListDependencies(ctx context.Context, deps []string, stateDeps []s
 }
 
 func (g *Git) ListPackages(ctx context.Context, packages []string, statePkgs []string) (packageStatus status.PackageStatus, err error) {
-	installedPkgs, err := g.ListInstalledPkgs(ctx, g.pkgDirectory, g.includeUnstableReleases)
+	installedPkgs, err := g.ListInstalledPkgs(ctx, packages, g.pkgDirectory, g.includeUnstableReleases)
 	if err != nil {
 		return status.PackageStatus{}, err
 	}
 
 	pkgObjs := []shared.Package{}
-	for _, pkgName := range packages {
-		pkg, err := g.GetRemotePkgMeta(ctx, pkgName, g.includeUnstableReleases)
+	for _, pkgNameWithTag := range packages {
+		pNT := strings.Split(pkgNameWithTag, ":")
+		pkgName := pkgNameWithTag
+		useHeadRelease := false
+		if pNT[len(pNT)-1] == "latest" {
+			useHeadRelease = true
+			pkgName = strings.Join(pNT[:len(pNT)-1], ":")
+		}
+		pkg, err := g.GetRemotePkgMeta(ctx, pkgName, g.includeUnstableReleases, useHeadRelease)
 		if err != nil {
 			return status.PackageStatus{}, err
 		}
@@ -145,8 +153,12 @@ func (g *Git) ListPackages(ctx context.Context, packages []string, statePkgs []s
 		}
 	}
 
+	pkgsNoTags := lo.Map(packages, func(p string, _ int) string {
+		return strings.TrimSuffix(p, ":latest")
+	})
+
 	for _, pkg := range statePkgs {
-		if !lo.Contains(packages, pkg) {
+		if !lo.Contains(pkgsNoTags, pkg) {
 			packageStatus.Removed = append(packageStatus.Removed, shared.Package{
 				Name:     g.PkgNameFromUrl(pkg),
 				FullName: pkg,
