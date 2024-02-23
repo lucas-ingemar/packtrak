@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/lucas-ingemar/packtrak/internal/managers/dnf"
+	"github.com/lucas-ingemar/packtrak/internal/managers/flatpak"
 	"github.com/lucas-ingemar/packtrak/internal/managers/git"
 	"github.com/lucas-ingemar/packtrak/internal/managers/github"
 	"github.com/lucas-ingemar/packtrak/internal/managers/goman"
@@ -14,7 +15,7 @@ import (
 )
 
 var (
-	managersRegistered = []Manager{dnf.New(), git.New(), goman.New(), github.New()}
+	managersRegistered = []Manager{dnf.New(), flatpak.New(), git.New(), github.New(), goman.New()}
 )
 
 type ManagerFactoryFace interface {

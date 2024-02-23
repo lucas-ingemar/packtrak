@@ -10,8 +10,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### TODO
 - Add tests
 - Add scaffold config for failing managers
+- Manager should be able to say if dependencies are a thing for them
 
 ### Added
+
+### Fixed
+
+### Changed
+
+### Removed
+
+
+## [1.0.0] - ?????????
+
+### Added
+- Flatpak manager
 
 ### Fixed
 
@@ -66,7 +79,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release
 
-[unreleased]: https://github.com/lucas-ingemar/packtrak/compare/v0.9.4...HEAD
+[unreleased]: https://github.com/lucas-ingemar/packtrak/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/lucas-ingemar/packtrak/compare/v0.9.4...v1.0.0
 [0.9.4]: https://github.com/lucas-ingemar/packtrak/compare/v0.9.3...v0.9.4
 [0.9.3]: https://github.com/lucas-ingemar/packtrak/compare/v0.9.2...v0.9.3
 [0.9.2]: https://github.com/lucas-ingemar/packtrak/compare/v0.9.1...v0.9.2

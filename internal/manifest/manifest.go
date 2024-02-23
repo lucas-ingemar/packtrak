@@ -39,9 +39,10 @@ type ManifestFace interface {
 
 type Manifest struct {
 	Dnf     PmManifest `yaml:"dnf"`
+	Flatpak PmManifest `yaml:"flatpak"`
 	Git     PmManifest `yaml:"git"`
-	Go      PmManifest `yaml:"go"`
 	Github  PmManifest `yaml:"github"`
+	Go      PmManifest `yaml:"go"`
 	Version string     `yaml:"_version"`
 }
 
@@ -142,12 +143,14 @@ func (m *Manifest) pmPnt(name shared.ManagerName) *PmManifest {
 	switch name {
 	case "dnf":
 		return &m.Dnf
+	case "flatpak":
+		return &m.Flatpak
 	case "git":
 		return &m.Git
-	case "go":
-		return &m.Go
 	case "github":
 		return &m.Github
+	case "go":
+		return &m.Go
 	default:
 		log.Fatal().Msgf("%s is not a registered package manager", name)
 		panic("")
