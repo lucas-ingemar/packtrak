@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/lucas-ingemar/packtrak/internal/config"
 	"github.com/lucas-ingemar/packtrak/internal/managers"
 	"github.com/lucas-ingemar/packtrak/internal/manifest"
 	"github.com/lucas-ingemar/packtrak/internal/shared"
@@ -56,18 +57,20 @@ func (a *App) mustDoSudo(ctx context.Context, managerNames []shared.ManagerName,
 		return true
 	}
 
-	text := fmt.Sprintf("The following package managers needs sudo privileges to work properly with the '%s' command:\n\n%s\n\nDo you want to grant access? You might need to enter your password", cmd, strings.Join(pmNames, ", "))
-	result, _ := pterm.InteractiveContinuePrinter{
-		DefaultValueIndex: 0,
-		DefaultText:       text,
-		TextStyle:         &pterm.ThemeDefault.PrimaryStyle,
-		Options:           []string{"y", "n"},
-		OptionsStyle:      &pterm.ThemeDefault.SuccessMessageStyle,
-		SuffixStyle:       &pterm.ThemeDefault.SecondaryStyle,
-		Delimiter:         ": ",
-	}.Show()
-	if result != "y" {
-		return false
+	if !*config.AssumeYes {
+		text := fmt.Sprintf("The following package managers needs sudo privileges to work properly with the '%s' command:\n\n%s\n\nDo you want to grant access? You might need to enter your password", cmd, strings.Join(pmNames, ", "))
+		result, _ := pterm.InteractiveContinuePrinter{
+			DefaultValueIndex: 0,
+			DefaultText:       text,
+			TextStyle:         &pterm.ThemeDefault.PrimaryStyle,
+			Options:           []string{"y", "n"},
+			OptionsStyle:      &pterm.ThemeDefault.SuccessMessageStyle,
+			SuffixStyle:       &pterm.ThemeDefault.SecondaryStyle,
+			Delimiter:         ": ",
+		}.Show()
+		if result != "y" {
+			return false
+		}
 	}
 
 	_, err = shared.Command(ctx, "sudo", []string{"echo", ""}, true, os.Stdin)

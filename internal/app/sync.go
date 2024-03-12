@@ -53,16 +53,21 @@ func (a *App) Sync(ctx context.Context, managerNames []shared.ManagerName) (err 
 		return state.Rotate(config.StateRotations)
 	}
 
-	fmt.Println("")
-	result, _ := pterm.InteractiveContinuePrinter{
-		DefaultValueIndex: 0,
-		DefaultText:       "Unsynced changes found in config. Do you want to sync?",
-		TextStyle:         &pterm.ThemeDefault.PrimaryStyle,
-		Options:           []string{"y", "n"},
-		OptionsStyle:      &pterm.ThemeDefault.SuccessMessageStyle,
-		SuffixStyle:       &pterm.ThemeDefault.SecondaryStyle,
-		Delimiter:         ": ",
-	}.Show()
+	result := "n"
+	if !*config.AssumeYes {
+		fmt.Println("")
+		result, _ = pterm.InteractiveContinuePrinter{
+			DefaultValueIndex: 0,
+			DefaultText:       "Unsynced changes found in config. Do you want to sync?",
+			TextStyle:         &pterm.ThemeDefault.PrimaryStyle,
+			Options:           []string{"y", "n"},
+			OptionsStyle:      &pterm.ThemeDefault.SuccessMessageStyle,
+			SuffixStyle:       &pterm.ThemeDefault.SecondaryStyle,
+			Delimiter:         ": ",
+		}.Show()
+	} else {
+		result = "y"
+	}
 
 	if result == "y" {
 		for _, manager := range ms {

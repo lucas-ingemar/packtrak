@@ -1,0 +1,21 @@
+_version: v1.0.0
+compact_print: false
+data_dir: /root/.local/share/packtrak
+groups: []
+managers:
+    dnf:
+        enabled: true
+    flatpak:
+        enabled: false
+        user_space_installations: false
+    git:
+        enabled: true
+        package_directory: /testing_dir/git
+    github:
+        bin_directory: /testing_dir/github/bin
+        enabled: true
+        package_directory: /testing_dir/github/library
+        symlink_to_bin: true
+    go:
+        enabled: true
+state_rotations: 3
