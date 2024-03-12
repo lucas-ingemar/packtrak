@@ -50,14 +50,21 @@ func (d *commandExecutor) InstallPkg(ctx context.Context, pkgs []shared.Package)
 		return errors.New("no packages provided")
 	}
 
+	cmds := []string{"dnf", "--color=always", "install"}
+	if *config.AssumeYes {
+		cmds = append(cmds, "--assumeyes")
+	}
+
 	pkgNames := []string{}
 	for _, pkg := range pkgs {
 		pkgNames = append(pkgNames, pkg.FullName)
 	}
 
+	cmds = append(cmds, pkgNames...)
+
 	cmd := execute.ExecTask{
 		Command:     "sudo",
-		Args:        append([]string{"dnf", "--color=always", "install"}, pkgNames...),
+		Args:        cmds,
 		StreamStdio: true,
 		Stdin:       os.Stdin,
 	}
@@ -79,14 +86,21 @@ func (d *commandExecutor) RemovePkg(ctx context.Context, pkgs []shared.Package) 
 		return errors.New("no packages provided")
 	}
 
+	cmds := []string{"dnf", "--color=always", "remove"}
+	if *config.AssumeYes {
+		cmds = append(cmds, "--assumeyes")
+	}
+
 	pkgNames := []string{}
 	for _, pkg := range pkgs {
 		pkgNames = append(pkgNames, pkg.FullName)
 	}
 
+	cmds = append(cmds, pkgNames...)
+
 	cmd := execute.ExecTask{
 		Command:     "sudo",
-		Args:        append([]string{"dnf", "--color=always", "remove"}, pkgNames...),
+		Args:        cmds,
 		StreamStdio: true,
 		Stdin:       os.Stdin,
 	}
@@ -175,12 +189,23 @@ func (d *commandExecutor) RemoveCm(ctx context.Context, cm string) error {
 }
 
 func (d *commandExecutor) InstallCopr(ctx context.Context, copr string) error {
-	_, err := shared.Command(ctx, "sudo", []string{"dnf", "copr", "enable", copr}, true, os.Stdin)
+	cmds := []string{"dnf", "copr", "enable"}
+	if *config.AssumeYes {
+		cmds = append(cmds, "--assumeyes")
+	}
+	cmds = append(cmds, copr)
+
+	_, err := shared.Command(ctx, "sudo", cmds, true, os.Stdin)
 	return err
 }
 
 func (d *commandExecutor) RemoveCopr(ctx context.Context, copr string) error {
-	_, err := shared.Command(ctx, "sudo", []string{"dnf", "copr", "remove", copr}, false, nil)
+	cmds := []string{"dnf", "copr", "remove"}
+	if *config.AssumeYes {
+		cmds = append(cmds, "--assumeyes")
+	}
+	cmds = append(cmds, copr)
+	_, err := shared.Command(ctx, "sudo", cmds, false, nil)
 	return err
 }
 

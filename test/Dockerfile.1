@@ -1,0 +1,20 @@
+FROM fedora:latest
+
+COPY --from=golang /usr/local/go /usr/local/go
+
+ENV PATH=$PATH:/usr/local/go/bin
+
+RUN mkdir -p /root/.local/share/packtrak
+RUN dnf install --assumeyes 'dnf-command(copr)'
+RUN dnf install --assumeyes git
+# RUN dnf install --assumeyes flatpak
+# RUN flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+
+WORKDIR /packtrak
+
+COPY . .
+COPY test/config.1.yaml /root/.config/packtrak/config.yaml
+
+RUN go mod vendor
+
+ENTRYPOINT [ "sh", "./test/entrypoint.1.sh" ]

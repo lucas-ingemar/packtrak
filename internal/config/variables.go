@@ -29,6 +29,8 @@ var (
 	CompactPrint   bool
 	Groups         []string
 	StateRotations int
+
+	AssumeYes *bool
 )
 
 const (

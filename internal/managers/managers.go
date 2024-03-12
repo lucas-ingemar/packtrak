@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/lucas-ingemar/packtrak/internal/managers/dnf"
+	"github.com/lucas-ingemar/packtrak/internal/managers/flatpak"
 	"github.com/lucas-ingemar/packtrak/internal/managers/git"
 	"github.com/lucas-ingemar/packtrak/internal/managers/github"
 	"github.com/lucas-ingemar/packtrak/internal/managers/goman"
@@ -14,7 +15,7 @@ import (
 )
 
 var (
-	managersRegistered = []Manager{dnf.New(), git.New(), goman.New(), github.New()}
+	ManagersRegistered = []Manager{dnf.New(), flatpak.New(), git.New(), github.New(), goman.New()}
 )
 
 type ManagerFactoryFace interface {
@@ -87,15 +88,15 @@ type Manager interface {
 }
 
 func InitManagerConfig() {
-	for _, pm := range managersRegistered {
+	for _, pm := range ManagersRegistered {
 		viper.SetDefault(keyName(pm, "enabled"), true)
 		pm.InitConfig()
 	}
 }
 
-func InitManagerFactory() (factory ManagerFactory) {
-	for _, m := range managersRegistered {
-		if viper.GetBool(keyName(m, "enabled")) {
+func InitManagerFactory(managers []Manager, viperEnabled bool) (factory ManagerFactory) {
+	for _, m := range managers {
+		if !viperEnabled || viper.GetBool(keyName(m, "enabled")) {
 			//FIXME: Here we should also make the init checks
 			if err := m.InitCheckCmd(); err != nil {
 				shared.PtermWarning.Printfln("Disabling %s manager: %s", m.Name(), err.Error())
