@@ -233,7 +233,7 @@ func (d *commandExecutor) ListInstalledPkgs(ctx context.Context) ([]string, []st
 
 	cmd := execute.ExecTask{
 		Command:     "dnf",
-		Args:        []string{"list", "installed"},
+		Args:        []string{"list", "--installed"},
 		StreamStdio: false,
 	}
 
